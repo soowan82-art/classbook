@@ -225,6 +225,22 @@ th.tt-today{color:var(--accent)}
 .task-row.late .task-title{color:var(--bad)}
 .task-row.compact{padding:6px 2px}
 .task-row.editing{background:var(--accent-soft);flex-direction:column}
+.cs-thread{border-bottom:1px solid var(--line);padding-bottom:6px;margin-bottom:6px}
+.cs-thread:last-child{border-bottom:0}
+.cs-thread.multi{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:12px}
+.cs-thread.multi .it{border-left:2px solid hsl(265 45% 75%);padding-left:10px;margin-left:4px}
+.cs-th-head{margin-bottom:6px}
+.cs-n{color:hsl(265 45% 45%)}
+.cs-add{margin:2px 0 4px;color:var(--accent)}
+.cs-follow{background:var(--accent-soft);border-radius:10px;padding:12px;margin:6px 0}
+.pill-btn{border:0;cursor:pointer;font:inherit}
+.todo-t{flex:1;min-width:0;cursor:pointer;word-break:break-word}
+.todo-t:hover{text-decoration:underline;text-decoration-color:var(--line)}
+.todo-k{display:inline-block;font-size:10.5px;font-weight:700;padding:0 5px;margin-right:5px;border-radius:4px;background:var(--bg);color:var(--muted);vertical-align:1px}
+.todo-k.sub{background:var(--warn-soft);color:var(--warn)}
+.todo.late .todo-t{color:var(--bad)}
+.todo-late{font-size:11px;font-weight:600;color:var(--bad);margin-left:4px}
+.toast-undo{margin-left:10px;background:none;border:0;color:#9fd3ff;font-weight:700;cursor:pointer;font:inherit;font-weight:700}
 .tt-modebar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 16px;border-radius:12px;margin-bottom:16px;border:1px solid var(--line);background:var(--surface)}
 .tt-modebar .small{color:var(--muted);margin-top:2px}
 .tt-modebar.week{border-left:4px solid var(--accent)}
@@ -693,7 +709,7 @@ const ui = {
   eventEdit:null, memoSel:null, memoQ:"", seatPick:null, seatView:"teacher", seatMode:"",
   roleTab:"assign",
   rnd:{ mode:"one", target:"all", customText:"", exclude:{}, drawn:[], result:null, order:null, groups:null, noRepeat:true, skipAbsent:true, groupBy:"count", groupN:6, groupSize:4, mixGender:true },
-  jobTab:"run", taskFilter:"open", taskCat:"전체", taskEdit:null, taskTab:"task", meetEdit:null, meetAll:false, subEdit:null, subFilter:"open", ttDraft:null, csSel:"all", csEdit:null, qtSel:null, qtEdit:false, qtLast:[], qtCat:"칭찬", qtWhen:"", sumSel:null, sumTerm:null, sumFilter:"all", sumNotes:null, sampleOk:false, calImp:null, calEdit:null, epTerm:null, epEdit:null, epPaste:false, ttMode:"week", ttWeek:today(), ttBrush:null, ttEdit:false, ttAdding:false, ttSp:false
+  jobTab:"run", taskFilter:"open", taskCat:"전체", taskEdit:null, taskTab:"task", meetEdit:null, meetAll:false, subEdit:null, subFilter:"open", ttDraft:null, csSel:"all", csEdit:null, csFollow:null, lastDel:null, qtSel:null, qtEdit:false, qtLast:[], qtCat:"칭찬", qtWhen:"", sumSel:null, sumTerm:null, sumFilter:"all", sumNotes:null, sampleOk:false, calImp:null, calEdit:null, epTerm:null, epEdit:null, epPaste:false, ttMode:"week", ttWeek:today(), ttBrush:null, ttEdit:false, ttAdding:false, ttSp:false
 };
 
 /* ───────── 공통 ───────── */
@@ -840,6 +856,7 @@ A.setupFromDrive = () => withLogin("setupFromDrive", async () => {
   if(!S.cls.name){ if(SY.state==="error") toast(SY.msg); else toast("드라이브에 학급일지 백업이 없어요. 학급 이름을 정해 새로 시작해 주세요"); }
 });
 function render(){
+  if(S.diary && Object.keys(S.diary).length) migrateDiary();
   if(!S.cls.name){ $("#side").innerHTML = ""; document.querySelector(".app").classList.add("no-side"); $("#main").innerHTML = setupView(); document.title = "학급일지"; setTimeout(()=>$("#setName")?.focus(), 0); return; }
   document.querySelector(".app").classList.remove("no-side");
   const r = route();
@@ -854,7 +871,7 @@ function render(){
 
 VIEWS.today = () => {
   const t = today(), d = new Date();
-  const todos = S.diary[t] || [];
+  const todos = dayTodos(t, true);
   const att = Object.entries(S.attendance[t] || {});
   const ev = S.events.filter(e => e.date >= t).sort((a,b)=>a.date.localeCompare(b.date)).slice(0,3);
   const asg = S.assignments.filter(a => a.due >= ymd(addDays(d,-7))).sort((a,b)=>a.due.localeCompare(b.due));
@@ -869,8 +886,8 @@ VIEWS.today = () => {
   ${evalTodayCard()}
   <div class="grid2">
     <div class="card"><div class="spread"><h2>오늘 할 일</h2><a class="btn sm" href="#diary">다이어리</a></div>
-      <ul class="todos" style="padding:0">${todos.map(x=>todoLi(t,x)).join("") || `<li class="empty">오늘 적어 둔 할 일이 없어요</li>`}</ul>
-      <input type="text" class="add" style="border:1px solid var(--line);border-radius:8px;margin-top:8px" placeholder="할 일 추가 후 Enter" data-enter="addTodo" data-date="${t}" id="todayAdd">
+      <ul class="todos" style="padding:0">${todos.map(x=>todoLi(t,x)).join("") || `<li class="empty">오늘 마감인 할 일이 없어요</li>`}</ul>
+      <input type="text" class="add" style="border:1px solid var(--line);border-radius:8px;margin-top:8px" placeholder="할 일 추가 후 Enter · 업무 관리에도 들어가요" data-enter="addTodo" data-date="${t}" id="todayAdd">
     </div>
     <div class="card"><div class="spread"><h2>다가오는 행사</h2><a class="btn sm" href="#events">전체 보기</a></div>
       ${ev.length ? ev.map(e => `<div class="spread" style="padding:8px 0;border-bottom:1px solid var(--line)"><div><div style="font-weight:600">${esc(e.title)}</div><div class="small muted">${md(e.date)}${e.time?" "+esc(e.time):""} · ${esc(e.type)}${e.host?" · "+esc(e.host):""}</div></div><div class="row"><span class="pill ${e.date===t?"bad":"acc"}">${dday(e.date)}</span>${e.checklist.length?`<span class="pill">준비 ${e.checklist.filter(c=>c.done).length}/${e.checklist.length}</span>`:""}</div></div>`).join("") : `<div class="empty">예정된 행사가 없어요</div>`}
@@ -896,12 +913,35 @@ function todayJobsCard(){
       ${h ? `<div class="small muted" style="margin-bottom:8px">${esc(h.quarter)}</div><div class="scroll"><table class="t"><tbody>${Object.entries(h.assign).filter(([,a])=>a.length).map(([jid,a])=>`<tr><td>${esc(h.names?.[jid]||"")}</td><td>${a.map(sname).map(esc).join(", ")}</td></tr>`).join("")}</tbody></table></div>` : `<div class="empty">아직 이번 분기 직업을 정하지 않았어요</div>`}</div>`; }
   return `<div class="card"><div class="spread"><h2>일인일역 · 직업놀이</h2><a class="btn sm" href="#jobs">방식 고르기</a></div><div class="empty">일인일역과 직업놀이 중 우리 반 방식을 골라 주세요</div></div>`;
 }
-function todoLi(date, x){
-  return `<li class="todo ${x.done?"done":""}"><input type="checkbox" ${x.done?"checked":""} data-ch="toggleTodo" data-date="${date}" data-id="${x.id}" aria-label="완료"><span>${esc(x.text)}</span><button class="x" data-act="delTodo" data-date="${date}" data-id="${x.id}" aria-label="삭제">×</button></li>`;
+/* 다이어리 할 일 = 업무 관리의 업무(마감일이 그날) + 제출(마감일이 그날). 어디서 체크해도 같은 데이터 */
+function dayTodos(d, withLate){
+  const t = today();
+  const L = (S.tasks||[]).filter(x=>x.due===d || (withLate && !x.done && x.due && x.due < d)).map(x=>({k:"task", x}))
+    .concat((S.submits||[]).filter(x=>x.due===d || (withLate && !x.done && x.due && x.due < d)).map(x=>({k:"sub", x})));
+  return L.sort((a,b)=>(a.x.done-b.x.done) || (a.x.due||"").localeCompare(b.x.due||"") || (a.k==="sub")-(b.k==="sub"));
 }
-EN.addTodo = el => { const v = el.value.trim(); if(!v) return; (S.diary[el.dataset.date] ||= []).push({id:uid(), text:v, done:false}); const keep = el.id; commit(); const n = keep && document.getElementById(keep); n && n.focus(); };
-CH.toggleTodo = el => { const x = (S.diary[el.dataset.date]||[]).find(t=>t.id===el.dataset.id); if(x){ x.done = el.checked; commit(); } };
-A.delTodo = el => { const d = el.dataset.date; S.diary[d] = (S.diary[d]||[]).filter(t=>t.id!==el.dataset.id); commit(); };
+function todoLi(date, it){
+  const {k, x} = it, late = !x.done && x.due && x.due < date;
+  const tag = k==="sub" ? `<span class="todo-k sub">제출</span>` : (x.cat && x.cat!=="학급" ? `<span class="todo-k">${esc(x.cat)}</span>` : "");
+  return `<li class="todo ${x.done?"done":""} ${late?"late":""}"><input type="checkbox" ${x.done?"checked":""} data-ch="${k==="sub"?"subDone":"taskDone"}" data-id="${x.id}" aria-label="${k==="sub"?"제출함":"완료"}">
+    <span class="todo-t" data-act="todoOpen" data-k="${k}" data-id="${x.id}" title="업무 관리에서 열기">${tag}${esc(x.title)}${k==="sub"&&x.to?` <span class="muted">→ ${esc(x.to)}</span>`:""}${late?` <span class="todo-late">${md(x.due)} 마감</span>`:""}</span>
+    <button class="x" data-act="delTodo" data-k="${k}" data-id="${x.id}" aria-label="삭제">×</button></li>`;
+}
+EN.addTodo = el => { let v = el.value.trim(); if(!v) return;
+  (S.tasks ||= []).push({id:uid(), title:v, due:el.dataset.date, cat:"학급", note:"", done:false, doneAt:"", created:today()});
+  const keep = el.id; commit(); const n = keep && document.getElementById(keep); n && n.focus(); };
+A.delTodo = el => { const key = el.dataset.k==="sub" ? "submits" : "tasks", x = S[key].find(y=>y.id===el.dataset.id); if(!x) return;
+  S[key] = S[key].filter(y=>y!==x); ui.lastDel = {key, x}; commit(); toastUndo(`'${x.title}'을(를) 지웠어요`); };
+A.undoDel = () => { const u = ui.lastDel; if(!u) return; S[u.key].push(u.x); ui.lastDel = null; commit(); document.querySelectorAll(".toast").forEach(x=>x.remove()); toast("되돌렸어요"); };
+A.todoOpen = el => { if(el.dataset.k==="sub"){ ui.taskTab = "sub"; ui.subEdit = el.dataset.id; } else { ui.taskTab = "task"; ui.taskEdit = el.dataset.id; ui.taskFilter = "all"; } location.hash = "tasks"; render(); };
+function toastUndo(msg){ document.querySelectorAll(".toast").forEach(x=>x.remove()); const t = document.createElement("div"); t.className = "toast"; t.innerHTML = `${esc(msg)} <button class="toast-undo" data-act="undoDel">되돌리기</button>`; document.body.appendChild(t); setTimeout(()=>t.remove(), 5000); }
+/* 예전 다이어리 할 일(S.diary)을 업무로 옮긴다 — 한 번만 */
+function migrateDiary(){
+  const D = S.diary; if(!D || !Object.keys(D).length) return;
+  Object.entries(D).forEach(([d, l]) => (l||[]).forEach(x => { if(!x || !x.text) return;
+    (S.tasks ||= []).push({id:x.id||uid(), title:x.text, due:d, cat:"학급", note:"", done:!!x.done, doneAt:x.done ? d : "", created:d}); }));
+  S.diary = {}; persist();
+}
 
 /* ───────── 다이어리 ───────── */
 /* 월 보기 한 칸에 들어갈 줄들: 중요한 것부터, 넘치면 '+n개' */
@@ -916,7 +956,7 @@ function monthLines(k, evs, att, todos){
   (S.submits||[]).filter(x=>x.due===k).forEach(x=>L.push(`<span class="mline mtask ${x.done?"mdone":""}">제출 ${esc(x.title)}</span>`));
   S.assignments.filter(a=>a.due===k).forEach(a=>{ const n = asgMiss(a).length; L.push(`<span class="mline masg">마감 ${esc(a.title)}${n?` · 미제출 ${n}`:""}</span>`); });
   (S.counsels||[]).filter(c=>c.date===k).forEach(c=>L.push(`<span class="mline mcs">상담 ${esc(sname(c.sid))}</span>`));
-  (S.counsels||[]).filter(c=>c.next===k).forEach(c=>L.push(`<span class="mline mcs">상담 예정 ${esc(sname(c.sid))}</span>`));
+  (S.counsels||[]).filter(c=>c.next===k && !c.nextDone).forEach(c=>L.push(`<span class="mline mcs">상담 예정 ${esc(sname(c.sid))}</span>`));
   S.assessments.filter(a=>a.date===k).forEach(a=>L.push(`<span class="mline mgr">평가 ${esc(a.subject)} ${esc(a.title)}</span>`));
   if(att.length) L.push(`<span class="mline muted"><i class="dot c-${att[0][1].reason}"></i> 출결 ${att.map(([sid])=>esc(sname(sid))).slice(0,2).join(", ")}${att.length>2?` 외 ${att.length-2}`:""}</span>`);
   const rn = S.records.filter(r=>r.date===k).length; if(rn) L.push(`<span class="mline muted">학생 기록 ${rn}건</span>`);
@@ -964,14 +1004,12 @@ function diaryTags(d, full){
     evs.map(e=>{ const done = e.checklist.filter(c=>c.done).length;
       return `<button class="dtag ev-tag" data-act="goEvent" title="학급 행사로 이동"><span class="dtag-k">행사</span><span class="dtag-b"><b>${e.time?esc(e.time)+" ":""}${esc(e.title)}</b><span class="small muted">${esc(e.type)}${e.host?" · "+esc(e.host):""}${e.place?" · "+esc(e.place):""}${e.checklist.length?` · 준비 ${done}/${e.checklist.length}`:""}</span></span></button>`; }).join("") +
     (S.meetings||[]).filter(m=>m.date===d).sort((a,b)=>(a.time||"").localeCompare(b.time||"")).map(m=>`<button class="dtag meet-tag" data-act="goMeet"><span class="dtag-k">회의</span><span class="dtag-b"><b>${m.time?esc(m.time)+" ":""}${esc(m.title)}</b>${m.place?` <span class="small muted">${esc(m.place)}</span>`:""}</span></button>`).join("") +
-    (S.submits||[]).filter(x=>x.due===d).map(x=>`<button class="dtag task-tag ${x.done?"tdone":""}" data-act="goSub"><span class="dtag-k">제출</span><span class="dtag-b">${esc(x.title)}${x.to?` → ${esc(x.to)}`:""}${x.done?" (제출 완료)":""}</span></button>`).join("") +
-    (S.tasks||[]).filter(x=>x.due===d).map(x=>`<button class="dtag task-tag ${x.done?"tdone":""}" data-act="goTasks"><span class="dtag-k">업무</span><span class="dtag-b">${esc(x.title)}${x.done?" (완료)":""}</span></button>`).join("") +
     (S.counsels||[]).filter(c=>c.date===d).map(c=>`<button class="dtag cs-tag" data-act="goCounsel" data-s="${c.sid}"><span class="dtag-k">상담</span><span class="dtag-b"><b>${c.time?esc(c.time)+" ":""}${esc(sname(c.sid))}</b><span class="small muted">${esc(c.who)} · ${esc(c.how)} · ${esc(c.topic)}</span></span></button>`).join("") +
-    (S.counsels||[]).filter(c=>c.next===d).map(c=>`<button class="dtag cs-tag" data-act="goCounsel"><span class="dtag-k">상담</span><span class="dtag-b">${esc(sname(c.sid))} 상담 예정</span></button>`).join("") +
+    (S.counsels||[]).filter(c=>c.next===d && !c.nextDone).map(c=>`<button class="dtag cs-tag" data-act="goCounsel"><span class="dtag-k">상담</span><span class="dtag-b">${esc(sname(c.sid))} 상담 예정</span></button>`).join("") +
     recTag(d, full) + extraTags(d, full) +
     (att.length ? `<button class="dtag att-tag" data-act="goAtt" data-d="${d}" title="출석 체크로 이동"><span class="dtag-k">출결</span><span class="dtag-b">${att.map(([sid,r])=>`<span class="dtag-row"><span class="nm"><i class="dot c-${r.reason}"></i>${esc(sname(sid))}</span> <span class="muted">${attLabel(r)}${r.note?" · "+esc(r.note):""}</span></span>`).join("")}</span></button>` : "");
 }
-const todoCount = ds => ds.reduce((a,d)=>{ const l = S.diary[d]||[]; a[0]+=l.filter(x=>x.done).length; a[1]+=l.length; return a; },[0,0]);
+const todoCount = ds => ds.reduce((a,d)=>{ const l = dayTodos(d); a[0]+=l.filter(x=>x.x.done).length; a[1]+=l.length; return a; },[0,0]);
 VIEWS.diary = () => {
   const mode = ui.diaryMode, cur = parse(ui.diaryDate), t = today();
   const seg = `<div class="seg"><button class="${mode==="day"?"on":""}" data-act="diaryMode" data-v="day">일</button><button class="${mode==="week"?"on":""}" data-act="diaryMode" data-v="week">주</button><button class="${mode==="month"?"on":""}" data-act="diaryMode" data-v="month">월</button></div>`;
@@ -984,8 +1022,8 @@ VIEWS.diary = () => {
     const tg = diaryTags(d, true);
     body = `<div class="grid2" style="grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);align-items:start">
       <div style="display:flex;flex-direction:column;gap:16px">${ttDayCard(d, true)}<div class="card"><h2>할 일</h2>
-        <ul class="todos" style="padding:0">${(S.diary[d]||[]).map(x=>todoLi(d,x)).join("") || `<li class="empty">적어 둔 할 일이 없어요</li>`}</ul>
-        <input type="text" class="add" style="border:1px solid var(--line);border-radius:8px;margin-top:8px" placeholder="할 일 추가 후 Enter" data-enter="addTodo" data-date="${d}" id="add-${d}"></div></div>
+        <ul class="todos" style="padding:0">${dayTodos(d, d===t).map(x=>todoLi(d,x)).join("") || `<li class="empty">이날 마감인 할 일이 없어요</li>`}</ul>
+        <input type="text" class="add" style="border:1px solid var(--line);border-radius:8px;margin-top:8px" placeholder="할 일 추가 후 Enter · 업무 관리에도 들어가요" data-enter="addTodo" data-date="${d}" id="add-${d}"></div></div>
       <div style="display:flex;flex-direction:column;gap:16px">
         <div class="card"><h2>출결 · 행사</h2><div class="tags" style="padding:0">${tg || `<div class="empty">출결 특이사항과 행사가 없어요</div>`}</div></div>
         <div class="card"><div class="spread"><h2>이날 메모</h2><span class="small muted" id="dmSaved"></span></div><textarea rows="6" data-in="dayMemo" data-date="${d}" placeholder="수업 메모, 전달 사항 등">${esc((S.dayMemo||{})[d]||"")}</textarea></div>
@@ -996,8 +1034,8 @@ VIEWS.diary = () => {
     const sat = ymd(addDays(mon,5)), sun = ymd(addDays(mon,6)), c = todoCount(days.concat([sat,sun]));
     sub = `${mon.getFullYear()}년 ${addDays(mon,3).getMonth()+1}월 ${weekOfMonth(mon)}주 · 할 일 ${c[0]}/${c[1]} 완료`;
     const head = (d, cls) => { const dt = parse(d); return `<button class="dh dh-btn" data-act="diaryOpenDay" data-d="${d}" title="이날 크게 보기"><b class="${cls}">${WD[dt.getDay()]}</b><span class="num muted">${dt.getMonth()+1}/${dt.getDate()}</span></button>`; };
-    const dayCol = d => `<section class="day ${d===t?"today":""}">${head(d, HOLI[d]?"holi":"")}<div class="tags">${HOLI[d]?"":ttMini(d)}${diaryTags(d)}</div><ul class="todos">${(S.diary[d]||[]).map(x=>todoLi(d,x)).join("")}</ul><input type="text" class="add" placeholder="+ 할 일 추가" data-enter="addTodo" data-date="${d}" id="add-${d}" aria-label="${md(d)} 할 일 추가"></section>`;
-    const half = (d, cls) => `<div class="half">${head(d,cls)}<div class="tags">${diaryTags(d)}</div><ul class="todos">${(S.diary[d]||[]).map(x=>todoLi(d,x)).join("")}</ul><input type="text" class="add" placeholder="+ 할 일 추가" data-enter="addTodo" data-date="${d}" id="add-${d}"></div>`;
+    const dayCol = d => `<section class="day ${d===t?"today":""}">${head(d, HOLI[d]?"holi":"")}<div class="tags">${HOLI[d]?"":ttMini(d)}${diaryTags(d)}</div><ul class="todos">${dayTodos(d, d===t).map(x=>todoLi(d,x)).join("")}</ul><input type="text" class="add" placeholder="+ 할 일 추가" data-enter="addTodo" data-date="${d}" id="add-${d}" aria-label="${md(d)} 할 일 추가"></section>`;
+    const half = (d, cls) => `<div class="half">${head(d,cls)}<div class="tags">${diaryTags(d)}</div><ul class="todos">${dayTodos(d, d===t).map(x=>todoLi(d,x)).join("")}</ul><input type="text" class="add" placeholder="+ 할 일 추가" data-enter="addTodo" data-date="${d}" id="add-${d}"></div>`;
     body = `<div class="week">${days.map(dayCol).join("")}<section class="day wkend">${half(sat,"sat")}${half(sun,"sun")}</section></div>
     <div class="card"><div class="spread"><h2>이번 주 메모 · 목표</h2><span class="small muted" id="wmSaved"></span></div>
       <textarea rows="4" data-in="weekMemo" data-week="${wk}" placeholder="이번 주에 기억할 내용이나 목표">${esc(S.weekMemo[wk]||"")}</textarea></div>`;
@@ -1007,7 +1045,7 @@ VIEWS.diary = () => {
     const monthDays = cells.filter(d=>d.getMonth()===m).map(ymd), c = todoCount(monthDays);
     const evN = S.events.filter(e=>e.date.startsWith(`${y}-${pad(m+1)}`)).length;
     sub = `${y}년 ${m+1}월 · 할 일 ${c[0]}/${c[1]} 완료 · 행사 ${evN}건`;
-    body = `<div class="card"><div class="cal">${WD.map((w,i)=>`<div class="wd ${i===0?"sun":i===6?"sat":""}">${w}</div>`).join("")}${cells.map(dt => { const k = ymd(dt), todos = S.diary[k]||[], evs = S.events.filter(e=>e.date===k), att = Object.entries(S.attendance[k]||{});
+    body = `<div class="card"><div class="cal">${WD.map((w,i)=>`<div class="wd ${i===0?"sun":i===6?"sat":""}">${w}</div>`).join("")}${cells.map(dt => { const k = ymd(dt), todos = [], evs = S.events.filter(e=>e.date===k), att = Object.entries(S.attendance[k]||{});
       return `<button class="cell mcell ${dt.getMonth()!==m?"out":""} ${k===t?"isToday":""}" data-act="diaryOpenDay" data-d="${k}" aria-label="${md(k)} 보기">
         <span class="dn num ${dt.getDay()===0||HOLI[k]?"sun":dt.getDay()===6?"sat":""}">${dt.getDate()}</span>
         ${monthLines(k, evs, att, todos)}</button>`; }).join("")}</div>
@@ -2110,14 +2148,15 @@ EN.taskSave = () => A.taskSave();
 A.taskDel = async el => { if(await ask("이 업무를 지울까요?","지우기",true)){ S.tasks = S.tasks.filter(t=>t.id!==el.dataset.id); commit(); } };
 A.taskClearDone = async () => { const n = S.tasks.filter(t=>t.done).length; if(await ask(`완료한 업무 ${n}개를 모두 지울까요?`,"지우기",true)){ S.tasks = S.tasks.filter(t=>!t.done); commit(); } };
 function tasksTodayCard(){
-  const open = (S.tasks||[]).filter(t=>!t.done).sort((a,b)=>(a.due||"9999").localeCompare(b.due||"9999"));
-  const show = open.slice(0,5), t = today(), wk = ymd(addDays(new Date(),7));
+  const t = today(), wk = ymd(addDays(new Date(),7));
+  const open = (S.tasks||[]).filter(x=>!x.done && !(x.due && x.due <= t)).sort((a,b)=>(a.due||"9999").localeCompare(b.due||"9999"));
+  const show = open.slice(0,5);
   const meets = (S.meetings||[]).filter(m=>m.date===t).sort((a,b)=>(a.time||"").localeCompare(b.time||""));
-  const subs = (S.submits||[]).filter(x=>!x.done && x.due && x.due<=wk).sort((a,b)=>a.due.localeCompare(b.due));
-  return `<div class="card"><div class="spread"><h2>업무</h2><a class="btn sm" href="#tasks">업무 관리</a></div>
+  const subs = (S.submits||[]).filter(x=>!x.done && x.due && x.due > t && x.due<=wk).sort((a,b)=>a.due.localeCompare(b.due));
+  return `<div class="card"><div class="spread"><h2>오늘 회의 · 다가오는 업무</h2><a class="btn sm" href="#tasks">업무 관리</a></div>
     ${meets.map(m=>`<div class="task-row compact" data-act="goMeet" style="cursor:pointer"><span class="pill vio">회의</span><div class="task-main"><div class="task-title">${m.time?`<b class="num">${esc(m.time)}</b> `:""}${esc(m.title)}</div>${m.place||(m.agenda||"").trim()?`<div class="small muted">${esc(m.place||"")}${(m.agenda||"").trim()?` · ${esc(m.agenda.split("\n")[0])}`:""}</div>`:""}</div></div>`).join("")}
     ${subs.map(x=>{ const g = taskGroup(x); return `<div class="task-row compact ${g==="기한 지남"?"late":""}"><input type="checkbox" data-ch="subDone" data-id="${x.id}" aria-label="제출함"><div class="task-main"><div class="task-title">${esc(x.title)}</div><div class="small muted">제출${x.to?` → ${esc(x.to)}`:""} · 마감 ${md(x.due)}</div></div><span class="pill ${g==="기한 지남"?"bad":g==="오늘"?"warn":""}">${dday(x.due)}</span></div>`; }).join("")}
-    ${show.length ? show.map(t=>{ const g = taskGroup(t); return `<div class="task-row compact ${g==="기한 지남"?"late":""}"><input type="checkbox" data-ch="taskDone" data-id="${t.id}" aria-label="완료"><div class="task-main"><div class="task-title">${esc(t.title)}</div><div class="small muted">${esc(t.cat)}${t.due?` · 마감 ${md(t.due)}`:""}</div></div>${t.due?`<span class="pill ${g==="기한 지남"?"bad":g==="오늘"?"warn":""}">${dday(t.due)}</span>`:""}</div>`; }).join("") + (open.length>5?`<div class="small muted" style="margin-top:6px">그 밖에 ${open.length-5}개</div>`:"") : (meets.length||subs.length ? "" : `<div class="empty">남은 업무가 없어요</div>`)}</div>`;
+    ${show.length ? show.map(t=>{ const g = taskGroup(t); return `<div class="task-row compact ${g==="기한 지남"?"late":""}"><input type="checkbox" data-ch="taskDone" data-id="${t.id}" aria-label="완료"><div class="task-main"><div class="task-title">${esc(t.title)}</div><div class="small muted">${esc(t.cat)}${t.due?` · 마감 ${md(t.due)}`:""}</div></div>${t.due?`<span class="pill ${g==="기한 지남"?"bad":g==="오늘"?"warn":""}">${dday(t.due)}</span>`:""}</div>`; }).join("") + (open.length>5?`<div class="small muted" style="margin-top:6px">그 밖에 ${open.length-5}개</div>`:"") : (meets.length||subs.length ? "" : `<div class="empty">오늘 회의와 다가오는 업무가 없어요</div>`)}</div>`;
 }
 
 /* ───────── 회의 · 제출 (업무 관리 안의 탭) ───────── */
@@ -2237,13 +2276,55 @@ A.goSub = () => { ui.taskTab = "sub"; location.hash = "tasks"; render(); };
 const CS_WHO = ["학생","어머니","아버지","보호자","기타"];
 const CS_HOW = ["대면","전화","문자·메신저","온라인"];
 const CS_TOPIC = ["학습","교우관계","생활","진로","건강","가정","기타"];
+/* 같은 내용으로 여러 번 하는 상담은 하나의 묶음(thread)으로 이어서 기록한다 */
+const csKey = c => c.thread || c.id;
+function csThreads(list, sel){
+  if(!list.length) return `<div class="empty">상담 기록이 없어요</div>`;
+  const G = {}; list.forEach(c => (G[csKey(c)] ||= []).push(c));
+  const groups = Object.values(G).map(l => l.sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time)))
+    .sort((a,b)=>{ const la = a[a.length-1], lb = b[b.length-1]; return (lb.date+lb.time).localeCompare(la.date+la.time); });
+  return groups.map(l => {
+    const first = l[0], last = l[l.length-1], key = csKey(first), multi = l.length > 1, f = ui.csFollow;
+    return `<div class="cs-thread ${multi?"multi":""}">
+      ${multi ? `<div class="row cs-th-head" style="gap:6px">${sel==="all"?`<b>${esc(sname(first.sid))}</b>`:""}<span class="pill vio">${esc(first.topic)}</span><span class="small muted">${l.length}회 상담 · ${md(first.date)} ~ ${md(last.date)}</span></div>` : ""}
+      ${l.map((c,n)=>`<div class="it"><div class="dt num">${multi?`<b class="cs-n">${n+1}차</b><br>`:""}${c.date.replace(/-/g,". ")}${c.time?`<br>${esc(c.time)}`:""}</div>
+        <div style="display:flex;flex-direction:column;gap:4px;min-width:0">${multi ? `<div class="small muted">${esc(c.who)} · ${esc(c.how)}</div>` : `<div class="row" style="gap:6px">${sel==="all"?`<b>${esc(sname(c.sid))}</b>`:""}<span class="pill vio">${esc(c.topic)}</span><span class="small muted">${esc(c.who)} · ${esc(c.how)}</span></div>`}
+          <div class="tx">${esc(c.content)||'<span class="muted">(내용 없음)</span>'}</div>
+          ${c.followup?`<div class="small"><b>후속 조치</b> ${esc(c.followup)}</div>`:""}
+          ${c.next?`<div class="small muted">다음 상담 ${md(c.next)}</div>`:""}</div>
+        <div class="row" style="align-items:flex-start"><button class="btn sm ghost" data-act="csEditOpen" data-id="${c.id}">고치기</button><button class="x" data-act="csDel" data-id="${c.id}" aria-label="삭제">×</button></div></div>`).join("")}
+      ${f && f.th===key ? `<div class="cs-follow"><div class="small" style="font-weight:600;margin-bottom:6px">${l.length+1}차 상담 이어서 기록 <span class="muted" style="font-weight:400">· ${esc(sname(first.sid))} · ${esc(first.topic)}</span></div>
+          <div class="form" style="grid-template-columns:150px 110px 130px 130px">
+            <label class="f">날짜<input type="date" id="cfDate" value="${f.date}"></label>
+            <label class="f">시간<input type="time" id="cfTime"></label>
+            <label class="f">상담한 사람<select id="cfWho">${CS_WHO.map(x=>`<option ${x===last.who?"selected":""}>${x}</option>`).join("")}</select></label>
+            <label class="f">방법<select id="cfHow">${CS_HOW.map(x=>`<option ${x===last.how?"selected":""}>${x}</option>`).join("")}</select></label>
+            <label class="f" style="grid-column:1/-1">상담 내용<textarea id="cfContent" rows="3" placeholder="지난번과 달라진 점, 이번에 나눈 이야기"></textarea></label>
+            <label class="f" style="grid-column:1/3">후속 조치(선택)<input type="text" id="cfFollow" value=""></label>
+            <label class="f" style="grid-column:3/-1">다음 상담일(선택)<input type="date" id="cfNext"></label></div>
+          <div class="row" style="justify-content:flex-end;margin-top:8px"><button class="btn sm" data-act="csFollowCancel">취소</button><button class="btn sm pri" data-act="csFollowSave">저장</button></div></div>`
+        : `<button class="btn sm ghost cs-add" data-act="csFollowOpen" data-th="${key}">+ 이어서 상담 기록 (${l.length+1}차)</button>`}
+    </div>`; }).join("");
+}
+A.csFollowOpen = el => { const key = el.dataset.th, l = (S.counsels||[]).filter(c=>csKey(c)===key); if(!l.length) return;
+  const last = l.sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time))[l.length-1];
+  ui.csFollow = {th:key, date: el.dataset.d || (last.next && last.next <= today() ? last.next : today())};
+  if(ui.csSel!=="all" && ui.csSel!==last.sid) ui.csSel = last.sid;
+  render(); const box = $(".cs-follow"); box?.scrollIntoView({block:"center"}); $("#cfContent")?.focus(); };
+A.csFollowCancel = () => { ui.csFollow = null; render(); };
+A.csFollowSave = () => { const f = ui.csFollow, l = (S.counsels||[]).filter(c=>csKey(c)===f.th); if(!l.length) return;
+  const base = l[0], content = $("#cfContent").value.trim(); if(!content){ toast("상담 내용을 적어 주세요"); $("#cfContent").focus(); return; }
+  const c = {id:uid(), thread:f.th, date:$("#cfDate").value||today(), time:$("#cfTime").value, sid:base.sid, who:$("#cfWho").value, how:$("#cfHow").value, topic:base.topic, content, followup:$("#cfFollow").value.trim(), next:$("#cfNext").value||""};
+  // 이번 상담으로 지난 '다음 상담 예정'은 끝난 것으로 본다
+  l.forEach(x => { if(x.next && x.next <= c.date) x.nextDone = true; });
+  S.counsels.push(c); ui.csFollow = null; commit(); toast(`${l.length+1}차 상담을 기록했어요`); };
 function csBlank(sid){ return {id:uid(), date:today(), time:"", sid: sid || sorted()[0]?.id || "", who:"학생", how:"대면", topic:"생활", content:"", followup:"", next:""}; }
 VIEWS.counsel = () => {
   if(!S.students.length) return header("상담 기록") + noStudents();
   const sel = ui.csSel, list = (S.counsels||[]).filter(c => sel==="all" || c.sid===sel).sort((a,b)=>(b.date+b.time).localeCompare(a.date+a.time));
   const cnt = id => (S.counsels||[]).filter(c=>c.sid===id).length;
   const e = ui.csEdit;
-  const upcoming = (S.counsels||[]).filter(c=>c.next && c.next>=today()).sort((a,b)=>a.next.localeCompare(b.next));
+  const upcoming = (S.counsels||[]).filter(c=>c.next && c.next>=today() && !c.nextDone).sort((a,b)=>a.next.localeCompare(b.next));
   const form = e ? `<div class="card"><h2>${(S.counsels||[]).some(c=>c.id===e.id)?"상담 기록 고치기":"새 상담 기록"}</h2>
     <div class="form">
       <label class="f">상담 날짜<input type="date" id="csDate" value="${e.date}"></label>
@@ -2259,21 +2340,17 @@ VIEWS.counsel = () => {
     <div class="row" style="justify-content:flex-end;margin-top:12px"><button class="btn" data-act="csCancel">취소</button><button class="btn pri" data-act="csSave">저장</button></div></div>` : "";
   return header("상담 기록", "학생·보호자 상담을 날짜별로 남겨요. 다음 상담일을 적으면 '오늘' 화면과 다이어리에 함께 보여요.",
     `<button class="btn" data-act="csExport">내보내기</button><button class="btn pri" data-act="csNew">상담 기록 추가</button>`) + form + `
-  ${upcoming.length ? `<div class="card"><h2>다가오는 상담</h2><div class="row" style="gap:8px">${upcoming.slice(0,8).map(c=>`<span class="pill acc">${md(c.next)} · ${esc(sname(c.sid))}</span>`).join("")}</div></div>` : ""}
+  ${upcoming.length ? `<div class="card"><h2>다가오는 상담 <span class="small muted">누르면 이어서 기록할 수 있어요</span></h2><div class="row" style="gap:8px">${upcoming.slice(0,8).map(c=>`<button class="pill acc pill-btn" data-act="csFollowOpen" data-th="${c.thread||c.id}" data-d="${c.next}">${md(c.next)} · ${esc(sname(c.sid))} · ${esc(c.topic)}</button>`).join("")}</div></div>` : ""}
   <div class="split">
     <div class="card" style="padding:12px"><div class="list">
       <div class="li ${sel==="all"?"on":""}" data-act="csSel" data-id="all"><span class="t1">전체 학생</span><span class="small muted num">${(S.counsels||[]).length}</span></div>
       ${sorted().map(s=>`<div class="li ${sel===s.id?"on":""}" data-act="csSel" data-id="${s.id}"><span><span class="muted small num">${s.no}</span> ${esc(s.name)}</span><span class="small muted num">${cnt(s.id)||""}</span></div>`).join("")}
     </div></div>
     <div class="card"><div class="spread"><h2>${sel==="all"?"전체 상담":esc(sname(sel))+" 상담"} <span class="small muted">${list.length}건</span></h2>${sel!=="all"?`<button class="btn sm" data-act="csNewFor">이 학생 상담 추가</button>`:""}</div>
-      <div class="tl">${list.map(c=>`<div class="it"><div class="dt num">${c.date.replace(/-/g,". ")}${c.time?`<br>${esc(c.time)}`:""}</div>
-        <div style="display:flex;flex-direction:column;gap:4px;min-width:0"><div class="row" style="gap:6px">${sel==="all"?`<b>${esc(sname(c.sid))}</b>`:""}<span class="pill vio">${esc(c.topic)}</span><span class="small muted">${esc(c.who)} · ${esc(c.how)}</span></div>
-          <div class="tx">${esc(c.content)||'<span class="muted">(내용 없음)</span>'}</div>
-          ${c.followup?`<div class="small"><b>후속 조치</b> ${esc(c.followup)}</div>`:""}
-          ${c.next?`<div class="small muted">다음 상담 ${md(c.next)}</div>`:""}</div>
-        <div class="row" style="align-items:flex-start"><button class="btn sm ghost" data-act="csEditOpen" data-id="${c.id}">고치기</button><button class="x" data-act="csDel" data-id="${c.id}" aria-label="삭제">×</button></div></div>`).join("") || `<div class="empty">상담 기록이 없어요</div>`}</div></div>
+      <div class="tl">${csThreads(list, sel)}</div></div>
   </div>`;
 };
+A.csFollowGo = el => { ui.csFollow = {th:el.dataset.th, date:el.dataset.d}; ui.csSel = "all"; location.hash = "counsel"; render(); setTimeout(()=>{ $(".cs-follow")?.scrollIntoView({block:"center"}); $("#cfContent")?.focus(); }, 50); };
 A.csSel = el => { ui.csSel = el.dataset.id; render(); };
 A.csNew = () => { ui.csEdit = csBlank(ui.csSel!=="all" ? ui.csSel : null); render(); $("#main").scrollTop = 0; $("#csContent")?.focus(); };
 A.csNewFor = () => A.csNew();
@@ -2286,13 +2363,13 @@ A.csSave = () => { const e = ui.csEdit;
   ui.csEdit = null; commit(); toast("상담 기록을 저장했어요"); };
 A.csDel = async el => { if(await ask("이 상담 기록을 지울까요?","지우기",true)){ S.counsels = S.counsels.filter(c=>c.id!==el.dataset.id); commit(); } };
 A.csExport = () => { const rows = [["날짜","시간","번호","이름","상담한 사람","방법","주제","상담 내용","후속 조치","다음 상담일"],
-  ...(S.counsels||[]).slice().sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time)).map(c=>[c.date, c.time, stu(c.sid)?.no??"", sname(c.sid), c.who, c.how, c.topic, c.content, c.followup, c.next])];
+  ...(S.counsels||[]).slice().sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time)).map(c=>{ const l = S.counsels.filter(x=>csKey(x)===csKey(c)).sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time)); return [c.date, c.time, stu(c.sid)?.no??"", sname(c.sid), c.who, c.how, l.length>1 ? `${c.topic} (${l.indexOf(c)+1}차)` : c.topic, c.content, c.followup, c.next]; })];
   exportSheets(`${clsName()}_상담기록`, [["상담 기록", rows]]); };
 function counselTodayCard(){
-  const t = today(), up = (S.counsels||[]).filter(c=>c.next && c.next>=t).sort((a,b)=>a.next.localeCompare(b.next)).slice(0,4);
+  const t = today(), up = (S.counsels||[]).filter(c=>c.next && c.next>=t && !c.nextDone).sort((a,b)=>a.next.localeCompare(b.next)).slice(0,4);
   const recent = (S.counsels||[]).slice().sort((a,b)=>(b.date+b.time).localeCompare(a.date+a.time)).slice(0,3);
   return `<div class="card"><div class="spread"><h2>상담</h2><a class="btn sm" href="#counsel">상담 기록</a></div>
-    ${up.length ? `<div class="small muted" style="margin-bottom:4px">다음 상담 예정</div>${up.map(c=>`<div class="spread" style="padding:5px 0"><span>${esc(sname(c.sid))} <span class="small muted">${esc(c.topic)}</span></span><span class="pill ${c.next===t?"warn":"acc"}">${md(c.next)} · ${dday(c.next)}</span></div>`).join("")}` : ""}
+    ${up.length ? `<div class="small muted" style="margin-bottom:4px">다음 상담 예정</div>${up.map(c=>`<div class="spread cs-up" style="padding:5px 0;cursor:pointer" data-act="csFollowGo" data-th="${c.thread||c.id}" data-d="${c.next}" title="이어서 기록하기"><span>${esc(sname(c.sid))} <span class="small muted">${esc(c.topic)}</span></span><span class="pill ${c.next===t?"warn":"acc"}">${md(c.next)} · ${dday(c.next)}</span></div>`).join("")}` : ""}
     ${recent.length ? `<div class="small muted" style="margin:8px 0 4px">최근 상담</div>${recent.map(c=>`<div class="spread" style="padding:5px 0"><span>${esc(sname(c.sid))} <span class="small muted">${esc(c.who)} · ${esc(c.how)}</span></span><span class="small muted num">${md(c.date)}</span></div>`).join("")}` : `<div class="empty">아직 상담 기록이 없어요</div>`}</div>`;
 }
 
