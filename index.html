@@ -225,6 +225,14 @@ th.tt-today{color:var(--accent)}
 .task-row.late .task-title{color:var(--bad)}
 .task-row.compact{padding:6px 2px}
 .task-row.editing{background:var(--accent-soft);flex-direction:column}
+.all-item{display:flex;gap:8px;align-items:flex-start}
+.all-item .all-body{flex:1;min-width:0}
+.all-k{flex:none;margin-top:10px;font-size:11px;font-weight:700;padding:1px 6px;border-radius:5px;min-width:34px;text-align:center}
+.all-k.k-task{background:var(--accent-soft);color:var(--accent)}
+.all-k.k-meet{background:hsl(265 60% 94%);color:hsl(265 40% 40%)}
+.all-k.k-sub{background:var(--warn-soft);color:var(--warn)}
+.all-done{opacity:.92}
+.all-done .task-title{color:var(--muted)}
 .cs-thread{border-bottom:1px solid var(--line);padding-bottom:6px;margin-bottom:6px}
 .cs-thread:last-child{border-bottom:0}
 .cs-thread.multi{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:12px}
@@ -709,7 +717,7 @@ const ui = {
   eventEdit:null, memoSel:null, memoQ:"", seatPick:null, seatView:"teacher", seatMode:"",
   roleTab:"assign",
   rnd:{ mode:"one", target:"all", customText:"", exclude:{}, drawn:[], result:null, order:null, groups:null, noRepeat:true, skipAbsent:true, groupBy:"count", groupN:6, groupSize:4, mixGender:true },
-  jobTab:"run", taskFilter:"open", taskCat:"전체", taskEdit:null, taskTab:"task", meetEdit:null, meetAll:false, subEdit:null, subFilter:"open", ttDraft:null, csSel:"all", csEdit:null, csFollow:null, lastDel:null, qtSel:null, qtEdit:false, qtLast:[], qtCat:"칭찬", qtWhen:"", sumSel:null, sumTerm:null, sumFilter:"all", sumNotes:null, sampleOk:false, calImp:null, calEdit:null, epTerm:null, epEdit:null, epPaste:false, ttMode:"week", ttWeek:today(), ttBrush:null, ttEdit:false, ttAdding:false, ttSp:false
+  jobTab:"run", taskFilter:"open", taskCat:"전체", taskEdit:null, taskTab:"all", allDoneMore:false, allAddKind:"task", meetEdit:null, meetAll:false, subEdit:null, subFilter:"open", ttDraft:null, csSel:"all", csEdit:null, csFollow:null, lastDel:null, qtSel:null, qtEdit:false, qtLast:[], qtCat:"칭찬", qtWhen:"", sumSel:null, sumTerm:null, sumFilter:"all", sumNotes:null, sampleOk:false, calImp:null, calEdit:null, epTerm:null, epEdit:null, epPaste:false, ttMode:"week", ttWeek:today(), ttBrush:null, ttEdit:false, ttAdding:false, ttSp:false
 };
 
 /* ───────── 공통 ───────── */
@@ -2120,8 +2128,9 @@ VIEWS.tasks = () => {
   const groups = order.map(g => [g, list.filter(t=>taskGroup(t)===g)]).filter(([,l])=>l.length);
   const late = open.filter(t=>taskGroup(t)==="기한 지남").length;
   const tab = ui.taskTab, mt = (S.meetings||[]), up = mt.filter(m=>m.date>=today()).length, sb = (S.submits||[]).filter(x=>!x.done), sbLate = sb.filter(x=>taskGroup(x)==="기한 지남").length;
-  const tabs = `<div class="seg big-seg"><button class="${tab==="task"?"on":""}" data-act="taskTab" data-v="task">업무 <span class="seg-n">${open.length}</span></button><button class="${tab==="meet"?"on":""}" data-act="taskTab" data-v="meet">회의 <span class="seg-n">${up}</span></button><button class="${tab==="sub"?"on":""}" data-act="taskTab" data-v="sub">제출 <span class="seg-n ${sbLate?"bad":""}">${sb.length}</span></button></div>`;
+  const tabs = `<div class="seg big-seg"><button class="${tab==="all"?"on":""}" data-act="taskTab" data-v="all">전체 <span class="seg-n ${late+sbLate?"bad":""}">${open.length+up+sb.length}</span></button><button class="${tab==="task"?"on":""}" data-act="taskTab" data-v="task">업무 <span class="seg-n">${open.length}</span></button><button class="${tab==="meet"?"on":""}" data-act="taskTab" data-v="meet">회의 <span class="seg-n">${up}</span></button><button class="${tab==="sub"?"on":""}" data-act="taskTab" data-v="sub">제출 <span class="seg-n ${sbLate?"bad":""}">${sb.length}</span></button></div>`;
   const sub = `할 일 ${open.length}개${late?` · <span style="color:var(--bad)">기한 지남 ${late}개</span>`:""} · 다가오는 회의 ${up}개 · 낼 것 ${sb.length}개${sbLate?` · <span style="color:var(--bad)">제출 기한 지남 ${sbLate}개</span>`:""}`;
+  if(tab==="all") return header("업무 관리", sub, tabs) + allWorkView();
   if(tab==="meet") return header("업무 관리", sub, tabs) + meetView();
   if(tab==="sub") return header("업무 관리", sub, tabs) + subView();
   return header("업무 관리", sub, tabs) + `
@@ -2272,6 +2281,44 @@ A.taskTab = el => { ui.taskTab = el.dataset.v; ui.taskEdit = ui.meetEdit = ui.su
 A.goMeet = () => { ui.taskTab = "meet"; location.hash = "tasks"; render(); };
 A.goSub = () => { ui.taskTab = "sub"; location.hash = "tasks"; render(); };
 
+/* ───── 업무 관리 '전체' 탭: 업무·회의·제출을 날짜순으로 한곳에, 끝난 것은 아래에 따로 ───── */
+function workGroup(date, done){ if(done) return "완료"; if(!date) return "날짜 없음"; const t = today(); if(date < t) return "기한 지남"; if(date === t) return "오늘"; return date <= ymd(addDays(new Date(),7)) ? "7일 안" : "나중에"; }
+function allWorkView(){
+  const t = today(), K = {task:"업무", meet:"회의", sub:"제출"};
+  const items = []
+    .concat((S.tasks||[]).map(x=>({k:"task", x, date:x.due, done:x.done, when:x.doneAt||x.due||""})))
+    .concat((S.submits||[]).map(x=>({k:"sub", x, date:x.due, done:x.done, when:x.doneAt||x.due||""})))
+    .concat((S.meetings||[]).map(x=>({k:"meet", x, date:x.date, done:x.date < t, when:x.date, time:x.time||""})));
+  const openL = items.filter(i=>!i.done).sort((a,b)=>(a.date||"9999").localeCompare(b.date||"9999") || (a.time||"").localeCompare(b.time||"") || ["meet","sub","task"].indexOf(a.k)-["meet","sub","task"].indexOf(b.k));
+  const doneL = items.filter(i=>i.done).sort((a,b)=>(b.when||"").localeCompare(a.when||""));
+  const order = ["기한 지남","오늘","7일 안","나중에","날짜 없음"];
+  const row = i => `<div class="all-item"><span class="all-k k-${i.k}">${K[i.k]}</span><div class="all-body">${i.k==="task" ? taskRow(i.x) : i.k==="sub" ? subRow(i.x) : meetRow(i.x)}</div></div>`;
+  const groups = order.map(g=>[g, openL.filter(i=>workGroup(i.date, false)===g)]).filter(([,l])=>l.length);
+  const more = ui.allDoneMore, doneShow = more ? doneL : doneL.slice(0,10);
+  const ak = ui.allAddKind;
+  return `<div class="card"><div class="row" style="gap:8px;align-items:flex-end;flex-wrap:wrap">
+      <div class="seg">${["task","sub","meet"].map(k=>`<button class="${ak===k?"on":""}" data-act="allAddKind" data-v="${k}">${K[k]}</button>`).join("")}</div>
+      <input type="text" id="aTitle" placeholder="${ak==="meet"?"회의 이름 (예: 학년협의회)":ak==="sub"?"제출할 것 (예: 출결 통계)":"할 일 (예: 학부모 안내장 만들기)"}" style="flex:1;min-width:200px" data-enter="allAdd">
+      <input type="date" id="aDate" value="${ak==="meet"?t:""}" aria-label="${ak==="meet"?"회의 날짜":"마감일"}">
+      ${ak==="meet" ? `<input type="time" id="aTime" aria-label="시각">` : ""}
+      <button class="btn pri" data-act="allAdd">추가</button></div>
+    <div class="small muted" style="margin-top:6px">${ak==="meet"?"장소·안건·회의록은 추가한 뒤 회의를 눌러 적어요.":ak==="sub"?"받는 곳·방법은 추가한 뒤 눌러서 적어요.":"분류·메모는 추가한 뒤 눌러서 고쳐요."}</div></div>
+  <div class="card">
+    ${groups.length ? groups.map(([g,l])=>`<div class="task-group"><div class="task-gh ${g==="기한 지남"?"bad":""}">${g} <span class="muted">${l.length}</span></div>${l.map(row).join("")}</div>`).join("") : `<div class="empty">남은 업무·회의·제출이 없어요</div>`}
+  </div>
+  ${doneL.length ? `<div class="card all-done"><div class="spread"><h2>완료 <span class="small muted">끝낸 업무 · 낸 제출 · 지난 회의 ${doneL.length}개</span></h2></div>
+    ${doneShow.map(row).join("")}
+    ${doneL.length>10 ? `<button class="btn sm ghost" data-act="allDoneMore" style="margin-top:6px">${more?"최근 10개만 보기":`${doneL.length-10}개 더 보기`}</button>` : ""}</div>` : ""}`;
+}
+A.allAddKind = el => { ui.allAddKind = el.dataset.v; render(); $("#aTitle")?.focus(); };
+A.allDoneMore = () => { ui.allDoneMore = !ui.allDoneMore; render(); };
+A.allAdd = () => { const k = ui.allAddKind, title = $("#aTitle").value.trim(), date = $("#aDate").value || "";
+  if(!title){ $("#aTitle").focus(); return; }
+  if(k==="meet"){ if(!date){ toast("회의 날짜를 골라 주세요"); return; } (S.meetings ||= []).push({id:uid(), date, time:$("#aTime")?.value||"", kind:"기타", title, place:"", agenda:"", notes:"", todo:"", sent:0}); }
+  else if(k==="sub") (S.submits ||= []).push({id:uid(), title, due:date, to:"", how:SUB_HOW[0], note:"", done:false, doneAt:""});
+  else (S.tasks ||= []).push({id:uid(), title, due:date, cat:"학급", note:"", done:false, doneAt:"", created:today()});
+  commit(); toast(`${({task:"업무",sub:"제출",meet:"회의"})[k]}에 추가했어요`); $("#aTitle")?.focus(); };
+EN.allAdd = () => A.allAdd();
 /* ───────── 상담 기록 ───────── */
 const CS_WHO = ["학생","어머니","아버지","보호자","기타"];
 const CS_HOW = ["대면","전화","문자·메신저","온라인"];
