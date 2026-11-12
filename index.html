@@ -228,6 +228,8 @@ th.tt-today{color:var(--accent)}
 .ep-drop.over{outline:2px dashed var(--accent);outline-offset:-6px;background:var(--accent-soft)}
 .ep-imp td{vertical-align:top}
 .ep-imp select{padding:2px 4px;width:auto}
+.ep-cell{border:1px solid transparent;background:transparent;padding:3px 5px;width:100%;min-width:120px;font:inherit}
+.ep-cell:hover,.ep-cell:focus{border-color:var(--line);background:var(--surface)}
 .att-run{display:flex;flex-direction:column;gap:6px;margin-top:6px;padding:8px 10px;border-radius:8px;background:var(--bg)}
 .att-run > span{display:flex;gap:8px;align-items:center}
 .att-run input[type=date]{width:auto;padding:4px 8px}
@@ -2051,7 +2053,7 @@ VIEWS.evalplan = () => {
   </div>
   ${ui.epImp ? epImportCard() : ""}
   ${ui.epPaste ? `<div class="card ep-drop"><h2>평가 계획 가져오기</h2>
-    <div class="row" style="gap:10px;margin-bottom:10px"><button class="btn pri" data-act="epFileOpen">파일 고르기</button><span class="small muted">엑셀(.xlsx) · 한글(.hwpx) · 워드(.docx) · CSV — 파일을 이 칸에 끌어다 놓아도 돼요</span></div>
+    <div class="row" style="gap:10px;margin-bottom:10px"><button class="btn pri" data-act="epFileOpen">파일 고르기</button><span class="small muted">엑셀(.xlsx) · 한글(.hwpx) · 워드(.docx) · PDF · CSV — 파일을 이 칸에 끌어다 놓아도 돼요</span></div>
     <div class="small muted" style="margin-bottom:6px">또는 엑셀·한글의 표를 복사해서 붙여 넣으세요. <b>열 순서는 상관없어요.</b> '교과·단원·평가 요소·성취기준·방법·시기' 같은 열 이름을 보고 맞추고, 열 이름이 없으면 내용을 보고 짐작해요. 합쳐진 칸(과목 하나에 여러 줄)도 읽어요.</div>
     <textarea id="epPasteTx" rows="7" placeholder="표를 통째로 복사해 붙여 넣으세요 (제목 줄 포함)"></textarea>
     <div class="row" style="justify-content:flex-end;margin-top:8px"><button class="btn" data-act="epPasteOpen">닫기</button><button class="btn pri" data-act="epPasteGo">읽어 보기</button></div></div>` : ""}
@@ -2089,8 +2091,17 @@ function xmlTables(xml){
   const doc = new DOMParser().parseFromString(xml, "application/xml"), T = [];
   const kids = (el, name) => Array.from(el.children).filter(c => c.localName === name);
   const textOf = el => { const parts = []; const walk = n => { for(const c of n.children){ if(c.localName === "tbl") continue; if(c.localName === "t") parts.push(c.textContent); else if(c.localName === "p" && parts.length && !/\n$/.test(parts[parts.length-1])) { walk(c); parts.push("\n"); continue; } walk(c); } }; walk(el); return parts.join("").replace(/\n+$/,"").replace(/\n{2,}/g,"\n").trim(); };
-  doc.querySelectorAll("*").forEach(tb => {
-    if(tb.localName !== "tbl") return;
+  const paras = [];
+  const inTbl = n => { for(let q = n.parentElement; q; q = q.parentElement) if(q.localName === "tbl") return true; return false; };
+  const all = Array.from(doc.getElementsByTagName("*"));
+  const tbls = all.filter(el => el.localName === "tbl" && !inTbl(el));
+  // 문서 순서대로: 표 밖 문단은 제목 후보로 모으고, 표는 만날 때마다 그 앞 문단을 붙여 둔다
+  const events = all.filter(el => (el.localName === "tbl" && !inTbl(el)) || (el.localName === "p" && !inTbl(el) && !Array.from(el.getElementsByTagName("*")).some(x => x.localName === "tbl" && !inTbl(x) )));
+  const order = events.map(el => el.localName === "tbl" ? {tb:el} : {p:Array.from(el.getElementsByTagName("*")).filter(x => x.localName === "t").map(x => x.textContent).join("").trim()});
+  const tblCtx = new Map();
+  order.forEach(ev => {
+    if(ev.p !== undefined){ if(ev.p) paras.push(ev.p); return; }
+    const tb = ev.tb;
     const grid = [], rows = kids(tb, "tr");
     rows.forEach((tr, ri) => {
       grid[ri] ||= []; let ci = 0;
@@ -2108,9 +2119,102 @@ function xmlTables(xml){
       });
     });
     const W = Math.max(0, ...grid.map(r => r ? r.length : 0));
-    T.push(grid.map(r => Array.from({length:W}, (_, i) => (r && r[i] != null ? String(r[i]) : "").trim())));
+    const out = grid.map(r => Array.from({length:W}, (_, i) => (r && r[i] != null ? String(r[i]) : "").trim()));
+    const vals = [...new Set(out.flat().filter(Boolean))];
+    if(vals.length <= 1){ if(vals[0]) paras.push(vals[0]); return; }   // 칸 하나짜리 표(제목 상자)는 제목으로 본다
+    out.ctx = paras.slice(-3).join("\n"); T.push(out);
   });
   return T;
+}
+/* ───── PDF 표 읽기: 글자 위치로 줄·칸을 다시 맞춘다 (스캔한 그림 PDF는 못 읽음) ───── */
+const PDFJS_V = "3.11.174";
+function loadScript(src){ return new Promise((ok, no) => { const s = document.createElement("script"); s.src = src; s.onload = ok; s.onerror = () => no(new Error("script")); document.head.appendChild(s); }); }
+async function loadPdfJs(){
+  if(window.pdfjsLib) return;
+  const base = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${PDFJS_V}/`;
+  await loadScript(base + "pdf.min.js"); await loadScript(base + "pdf.worker.min.js");   // 워커를 같은 화면에서 돌린다(다른 주소 워커 제한 피하기)
+  pdfjsLib.GlobalWorkerOptions.workerSrc = base + "pdf.worker.min.js";
+}
+async function pdfLines(buf){
+  await loadPdfJs();
+  const pdf = await pdfjsLib.getDocument({data:new Uint8Array(buf), isEvalSupported:false}).promise;
+  const items = []; let off = 0;
+  for(let p = 1; p <= pdf.numPages; p++){
+    const page = await pdf.getPage(p), vp = page.getViewport({scale:1}), tc = await page.getTextContent();
+    tc.items.forEach(it => { if(!it.str || !it.str.trim()) return; const h = Math.abs(it.transform[3]) || it.height || 10;
+      items.push({x:it.transform[4], x2:it.transform[4] + (it.width || it.str.length * h * .9), y:off + vp.height - it.transform[5], h, s:it.str}); });
+    off += vp.height + 40;
+  }
+  items.sort((a, b) => a.y - b.y || a.x - b.x);
+  const lines = [];
+  items.forEach(it => { const L = lines[lines.length - 1]; if(L && Math.abs(it.y - L.y) <= Math.max(2, Math.min(L.h, it.h) * .45)) L.items.push(it); else lines.push({y:it.y, h:it.h, items:[it]}); });
+  lines.forEach(L => {
+    L.items.sort((a, b) => a.x - b.x); const cells = [];
+    L.items.forEach(it => { const c = cells[cells.length - 1], gap = c ? it.x - c.x2 : 99;
+      if(c && gap < L.h * .9){ c.s += (gap > L.h * .15 && !/\s$/.test(c.s) ? " " : "") + it.s; c.x2 = Math.max(c.x2, it.x2); }
+      else cells.push({x:it.x, x2:it.x2, s:it.s}); });
+    cells.forEach(c => c.s = c.s.replace(/\s+/g, " ").trim()); L.cells = cells.filter(c => c.s);
+  });
+  return lines.filter(L => L.cells.length);
+}
+function pdfToTable(lines){
+  if(!lines.length) return [];
+  const isHead = L => L.cells.filter(c => c.s.length <= 20 && EP_HEAD.some(([, re]) => re.test(c.s))).length;
+  let hi = lines.findIndex(L => isHead(L) >= 2);
+  const body = hi >= 0 ? lines.slice(hi) : lines;
+  // 1) 세로 빈틈으로 칸 나누기
+  const minX = Math.min(...body.flatMap(L => L.cells.map(c => c.x))), maxX = Math.max(...body.flatMap(L => L.cells.map(c => c.x2))), W = maxX - minX || 1;
+  const wideLine = L => L.cells.length === 1 && (L.cells[0].x2 - L.cells[0].x) > W * .4;
+  const iv = body.filter(L => !wideLine(L)).flatMap(L => L.cells.map(c => [c.x, c.x2])).sort((a, b) => a[0] - b[0]);
+  const cols = []; iv.forEach(([a, b]) => { const c = cols[cols.length - 1]; if(c && a <= c[1] + 1.5) c[1] = Math.max(c[1], b); else cols.push([a, b]); });
+  const colOf = c => { const m = (c.x + c.x2) / 2; let k = cols.findIndex(([a, b]) => m >= a - 1 && m <= b + 1); if(k < 0){ k = 0; let bd = 1e9; cols.forEach(([a, b], i) => { const d = Math.min(Math.abs(m - a), Math.abs(m - b)); if(d < bd){ bd = d; k = i; } }); } return k; };
+  const N = cols.length;
+  const colRight = Array(N).fill(0); body.filter(L => !wideLine(L)).forEach(L => L.cells.forEach(c => { const k = colOf(c); colRight[k] = Math.max(colRight[k], c.x2); }));
+  // 줄바꿈된 글 잇기: 앞줄이 칸 끝까지 꽉 찼고 한글끼리 이어지면 낱말 중간에서 끊긴 것으로 보고 붙인다
+  const joinTxt = (a, b, prevX2, k, h) => !a ? b : (/[가-힣]$/.test(a) && /^[가-힣]/.test(b) && prevX2 >= colRight[k] - h * .6) ? a + b : a + " " + b;
+  
+  // 2) 제목 줄(두 줄 제목도)
+  const head = Array(N).fill("");
+  let start = 0;
+  if(hi >= 0){ const H = [lines[hi]]; const nx = lines[hi + 1]; if(nx && nx.y - lines[hi].y < lines[hi].h * 1.8 && isHead(nx) >= 1) H.push(nx);
+    H.forEach(L => L.cells.forEach(c => { const k = colOf(c); head[k] = (head[k] ? head[k] + " " : "") + c.s; })); start = H.length; }
+  const isTitle = L => L.cells.length === 1 && L.cells[0].s.length <= 30 && !!findSubject(L.cells[0].s);
+  const data = body.slice(hi >= 0 ? start : 0).filter(L => !(L.cells.length === 1 && /^※|^\*|^-\s*\d+\s*-$/.test(L.cells[0].s)) && !(isHead(L) >= 2));
+  // 3) 줄을 표의 행으로: 여러 칸이 채워진 줄은 새 행, 한 칸짜리 줄은 윗행의 이어지는 글
+  const fill = data.map(L => new Set(L.cells.map(colOf)).size), K = Math.max(...fill, 1);
+  const labelCols = new Set(); head.forEach((t, k) => { if(/^(교\s*과|과\s*목|교과목|학기)|단원|영역/.test(t)) labelCols.add(k); });
+  const rows = [], labels = {};
+  data.forEach((L, i) => {
+    if(isTitle(L) && !head.some(t => /^(교\s*과|과\s*목)/.test(t))){ const r = {y:L.y, yEnd:L.y, c:Array(N).fill(""), x2:{}, title:true}; r.c[0] = L.cells[0].s; rows.push(r); return; }
+    const ks = L.cells.map(colOf), nonLabel = ks.filter(k => !labelCols.has(k));
+    const isNew = new Set(nonLabel).size >= Math.max(2, Math.ceil((K - labelCols.size) * .5)) || !rows.length;
+    L.cells.forEach((c, j) => { const k = ks[j];
+      if(labelCols.has(k)){ const lb = (labels[k] ||= []), prev = lb[lb.length - 1], cur = rows[rows.length - 1];
+        // 같은 행 안에서 줄바꿈된 글이면 이어 붙이고, 아니면 새 이름표
+        if(prev && !isNew && cur && prev.y0 >= cur.y - L.h * .6 && L.y - prev.yEnd < L.h * 2.2) { prev.s = joinTxt(prev.s, c.s, prev.x2 || 0, k, L.h); prev.x2 = c.x2; prev.yEnd = L.y; prev.y = (prev.y0 + L.y) / 2; }
+        else lb.push({s:c.s, y:L.y, y0:L.y, yEnd:L.y, x2:c.x2}); }
+    });
+    if(isNew && nonLabel.length){ const r = {y:L.y, yEnd:L.y, c:Array(N).fill(""), x2:{}}; ks.forEach((k, j) => { if(!labelCols.has(k)){ r.c[k] = L.cells[j].s; r.x2[k] = L.cells[j].x2; } }); rows.push(r); }
+    else if(rows.length && !rows[rows.length - 1].title){ const r = rows[rows.length - 1]; r.yEnd = L.y; ks.forEach((k, j) => { if(!labelCols.has(k)){ r.c[k] = joinTxt(r.c[k], L.cells[j].s, r.x2[k] || 0, k, L.h); r.x2[k] = L.cells[j].x2; } }); }
+  });
+  // 4) 과목·단원처럼 합쳐진 칸: 행 시작과 같은 높이면 그 행부터 아래로, 가운데 정렬이면 가장 가까운 행들에
+  const RR = rows.filter(r => !r.title);
+  labelCols.forEach(k => { const lb = labels[k] || []; if(!lb.length) return;
+    const tol = lines[0].h * .6, floating = lb.some(l => !RR.some(r => Math.abs(r.y - l.y0) <= tol));
+    if(!floating){ let cur = ""; RR.forEach(r => { const l = lb.find(x => Math.abs(x.y0 - r.y) <= tol); if(l) cur = l.s; r.c[k] = cur; }); }
+    else {   // 가운데 정렬된 합친 칸: 이름표마다 '그 이름표가 한가운데 오는' 연속된 행 묶음을 찾는다
+      const n = RR.length, m = lb.length, h = lines[0].h, top = i => RR[i].y - h * .6, bot = i => RR[i].yEnd + h * .4;
+      const cost = (a, b, l) => { const c = (top(a) + bot(b)) / 2; return Math.abs(c - l.y) + (l.y < top(a) - h || l.y > bot(b) + h ? 1e4 : 0); };
+      const D = Array.from({length:m + 1}, () => Array(n + 1).fill(Infinity)), P = Array.from({length:m + 1}, () => Array(n + 1).fill(-1));
+      D[0][0] = 0;
+      for(let j = 1; j <= m; j++) for(let b = j; b <= n; b++) for(let a = j - 1; a < b; a++){ const v = D[j-1][a] + cost(a, b - 1, lb[j-1]); if(v < D[j][b]){ D[j][b] = v; P[j][b] = a; } }
+      if(isFinite(D[m][n])){ let b = n; for(let j = m; j >= 1; j--){ const a = P[j][b]; for(let i = a; i < b; i++) RR[i].c[k] = lb[j-1].s; b = a; } }
+      else RR.forEach(r => { const mid = (r.y + r.yEnd) / 2; let best = lb[0]; lb.forEach(l => { if(Math.abs(l.y - mid) < Math.abs(best.y - mid)) best = l; }); r.c[k] = best.s; });
+    }
+  });
+  const out = (hi >= 0 ? [head] : []).concat(rows.map(r => r.c));
+  out.ctx = hi > 0 ? lines.slice(Math.max(0, hi - 3), hi).map(L => L.cells.map(c => c.s).join(" ")).join("\n") : "";
+  return out;
 }
 async function readTablesFromFile(f){
   const name = f.name.toLowerCase();
@@ -2119,12 +2223,16 @@ async function readTablesFromFile(f){
     const wb = XLSX.read(await f.arrayBuffer(), {type:"array"});
     return wb.SheetNames.map(n => { const ws = wb.Sheets[n], rows = XLSX.utils.sheet_to_json(ws, {header:1, blankrows:true, defval:""});
       (ws["!merges"]||[]).forEach(m => { const v = (rows[m.s.r]||[])[m.s.c]; for(let r = m.s.r; r <= m.e.r; r++) for(let c = m.s.c; c <= m.e.c; c++){ (rows[r] ||= [])[c] = v; } });
-      return rows.map(r => (r||[]).map(x => String(x ?? "").trim())); });
+      const out = rows.map(r => (r||[]).map(x => String(x ?? "").trim())); out.ctx = n; return out; });
   }
   if(/\.hwpx$/.test(name)){ const files = await unzipText(await f.arrayBuffer(), n => /^Contents\/section\d+\.xml$/i.test(n)); return Object.keys(files).sort().flatMap(k => xmlTables(files[k])); }
   if(/\.docx$/.test(name)){ const files = await unzipText(await f.arrayBuffer(), n => n === "word/document.xml"); return xmlTables(files["word/document.xml"] || ""); }
   if(/\.hwp$/.test(name)) throw new Error("예전 한글 파일(.hwp)은 바로 읽을 수 없어요. 한글에서 [다른 이름으로 저장 → HWPX]로 저장해서 올리거나, 표를 복사해 붙여 넣어 주세요");
-  if(/\.pdf$/.test(name)) throw new Error("PDF는 표 모양이 깨져서 읽기 어려워요. 원본 한글·엑셀 파일을 올리거나 표를 복사해 붙여 넣어 주세요");
+  if(/\.pdf$/.test(name)){
+    let lines; try{ lines = await pdfLines(await f.arrayBuffer()); }catch(e){ throw new Error(e && e.message==="script" ? "PDF 도구를 불러오지 못했어요. 인터넷 연결을 확인하거나 원본 한글·엑셀 파일을 올려 주세요" : "PDF를 열지 못했어요. 암호가 걸려 있는지 확인해 주세요"); }
+    if(!lines.length) throw new Error("이 PDF에는 글자가 없어요(스캔한 그림 파일). 원본 한글·엑셀 파일을 올려 주세요");
+    return [pdfToTable(lines)];
+  }
   throw new Error("엑셀(.xlsx), 한글(.hwpx), 워드(.docx), CSV 파일을 올려 주세요");
 }
 const EP_KEYS = {term:"학기", subj:"과목", unit:"단원·영역", item:"평가 요소", std:"성취기준", method:"방법", when:"시기"};
@@ -2141,7 +2249,16 @@ const KNOWN_SUBJ = new Set(Object.values(TT_BANDS).flat().concat(["창체","창�
 const RE_STD = /\[\s*\d+\s*[가-힣]{1,3}\s*\d{2}\s*-\s*\d{2}\s*\]/;
 const RE_WHEN = /^\s*(\d{4}[-.]\s*)?\d{1,2}\s*[./월]\s*(\d{1,2})?|^\s*\d{1,2}\s*월|\d{1,2}\s*월\s*\d\s*주/;
 const RE_METHOD = /서술|논술|구술|발표|실기|관찰|보고서|포트폴리오|토의|토론|실험|실습|지필|프로젝트|자기\s*평가|동료\s*평가|면접|산출물|체크리스트/;
-function epDetect(table){
+const SUBJ_LIST = [...KNOWN_SUBJ].sort((a, b) => b.length - a.length);
+/* 글에서 과목 이름 하나 찾기 (여러 과목이 섞여 있으면 못 정한 것으로) */
+function findSubject(t){
+  t = String(t || "").replace(/\s+/g, " ").trim(); if(!t || t.length > 40) return "";
+  const hits = SUBJ_LIST.filter(n => new RegExp(`(^|[^가-힣])${n.replace(/[()]/g, "\\$&").replace(/\s/g, "\\s*")}(과|교과|$|[^가-힣])`).test(t));
+  const top = hits.filter(h => !hits.some(o => o !== h && o.includes(h)));
+  return top.length === 1 ? top[0] : "";
+}
+const ctxSubject = ctx => { const L = String(ctx || "").split("\n").reverse(); for(const l of L){ const f = findSubject(l); if(f) return f; } return ""; };
+function epDetect(table, ctx){
   const rows = table.filter(r => r.some(x => x));
   if(!rows.length) return null;
   // 1) 제목 줄 찾기: 위쪽 15줄 중 열 이름이 가장 많이 맞는 줄
@@ -2154,6 +2271,9 @@ function epDetect(table){
     if(sc > best){ best = sc; hIdx = i; map = m; }
   }
   const two = !!map._two, data = rows.slice(hIdx < 0 ? 0 : hIdx + (two ? 2 : 1));
+  // 표 위 제목(문단·시트 이름·제목 줄)에 적힌 과목
+  let ctxSubj = ctxSubject(ctx);
+  rows.slice(0, Math.max(0, hIdx)).forEach(r => { const v = [...new Set(r.filter(Boolean))]; if(v.length === 1){ const f = findSubject(v[0]); if(f) ctxSubj = f; } });
   delete map._two;
   // 2) 제목으로 못 찾은 열은 내용을 보고 짐작
   const W = Math.max(...rows.map(r => r.length)), used = new Set(Object.values(map));
@@ -2172,22 +2292,25 @@ function epDetect(table){
   // 3) 줄마다 계획 만들기 (합쳐진 칸 때문에 비어 있는 과목·단원·학기는 위 값을 이어받음)
   const Y = CAL().year, plans = []; let last = {};
   data.forEach(r => {
+    const vals = [...new Set(r.filter(Boolean))];
+    if(vals.length === 1){ const f = findSubject(vals[0]); if(f && vals[0].length <= 30){ ctxSubj = f; last = {}; return; } }   // 표 중간의 '■ 수학' 같은 제목 줄
+    if(r.filter(x => x && x.length <= 20 && EP_HEAD.some(([, re]) => re.test(x))).length >= 2) return;   // 되풀이된 제목 줄
     const get = k => map[k] !== undefined ? String(r[map[k]] || "").trim() : "";
-    let subj = get("subj") || last.subj || "", unit = get("unit") || (get("subj") ? "" : last.unit) || "", term = get("term") || last.term || "";
+    let subj = get("subj") || last.subj || ctxSubj || "", unit = get("unit") || (get("subj") ? "" : last.unit) || "", term = get("term") || last.term || "";
     const item = get("item");
-    if(!item || item === subj || EP_HEAD.some(([k, re]) => re.test(item) && item.length < 10)) { if(get("subj")) last.subj = subj; return; }
+    if(!item || item === subj || /^(평가\s*)?(요소|내용|과제|항목|활동|문항)$|^(단원|영역|주제)(명)?$/.test(item.replace(/\s+/g," "))) { if(get("subj")) last.subj = subj; return; }
     last = {subj, unit, term};
     const when = parseWhen(get("when"), Y);
     let t = /2/.test(term) ? "2" : /1/.test(term) ? "1" : "";
     if(!t){ const d = when.date || (when.month ? when.month + "-15" : ""); t = d ? (d <= CAL().t1[1] && d >= `${Y}-03-01` ? "1" : "2") : ui.epTerm; }
-    plans.push({id:uid(), term:t, subj:subj.replace(/\s+/g," "), unit, item:item.replace(/\s*\n\s*/g," "), std:(get("std").match(new RegExp(RE_STD.source, "g")) || [get("std")]).join(" ").trim(), method:get("method").replace(/\s*\n\s*/g,", "), date:when.date || "", month:when.month || "", whenRaw:get("when")});
+    plans.push({id:uid(), term:t, subj:subj.replace(/\s+/g," "), unit, item:item.replace(/\s*\n\s*/g," "), std:(get("std").match(new RegExp(RE_STD.source, "g")) || [get("std")]).map(x => x.replace(/\s+/g, "")).join(" ").trim(), method:get("method").replace(/\s*\n\s*/g,", "), date:when.date || "", month:when.month || "", whenRaw:get("when")});
   });
   const header = hIdx >= 0 ? rows[hIdx].map((x, c) => two && rows[hIdx+1] ? [x, rows[hIdx+1][c]].filter(Boolean).filter((v,k,arr)=>arr.indexOf(v)===k).join(" ") : x) : null;
   return {plans, map, header};
 }
 function epFromTables(tables, src){
   let plans = [], maps = [];
-  tables.forEach(t => { const r = epDetect(t); if(r && r.plans.length){ plans = plans.concat(r.plans); maps.push(r); } });
+  tables.forEach(t => { const r = epDetect(t, t.ctx || ""); if(r && r.plans.length){ plans = plans.concat(r.plans); maps.push(r); } });
   const exist = new Set((S.evalPlans||[]).map(p => p.term + "|" + p.subj + "|" + p.item));
   plans.forEach(p => { p.dup = exist.has(p.term + "|" + p.subj + "|" + p.item); p.on = !p.dup && !!p.subj; });
   ui.epImp = {src, plans, maps}; ui.epPaste = false; render();
@@ -2198,11 +2321,12 @@ function epImportCard(){
   const colName = (m, k) => m.header && m.map[k] !== undefined && m.header[m.map[k]] ? `'${esc(m.header[m.map[k]])}'` : m.map[k] !== undefined ? `${String.fromCharCode(65 + m.map[k])}열(내용 보고 짐작)` : "<span style='color:var(--warn)'>못 찾음</span>";
   return `<div class="card"><div class="spread"><h2>미리 보기 <span class="small muted">${esc(im.src)} · ${P.length}개 찾음</span></h2><button class="btn sm" data-act="epImpClose">닫기</button></div>
     ${im.maps.slice(0,1).map(m => `<div class="row small" style="gap:6px 14px;margin-bottom:8px">${Object.entries(EP_KEYS).map(([k, l]) => `<span><b>${l}</b> ← ${colName(m, k)}</span>`).join("")}</div>`).join("")}
+    ${/\.pdf$/i.test(im.src) ? `<div class="banner" style="margin-bottom:8px"><div class="small">PDF는 글자 위치로 표를 다시 맞춘 거라 <b>긴 글이 줄바꿈된 칸이나 합쳐진 칸이 섞일 수 있어요.</b> 넣기 전에 꼭 확인해 주세요. 원본 한글(.hwpx)·엑셀 파일이 있으면 그게 더 정확해요.</div></div>` : ""}
     <div class="small muted" style="margin-bottom:8px">열 순서와 상관없이 열 이름과 내용을 보고 맞췄어요. 학기 열이 없으면 시기를 보고 1·2학기를 나눴어요. 넣지 않을 줄은 체크를 빼세요.${P.some(p=>p.dup)?" 이미 있는 계획은 체크를 빼 두었어요.":""}</div>
     <div class="scroll" style="max-height:440px;overflow:auto"><table class="t ep-imp"><thead><tr><th></th><th>학기</th><th>과목</th><th>단원·영역</th><th>평가 요소</th><th>성취기준</th><th>방법</th><th>시기</th></tr></thead><tbody>
       ${P.map((p, i) => `<tr class="${p.on ? "" : "muted"}"><td><input type="checkbox" ${p.on ? "checked" : ""} data-ch="epImpOn" data-i="${i}" aria-label="넣기"></td>
         <td><select data-ch="epImpTerm" data-i="${i}"><option value="1" ${p.term==="1"?"selected":""}>1학기</option><option value="2" ${p.term==="2"?"selected":""}>2학기</option></select></td>
-        <td>${p.subj ? esc(p.subj) : `<input type="text" placeholder="과목" data-ch="epImpSubj" data-i="${i}" style="width:70px">`}</td><td class="small">${esc(p.unit)}</td><td>${esc(p.item)}${p.dup?` <span class="pill">이미 있음</span>`:""}</td>
+        <td>${p.subj ? esc(p.subj) : `<input type="text" placeholder="과목" data-ch="epImpSubj" data-i="${i}" style="width:70px">`}</td><td class="small"><input type="text" class="ep-cell" value="${esc(p.unit)}" data-ch="epImpTxt" data-k="unit" data-i="${i}" aria-label="단원"></td><td><input type="text" class="ep-cell" value="${esc(p.item)}" data-ch="epImpTxt" data-k="item" data-i="${i}" aria-label="평가 요소">${p.dup?` <span class="pill">이미 있음</span>`:""}</td>
         <td class="small">${esc(p.std)}</td><td class="small">${esc(p.method)}</td><td class="small num">${p.date ? md(p.date) : p.month ? `${Number(p.month.slice(5))}월` : esc(p.whenRaw||"")}</td></tr>`).join("") || `<tr><td colspan="8" class="empty">읽은 내용이 없어요</td></tr>`}</tbody></table></div>
     <div class="row" style="justify-content:flex-end;margin-top:10px"><button class="btn" data-act="epImpClose">취소</button><button class="btn pri" data-act="epImpApply" ${on?"":"disabled"}>${on}개 넣기</button></div></div>`;
 }
@@ -2213,6 +2337,7 @@ async function epFileLoad(f){
 }
 A.epImpClose = () => { ui.epImp = null; render(); };
 CH.epImpOn = el => { ui.epImp.plans[Number(el.dataset.i)].on = el.checked; render(); };
+CH.epImpTxt = el => { ui.epImp.plans[Number(el.dataset.i)][el.dataset.k] = el.value.trim(); };
 CH.epImpTerm = el => { ui.epImp.plans[Number(el.dataset.i)].term = el.value; };
 CH.epImpSubj = el => { const p = ui.epImp.plans[Number(el.dataset.i)]; p.subj = el.value.trim(); p.on = !!p.subj; render(); };
 A.epImpApply = () => { const L = ui.epImp.plans.filter(p => p.on && p.subj);
