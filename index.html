@@ -158,7 +158,7 @@ table.t{width:100%;border-collapse:collapse;font-size:13.5px}
 .mline{font-size:11.5px;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;display:block}
 .mev{background:var(--accent-soft);color:var(--accent);border-radius:4px;padding:0 5px;font-weight:500}
 .mdone{color:var(--muted);text-decoration:line-through}
-.subj{display:inline-flex;align-items:center;justify-content:center;min-width:52px;padding:3px 8px;border-radius:7px;font-size:13px;font-weight:600;background:hsl(var(--h) var(--s,70%) 92%);color:hsl(var(--h) var(--s,55%) 28%)}
+.subj{display:inline-flex;align-items:center;justify-content:center;min-width:52px;padding:3px 8px;border-radius:7px;font-size:13px;font-weight:600;white-space:nowrap;gap:3px;background:hsl(var(--h) var(--s,70%) 92%);color:hsl(var(--h) var(--s,55%) 28%)}
 .subj.sm{min-width:34px;padding:0 5px;font-size:11.5px;border-radius:5px}
 .subj.sp{outline:1.5px dashed hsl(var(--h) 45% 45%);outline-offset:-1.5px}
 .sp-tag{font-style:normal;font-size:9.5px;font-weight:700;margin-left:3px;padding:0 3px;border-radius:3px;background:hsl(var(--h) 45% 40%);color:#fff;vertical-align:1px}
@@ -235,6 +235,21 @@ th.tt-today{color:var(--accent)}
 .masg{background:var(--bad-soft);color:var(--bad);border-radius:4px;padding:0 5px}
 .mgr{background:var(--ok-soft);color:var(--ok);border-radius:4px;padding:0 5px}
 .mline.more{color:var(--accent);font-weight:600}
+.msch{background:var(--accent-soft);color:var(--accent);border-radius:4px;padding:0 5px;opacity:.85}
+.sch-tag .dtag-k{background:var(--accent);color:var(--surface)}
+.cal-row{display:flex;gap:10px;align-items:center;padding:6px 2px;border-bottom:1px solid var(--line)}
+.cal-row:last-child{border-bottom:0}
+.cal-click{cursor:pointer;border-radius:6px}
+.cal-click:hover{background:var(--hover,color-mix(in srgb,var(--accent) 6%,transparent))}
+.cal-edit{flex-wrap:wrap;background:var(--accent-soft);border-radius:8px;padding:8px}
+.cal-edit input[type=date]{width:auto}
+.cal-row:not(.cal-edit) > :nth-last-child(2){flex:1}
+.ep-t td{vertical-align:middle}
+.ep-stats{grid-template-columns:repeat(4,minmax(0,1fr))}
+.ep-form{grid-template-columns:100px 1fr 1.2fr 1.6fr}
+.cal-terms{grid-template-columns:auto 1fr 1fr;align-items:center}
+@media (max-width:700px){.grid3.ep-stats{grid-template-columns:1fr 1fr}.ep-form{grid-template-columns:1fr 1fr}.ep-form > label:nth-child(4){grid-column:1/-1}.ep-t tr{display:grid;grid-template-columns:auto 1fr;gap:4px 8px;padding:8px 0;border-bottom:1px solid var(--line)}.ep-t td{border:0;padding:0;width:auto!important}.ep-t td:nth-child(3){grid-column:1/-1}.ep-t td:nth-child(n+4){grid-column:span 1}.cal-terms{grid-template-columns:auto 1fr}.cal-terms > input:nth-child(3n){grid-column:2}}
+.ep-late td{background:color-mix(in srgb,var(--bad-soft) 55%,transparent)}
 .asg-tag .dtag-k{background:var(--bad-soft);color:var(--bad)}
 .gr-tag .dtag-k{background:var(--ok-soft);color:var(--ok)}
 .ex-tag .dtag-k{background:var(--bg);color:var(--muted);border:1px solid var(--line)}
@@ -451,15 +466,18 @@ th.tt-today{color:var(--accent)}
   <main class="main" id="main"></main>
 </div>
 <input type="file" id="fileRestore" accept=".json,application/json" class="hidden">
+<input type="file" id="fileCal" accept=".json,application/json" class="hidden">
+<input type="file" id="fileArchive" accept=".json,application/json" class="hidden">
 <input type="file" id="fileStudents" accept=".xlsx,.xls,.csv" class="hidden">
 <script>
 "use strict";
+let liveS = null;   // 지난 학년도 보관 기록을 보는 동안 지금 기록을 잠시 넣어 두는 곳
 const VIEWS = {}, AFTER = {}, A = {}, CH = {}, EN = {}, IN = {};
 /* ───────── 저장 ───────── */
 const KEY = "hopyeong-classbook-v1";
 let storageOK = true;
 function loadState(){ try{ const r = localStorage.getItem(KEY); return r ? JSON.parse(r) : null; }catch(e){ storageOK = false; return null; } }
-function persist(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); storageOK = true; }catch(e){ storageOK = false; } markDirty(); }
+function persist(){ if(liveS) return; try{ localStorage.setItem(KEY, JSON.stringify(S)); storageOK = true; }catch(e){ storageOK = false; } markDirty(); }
 /* 구글 드라이브 동기화 상태(이 기기에만 저장) */
 const SYNC_KEY = KEY + "-drive";
 let SY = Object.assign({on:false, folderId:"", rev:0, dirty:false, lastOk:0, state:"off", msg:""}, (()=>{ try{ return JSON.parse(localStorage.getItem(SYNC_KEY)) || {}; }catch(e){ return {}; } })());
@@ -485,13 +503,12 @@ const shuffle = a => { a = a.slice(); for(let i=a.length-1;i>0;i--){ const j = M
 const dday = s => { const diff = Math.round((parse(s) - parse(today()))/86400000); return diff === 0 ? "D-day" : diff > 0 ? `D-${diff}` : `D+${-diff}`; };
 
 const LEVELS = ["매우 잘함","잘함","보통","노력 요함"];
-const HOLI = {"2026-01-01":"신정","2026-02-16":"설날 연휴","2026-02-17":"설날","2026-02-18":"설날 연휴","2026-03-01":"삼일절","2026-03-02":"대체공휴일","2026-05-05":"어린이날","2026-05-24":"부처님오신날","2026-05-25":"대체공휴일","2026-06-03":"지방선거","2026-06-06":"현충일","2026-08-15":"광복절","2026-08-17":"대체공휴일","2026-09-24":"추석 연휴","2026-09-25":"추석","2026-09-26":"추석 연휴","2026-10-03":"개천절","2026-10-05":"대체공휴일","2026-10-09":"한글날","2026-12-25":"성탄절","2027-01-01":"신정","2027-03-01":"삼일절"};
 
 /* ───────── 메뉴 ───────── */
 const MENUS = [
   {grp:"", items:[["today","오늘"]]},
-  {grp:"기록", items:[["diary","다이어리"],["timetable","시간표"],["tasks","업무 관리"],["memo","메모장"],["events","학급 행사"]]},
-  {grp:"학생", items:[["attendance","출석 체크"],["submit","제출 체크"],["records","학생 기록"],["counsel","상담 기록"],["summary","학생 종합·의견"],["grades","성적 입력"]]},
+  {grp:"기록", items:[["diary","다이어리"],["calendar","학사일정"],["timetable","시간표"],["tasks","업무 관리"],["memo","메모장"],["events","학급 행사"]]},
+  {grp:"학생", items:[["attendance","출석 체크"],["submit","제출 체크"],["records","학생 기록"],["counsel","상담 기록"],["summary","학생 종합·의견"],["grades","성적 입력"],["evalplan","평가 계획"]]},
   {grp:"운영", items:[["budget","예산 관리"],["seats","자리 배치"],["random","랜덤 뽑기"],["jobs","일인일역"]]},
   {grp:"관리", items:[["students","학생 관리"],["settings","설정"]]},
 ];
@@ -531,7 +548,7 @@ function blank(){
     assessments:[], budgets:[], seats:{rows:4, cols:6, pair:true, map:[], locked:[], gfix:{}},
     jobs:{ quarter:"", list:[], draft:null, history:[] }, jobMode:"",
     roles:{ list:[], assign:{}, checks:{}, period:"", history:[] },
-    tasks:[], counsels:[], quickTags:DEFAULT_QUICK.map(x=>({...x, id:uid()})), quickV:3, timetable:ttBlank() };
+    tasks:[], counsels:[], quickTags:DEFAULT_QUICK.map(x=>({...x, id:uid()})), quickV:3, timetable:ttBlank(), cal:calDefault(), evalPlans:[] };
 }
 function sampleData(){
   const s = blank(); s.isSample = true;
@@ -587,6 +604,13 @@ function sampleData(){
   s.timetable.base = {1:["국어","수학","사회","과학","체육",""],2:["수학","국어","영어|전담","음악|전담","미술","미술"],3:["국어","수학","도덕","체육","자율",""],4:["과학|전담","과학|전담","국어","영어|전담","수학","사회"],5:["국어","수학","사회","음악","동아리","진로"]};
   s.timetable.over[t] = {3:"체육"};
   s.timetable.memos[t] = {0:"독서록 검사", 1:"꺾은선 그래프 익힘책 74쪽"};
+  s.evalPlans = [
+    {id:uid(), term:"2", subj:"수학", unit:"5. 꺾은선그래프", item:"꺾은선 그래프 그리기", std:"[4수04-02]", method:"서술·논술", date:dk(1), month:""},
+    {id:uid(), term:"2", subj:"국어", unit:"4. 의견이 드러나게 글을 써요", item:"의견 글 쓰기", std:"[4국03-03]", method:"서술·논술", date:ymd(addDays(T,-8)), month:""},
+    {id:uid(), term:"2", subj:"과학", unit:"3. 그림자와 거울", item:"거울에 비친 모습 관찰하기", std:"", method:"실험·실습", date:ymd(addDays(T,-6)), month:""},
+    {id:uid(), term:"2", subj:"사회", unit:"2. 필요한 것의 생산과 교환", item:"지역 간 교류 조사 보고서", std:"", method:"보고서", date:ymd(addDays(T,4)), month:""},
+    {id:uid(), term:"2", subj:"체육", unit:"표현", item:"주제 표현 움직임 발표", std:"", method:"실기", date:"", month:`${T.getFullYear()}-12`}
+  ];
   s.tasks = [
     {id:uid(), title:"학교폭력 예방교육 결과 보고", due:ymd(addDays(T,-1)), cat:"공문·보고", note:"업무관리시스템", done:false, doneAt:"", created:t},
     {id:uid(), title:"강사 초청 수업 품의", due:ymd(addDays(T,2)), cat:"행사", note:"", done:false, doneAt:"", created:t},
@@ -630,7 +654,7 @@ if((S.quickV||1) < 3){
   DEFAULT_QUICK.forEach(x=>{ if(!seen.has(x.cat+"|"+x.text)){ S.quickTags.push({...x, id:uid()}); seen.add(x.cat+"|"+x.text); } });
   S.quickV = 3;
 }
-["tasks","counsel","timetable","summary"].forEach(k => { if(S.menus && S.menus[k]===undefined) S.menus[k] = true; });
+["tasks","counsel","timetable","summary","calendar","evalplan"].forEach(k => { if(S.menus && S.menus[k]===undefined) S.menus[k] = true; });
 if(S.jobMode===undefined) S.jobMode = "";
 if(firstRun) persist();
 
@@ -642,7 +666,7 @@ const ui = {
   eventEdit:null, memoSel:null, memoQ:"", seatPick:null, seatView:"teacher", seatMode:"",
   roleTab:"assign",
   rnd:{ mode:"one", target:"all", customText:"", exclude:{}, drawn:[], result:null, order:null, groups:null, noRepeat:true, skipAbsent:true, groupBy:"count", groupN:6, groupSize:4, mixGender:true },
-  jobTab:"run", taskFilter:"open", taskCat:"전체", taskEdit:null, csSel:"all", csEdit:null, qtSel:null, qtEdit:false, qtLast:[], qtCat:"칭찬", qtWhen:"", sumSel:null, sumTerm:null, sumFilter:"all", sumNotes:null, sampleOk:false, ttMode:"week", ttWeek:today(), ttBrush:null, ttEdit:false, ttAdding:false, ttSp:false
+  jobTab:"run", taskFilter:"open", taskCat:"전체", taskEdit:null, csSel:"all", csEdit:null, qtSel:null, qtEdit:false, qtLast:[], qtCat:"칭찬", qtWhen:"", sumSel:null, sumTerm:null, sumFilter:"all", sumNotes:null, sampleOk:false, calImp:null, calEdit:null, epTerm:null, epEdit:null, epPaste:false, ttMode:"week", ttWeek:today(), ttBrush:null, ttEdit:false, ttAdding:false, ttSp:false
 };
 
 /* ───────── 공통 ───────── */
@@ -781,7 +805,7 @@ function setupView(){
   </div></div>`;
 }
 A.setupGo = () => { const n = $("#setName").value.trim(); if(!n){ toast("학급 이름을 적어 주세요"); $("#setName").focus(); return; }
-  S.cls.name = n; S.cls.grade = $("#setGrade").value.trim(); S.cls.year = Number($("#setYear").value) || new Date().getFullYear(); commit(); };
+  S.cls.name = n; S.cls.grade = $("#setGrade").value.trim(); S.cls.year = Number($("#setYear").value) || new Date().getFullYear(); calFollowYear(); commit(); };
 EN.setupGo = () => A.setupGo();
 A.setupFromDrive = () => withLogin("setupFromDrive", async () => {
   Object.assign(SY, {on:true, rev:0, dirty:false, state:"busy", msg:""}); saveSY();
@@ -794,7 +818,7 @@ function render(){
   const r = route();
   renderSide(r);
   const v = VIEWS[r]();
-  $("#main").innerHTML = `<div class="wrap">${syncBanner()}${sampleBanner()}${v}</div>`;
+  $("#main").innerHTML = `<div class="wrap">${archiveBanner()}${syncBanner()}${liveS?"":sampleBanner()}${v}</div>`;
   AFTER[r] && AFTER[r]();
   document.title = `${TITLE[r]} · ${clsName()} 학급일지`;
 }
@@ -809,12 +833,13 @@ VIEWS.today = () => {
   const asg = S.assignments.filter(a => a.due >= ymd(addDays(d,-7))).sort((a,b)=>a.due.localeCompare(b.due));
   const b = S.budgets[0];
   const spent = b ? b.expenses.reduce((s,e)=>s+Number(e.amount||0),0) : 0;
-  return header(`${d.getMonth()+1}월 ${d.getDate()}일 ${WD[d.getDay()]}요일`, HOLI[t] ? `<span class="holi">${HOLI[t]}</span>` : `${esc(clsName())} 오늘의 학급`) + ttDayCard(t, true) + `
+  return header(`${d.getMonth()+1}월 ${d.getDate()}일 ${WD[d.getDay()]}요일`, (HOLI[t] ? `<span class="holi">${HOLI[t]}</span>` : `${esc(clsName())} 오늘의 학급`) + schoolEvents(t).map(x=>` <span class="pill acc">${esc(x.name)}</span>`).join("")) + ttDayCard(t, true) + `
   <div class="grid3">
     <div class="card stat"><span class="l">재적</span><span class="v num">${S.students.length}명</span><span class="small muted">남 ${S.students.filter(s=>s.gender==="남").length} · 여 ${S.students.filter(s=>s.gender==="여").length}</span></div>
     <div class="card stat"><span class="l">오늘 출결 특이사항</span><span class="v num">${att.length}건</span><span class="small muted">${att.length ? att.map(([sid,r])=>`${esc(sname(sid))} ${attLabel(r)}`).join(", ") : "모두 출석"}</span></div>
     <div class="card stat"><span class="l">${b ? esc(b.name)+" 잔액" : "예산"}</span><span class="v num">${b ? won(b.total - spent) : "-"}</span><span class="small muted">${b ? `총 ${won(b.total)} 중 ${Math.round(spent/b.total*100)}% 사용` : "예산 관리에서 만들 수 있어요"}</span></div>
   </div>
+  ${evalTodayCard()}
   <div class="grid2">
     <div class="card"><div class="spread"><h2>오늘 할 일</h2><a class="btn sm" href="#diary">다이어리</a></div>
       <ul class="todos" style="padding:0">${todos.map(x=>todoLi(t,x)).join("") || `<li class="empty">오늘 적어 둔 할 일이 없어요</li>`}</ul>
@@ -856,6 +881,8 @@ A.delTodo = el => { const d = el.dataset.date; S.diary[d] = (S.diary[d]||[]).fil
 function monthLines(k, evs, att, todos){
   const L = [];
   if(HOLI[k]) L.push(`<span class="mline holi">${HOLI[k]}</span>`);
+  schoolEvents(k).forEach(x=>L.push(`<span class="mline msch">${esc(x.name)}</span>`));
+  (S.evalPlans||[]).filter(p=>p.date===k && !planAssess(p)).forEach(p=>L.push(`<span class="mline mgr">평가 예정 ${esc(p.subj)}</span>`));
   evs.forEach(e=>L.push(`<span class="mline mev">${esc(e.title)}</span>`));
   (S.tasks||[]).filter(x=>x.due===k).forEach(x=>L.push(`<span class="mline mtask ${x.done?"mdone":""}">업무 ${esc(x.title)}</span>`));
   S.assignments.filter(a=>a.due===k).forEach(a=>{ const n = asgMiss(a).length; L.push(`<span class="mline masg">마감 ${esc(a.title)}${n?` · 미제출 ${n}`:""}</span>`); });
@@ -884,6 +911,8 @@ function extraTags(d, full){
   return h;
 }
 A.goSubmit = el => { ui.submitMode = "asg"; ui.submitSel = el.dataset.id; location.hash = "submit"; };
+A.goCal = () => { location.hash = "calendar"; };
+A.goEval = () => { location.hash = "evalplan"; };
 A.goGrades = el => { ui.gradeSel = el.dataset.id; location.hash = "grades"; };
 A.goBudget = () => { location.hash = "budget"; };
 function recTag(d, full){
@@ -901,6 +930,8 @@ function diaryTags(d, full){
   const att = Object.entries(S.attendance[d]||{}).sort((a,b)=>(stu(a[0])?.no??99)-(stu(b[0])?.no??99));
   const evs = S.events.filter(e=>e.date===d).sort((a,b)=>(a.time||"").localeCompare(b.time||""));
   return (HOLI[d] ? `<span class="pill bad">${HOLI[d]}</span>` : "") +
+    schoolEvents(d).map(x=>`<button class="dtag sch-tag" data-act="goCal"><span class="dtag-k">학교</span><span class="dtag-b">${esc(x.name)}</span></button>`).join("") +
+    (S.evalPlans||[]).filter(p=>p.date===d).map(p=>{ const st = planStatus(p); return `<button class="dtag gr-tag" data-act="goEval"><span class="dtag-k">평가</span><span class="dtag-b">${esc(p.subj)} · ${esc(p.item)} <span class="small muted">${PLAN_PILL[st.k][1]}</span></span></button>`; }).join("") +
     evs.map(e=>{ const done = e.checklist.filter(c=>c.done).length;
       return `<button class="dtag ev-tag" data-act="goEvent" title="학급 행사로 이동"><span class="dtag-k">행사</span><span class="dtag-b"><b>${e.time?esc(e.time)+" ":""}${esc(e.title)}</b><span class="small muted">${esc(e.type)}${e.host?" · "+esc(e.host):""}${e.place?" · "+esc(e.place):""}${e.checklist.length?` · 준비 ${done}/${e.checklist.length}`:""}</span></span></button>`; }).join("") +
     (S.tasks||[]).filter(x=>x.due===d).map(x=>`<button class="dtag task-tag ${x.done?"tdone":""}" data-act="goTasks"><span class="dtag-k">업무</span><span class="dtag-b">${esc(x.title)}${x.done?" (완료)":""}</span></button>`).join("") +
@@ -1444,7 +1475,7 @@ const ttHue = name => { name = cellName(name); const f = TT().subjects.find(s=>s
 function subjChip(v, extra=""){ if(!v) return `<span class="subj empty-subj ${extra}">·</span>`; const h = ttHue(v), sp = isSp(v); return `<span class="subj ${sp?"sp":""} ${extra}" style="--h:${h??0};${h==null?"--s:0%":""}" title="${sp?"전담 수업":"담임 수업"}">${esc(cellName(v))}${sp?`<i class="sp-tag">전담</i>`:""}</span>`; }
 /* 그날 실제 시간표: [{p, subj, base, changed, memo}] */
 function ttDay(d){
-  const tt = TT(), w = parse(d).getDay(); if(w===0 || w===6) return [];
+  const tt = TT(), w = parse(d).getDay(); if(w===0 || w===6 || offName(d)) return [];
   const base = tt.base[w] || [], ov = tt.over[d] || {}, memo = tt.memos[d] || {};
   return Array.from({length:tt.periods}, (_,i) => { const b = base[i] || ""; const has = Object.prototype.hasOwnProperty.call(ov, i); const subj = has ? ov[i] : b;
     return {p:i, subj, base:b, changed: has && ov[i]!==b, memo: memo[i] || ""}; });
@@ -1535,6 +1566,448 @@ function ttMini(d){ // 주 보기 칸에 들어가는 작은 시간표
   const rows = ttDay(d); if(!rows.length || !rows.some(r=>r.subj||r.memo)) return "";
   return `<button class="tt-mini" data-act="diaryOpenDay" data-d="${d}" title="눌러서 교시별 메모 적기">${rows.map(r=>`<span class="tt-mrow"><span class="num muted">${r.p+1}</span>${subjChip(r.subj, "sm")}${r.changed?'<i class="dot" style="background:var(--warn)"></i>':""}${r.memo?`<span class="tt-mmemo">${esc(r.memo)}</span>`:""}</span>`).join("")}</button>`;
 }
+
+/* ───────── 학사일정 ─────────
+   S.cal = {year, t1:[시작,끝], t2:[시작,끝], breaks:[{name,s,e}], offs:[{id,s,e,name,kind}], events:[{id,s,e,name}], work:[수업하는 공휴일]} */
+const KR_HOLI = {
+  "2026-01-01":"신정","2026-02-16":"설날 연휴","2026-02-17":"설날","2026-02-18":"설날 연휴","2026-03-01":"삼일절","2026-03-02":"대체공휴일(삼일절)",
+  "2026-05-01":"노동절","2026-05-05":"어린이날","2026-05-24":"부처님오신날","2026-05-25":"대체공휴일(부처님오신날)","2026-06-03":"지방선거","2026-06-06":"현충일",
+  "2026-07-17":"제헌절","2026-08-15":"광복절","2026-08-17":"대체공휴일(광복절)","2026-09-24":"추석 연휴","2026-09-25":"추석","2026-09-26":"추석 연휴",
+  "2026-10-03":"개천절","2026-10-05":"대체공휴일(개천절)","2026-10-09":"한글날","2026-12-25":"성탄절",
+  "2027-01-01":"신정","2027-02-06":"설날 연휴","2027-02-07":"설날","2027-02-08":"설날 연휴","2027-02-09":"대체공휴일(설날)","2027-03-01":"삼일절",
+  "2027-05-01":"노동절","2027-05-03":"대체공휴일(노동절)","2027-05-05":"어린이날","2027-05-13":"부처님오신날","2027-06-06":"현충일",
+  "2027-07-17":"제헌절","2027-07-19":"대체공휴일(제헌절)","2027-08-15":"광복절","2027-08-16":"대체공휴일(광복절)",
+  "2027-09-14":"추석 연휴","2027-09-15":"추석","2027-09-16":"추석 연휴","2027-10-03":"개천절","2027-10-04":"대체공휴일(개천절)",
+  "2027-10-09":"한글날","2027-10-11":"대체공휴일(한글날)","2027-12-25":"성탄절","2027-12-27":"대체공휴일(성탄절)","2028-01-01":"신정","2028-01-26":"설날 연휴","2028-01-27":"설날","2028-01-28":"설날 연휴","2028-03-01":"삼일절"
+};
+function calDefault(Y){ Y = Number(Y) || new Date().getFullYear(); return {year:Y, t1:[`${Y}-03-02`,`${Y}-07-24`], t2:[`${Y}-08-17`,`${Y}-12-31`], set:false, breaks:[], offs:[], events:[], work:[], preset:""}; }
+/* 학년도를 바꿨을 때 학사일정이 아직 비어 있으면 그 해 기본값으로 맞춘다 */
+function calFollowYear(){ const c = CAL(), Y = Number(S.cls.year); if(Y && c.year !== Y && !c.set && !c.preset && !c.events.length && !c.offs.length && !c.breaks.length) S.cal = calDefault(Y); }
+function CAL(){
+  if(!S.cal) S.cal = calDefault(S.cls && S.cls.year);
+  const c = S.cal;
+  if(c.set === undefined){   // 예전 형식: 여름·학년말 방학은 이제 학기 날짜로 자동 계산
+    c.set = !!c.preset;
+    if(c.set) c.breaks = c.breaks.filter(b => !(/여름방학/.test(b.name) && b.s===ymd(addDays(parse(c.t1[1]),1))) && !(/겨울방학/.test(b.name) && b.s===ymd(addDays(parse(c.t2[1]),1))));
+  }
+  return c;
+}
+const inSpan = (d, s, e) => d >= s && d <= (e || s);
+const yearEnd = Y => ymd(new Date(Number(Y)+1, 2, 0));   // 다음 해 2월 말일
+/* 학기 날짜로 정해지는 방학 */
+function autoBreaks(c){ c = c || CAL(); if(!c.set) return [];
+  const L = [];
+  if(c.t1[0] > `${c.year}-03-01`) L.push({name:"개학 전", s:`${c.year}-03-01`, e:ymd(addDays(parse(c.t1[0]),-1))});
+  if(c.t2[0] > ymd(addDays(parse(c.t1[1]),1))) L.push({name:"여름방학", s:ymd(addDays(parse(c.t1[1]),1)), e:ymd(addDays(parse(c.t2[0]),-1))});
+  if(c.t2[1] < yearEnd(c.year)) L.push({name:"학년말 방학", s:ymd(addDays(parse(c.t2[1]),1)), e:yearEnd(c.year)});
+  return L; }
+/* 수업이 없는 날이면 이름(공휴일·재량휴업일·방학 등), 아니면 "" */
+function offName(d){
+  if(!d || typeof d !== "string") return "";
+  const c = CAL();
+  const o = c.offs.find(x=>inSpan(d, x.s, x.e)); if(o) return o.name;
+  if(KR_HOLI[d] && !c.work.includes(d)) return KR_HOLI[d];
+  const b = c.breaks.find(x=>inSpan(d, x.s, x.e)); if(b) return b.name;
+  if(c.set && d >= `${c.year}-03-01` && d <= yearEnd(c.year)){ const a = autoBreaks(c).find(x=>inSpan(d, x.s, x.e)); if(a) return a.name; }
+  return "";
+}
+const schoolEvents = d => CAL().events.filter(x=>inSpan(d, x.s, x.e));
+const HOLI = new Proxy({}, {get:(_, k) => typeof k==="string" ? offName(k) : undefined});
+function schoolDays(s, e){ let n = 0; for(let d = parse(s); ymd(d) <= e; d = addDays(d,1)){ const w = d.getDay(); if(w && w!==6 && !offName(ymd(d))) n++; } return n; }
+function presetHosu2026(){
+  const ev = (s,e,name) => ({id:uid(), s, e:e||"", name});
+  const off = (s,e,name,kind) => ({id:uid(), s, e:e||"", name, kind});
+  return {year:2026, t1:["2026-03-03","2026-07-27"], t2:["2026-08-12","2026-12-24"], set:true, preset:"김포호수초등학교 2026학년도", breaks:[],
+    offs:[off("2026-05-04","","재량휴업일","재량휴업일"), off("2026-07-17","","재량휴업일(제헌절)","재량휴업일"), off("2026-11-19","","재량휴업일(수능)","재량휴업일")],
+    events:[ev("2026-03-03","","시업식·입학식"), ev("2026-03-09","","학급임원선거"), ev("2026-03-09","2026-03-12","기초학력진단검사"), ev("2026-03-18","","학부모총회·교육과정설명회·공개수업"),
+      ev("2026-04-06","2026-04-10","친구사랑주간"), ev("2026-04-09","","소방교육(2교시)"), ev("2026-04-13","2026-04-17","다문화교육주간"), ev("2026-04-20","","장애이해교육"), ev("2026-04-20","2026-04-24","과학의날 행사주간"),
+      ev("2026-05-08","2026-05-15","학년별 체육대회"), ev("2026-05-18","2026-05-22","체격측정주간"), ev("2026-06-05","","개교기념일(수업일)"), ev("2026-06-22","2026-06-26","통일교육주간"), ev("2026-07-27","","여름방학식"),
+      ev("2026-08-12","","개학식"), ev("2026-08-19","","학급임원선거"), ev("2026-09-02","2026-09-23","동료장학"), ev("2026-09-17","","소방교육(2교시)"), ev("2026-10-19","2026-10-23","독도교육주간"),
+      ev("2026-11-02","2026-11-06","친구사랑주간"), ev("2026-12-02","","교육과정 나눔데이"), ev("2026-12-04","","학생자치 전교임원선거"), ev("2026-12-24","","종업식·졸업식")],
+    work:[]};
+}
+
+/* ───── 학교 학사일정 붙여넣기: 학교마다 다른 표기를 최대한 읽는다 ─────
+   읽는 예) 3/18 학부모총회 · 3.18.(수) 학부모총회 · 3월 18일(수) 학부모총회 · 2027-03-18 학부모총회
+           4/6~4/10 친구사랑주간 · 4.6.(월)~4.10.(금) · 9(월)-12(목) 기초학력진단 (위에 '3월' 같은 달 표시가 있을 때)
+           ◆여름방학(7.28.-8.11.) · ★1(금) 노동절 ★6(토)~9(화) 설 연휴 (한 줄에 여러 개)
+   요일이 적혀 있으면 요일이 맞는 달을 골라서, '3월 4월 5월 6월'처럼 달이 한꺼번에 적힌 달력 표도 읽는다. */
+const WDK = "일월화수목금토";
+const HOLI_WORD = /삼일절|어린이날|현충일|광복절|개천절|한글날|성탄|탄신일|신정|설날|설 ?연휴|추석|부처님|석가|노동절|근로자의 ?날|제헌절|대체 ?공휴일|대체 ?휴일|선거일$|지방선거|대통령선거|국회의원선거|공휴일/;
+function calParse(text, Y){
+  Y = Number(Y);
+  const yOf = m => m >= 3 ? Y : Y + 1;
+  const mk = (y, m, d) => { if(!(m>=1 && m<=12 && d>=1 && d<=31)) return ""; const t = new Date(y, m-1, d); return t.getMonth()===m-1 ? ymd(t) : ""; };
+  const wdOk = (iso, w) => !w || parse(iso).getDay() === WDK.indexOf(w);
+  let queue = [], ptr = 0, last = null;
+  const pickMonth = (day, w) => {           // 달이 안 적힌 '9(월)'의 달 고르기
+    if(!queue.length) return last ? last.m : 0;
+    if(w){ for(let i = ptr; i < queue.length; i++){ const iso = mk(yOf(queue[i]), queue[i], day); if(iso && wdOk(iso, w)){ ptr = i; return queue[i]; } }
+           for(let i = 0; i < ptr; i++){ const iso = mk(yOf(queue[i]), queue[i], day); if(iso && wdOk(iso, w)){ ptr = i; return queue[i]; } } }
+    return queue[ptr];
+  };
+  const noteMonth = m => { const i = queue.indexOf(m); if(i >= 0) ptr = i; else { queue = [m]; ptr = 0; } last = {m}; };
+  const W = "(?:\\s*\\(\\s*([월화수목금토일])\\s*\\))?";
+  const FULL = `(?:(\\d{4})\\s*[-.\\/년]\\s*)?(\\d{1,2})\\s*(?:[.\\/]|월)\\s*(\\d{1,2})\\s*(?:일|\\.)?${W}`;      // [년.]월.일(요일)
+  const DAY = `(\\d{1,2})(?!\\s*(?:월|학기|학년|차시|차|교시|번|명|주|개|%|시|분|\\d))\\s*일?${W}`;                                                                       // 일(요일)
+  const SEP = "\\s*[~∼〜\\-–—]\\s*";
+  const reParen = new RegExp(`^(.+?)\\s*\\(\\s*${FULL}${SEP}(?:${FULL}|${DAY})\\s*\\)(.*)$`);
+  const reFull = new RegExp(`^${FULL}(?:${SEP}(?:${FULL}|${DAY}))?\\s*[:,]?\\s*(.*)$`);
+  const reDay = new RegExp(`^${DAY}(?:${SEP}(?:${FULL}|${DAY}))?\\s*[:,]?\\s*(.*)$`);
+  const out = [], skipped = []; let rowNo = 0;
+  const toISO = (y, m, d, w) => { if(y) return mk(Number(y), Number(m), Number(d)); const iso = mk(yOf(Number(m)), Number(m), Number(d)); return iso; };
+  const endOf = (start, g) => {   // g: [y,m,d,w, d2,w2]
+    if(g[2] !== undefined){ return toISO(g[0], g[1], g[2], g[3]); }
+    if(g[4] !== undefined){ const sm = Number(start.slice(5,7)), sy = Number(start.slice(0,4)); let iso = mk(sy, sm, Number(g[4]));
+      if(!iso || iso < start || (g[5] && !wdOk(iso, g[5]))){ const nm = sm===12 ? 1 : sm+1; iso = mk(sm===12 ? sy+1 : sy, nm, Number(g[4])); } return iso; }
+    return "";
+  };
+  text.replace(/\r/g,"").split("\n").forEach(raw => {
+    const line = raw.replace(/[ 　]/g," ");
+    if(/^\s+[가-힣]/.test(line) && !/\d/.test(line) && !/^[\s일월화수목금토]+$/.test(line) && out.length && out[out.length-1].row === rowNo - 1){ out[out.length-1].name += " " + line.trim(); rowNo++; return; }
+    rowNo++;
+    const segs = line.split(/(?=[★◆◇●○■□▶◈※])/).map(x=>x.trim()).filter(Boolean);
+    segs.forEach(seg => {
+      const marker = /^[★◆◇●○■□▶◈※]/.test(seg) ? seg[0] : ""; let t = seg.replace(/^[★◆◇●○■□▶◈※\-•·]\s*/,"").trim();
+      if(!t) return;
+      // 달 머리글: '3월', '3월 (21) 4월 (22)', '[3월]'
+      const months = [...t.matchAll(/(\d{1,2})\s*월/g)].map(m=>Number(m[1]));
+      if(months.length && !t.replace(/\[|\]|<|>|\(\s*\d*\s*\)?|\d{1,2}\s*월|\s/g,"")){ queue = months; ptr = 0; last = {m:months[0]}; return; }
+      let s = "", e = "", name = "", m;
+      if((m = t.match(reParen))){       // 여름방학(7.28.-8.11.)
+        s = toISO(m[2], m[3], m[4], m[5]); e = endOf(s, [m[6],m[7],m[8],m[9],m[10],m[11]]); name = (m[1] + " " + (m[12]||"")).trim();
+      } else if((m = t.match(reFull))){
+        s = toISO(m[1], m[2], m[3], m[4]); if(s) noteMonth(Number(m[2]));
+        e = endOf(s, [m[5],m[6],m[7],m[8],m[9],m[10]]); name = m[11];
+      } else if((m = t.match(reDay)) && (m[2] || queue.length || last)){
+        const day = Number(m[1]), mo = pickMonth(day, m[2]); if(mo){ s = mk(yOf(mo), mo, day); last = {m:mo}; }
+        e = endOf(s || "0000-00-00", [m[3],m[4],m[5],m[6],m[7],m[8]]); name = m[9];
+      }
+      name = (name||"").replace(/^[\s:,·\-]+/,"").replace(/\s*\(\s*\d+\s*일(간)?\s*\)/g,"").trim();
+      if(!s || !name || !/[가-힣A-Za-z]/.test(name)){ if(/\d/.test(t) && /[가-힣]/.test(t)) skipped.push(t); return; }
+      if(e === s) e = "";
+      out.push({s, e, name, marker, row:rowNo - 1});
+    });
+  });
+  // 학기 날짜 찾기 + 종류 정하기
+  const terms = {};
+  const firstOf = (re, f) => out.find(x => re.test(x.name) && (!f || f(x)));
+  const a = firstOf(/시업식|입학식.*시업|1학기\s*개학/); if(a) terms.t1s = a.s;
+  const b = firstOf(/여름\s*방학식|1학기\s*(종업|방학)식/); if(b) terms.t1e = b.s;
+  const g = firstOf(/개학식|2학기\s*(시작|개학)/, x => x.s.slice(5) >= "07-15" && x.s.slice(5) <= "09-30"); if(g) terms.t2s = g.s;
+  const z = firstOf(/종업식|수료식|학년말\s*방학식/) || firstOf(/겨울\s*방학식/); if(z) terms.t2e = z.s;
+  const wv = firstOf(/겨울\s*방학식/), kk = wv && firstOf(/개학/, x => x.s > wv.s && /-0[12]-/.test(x.s));
+  if(wv && kk && z && z.s > kk.s && !out.some(x=>/겨울\s*방학/.test(x.name) && !/식/.test(x.name) && x.e)) out.push({s:ymd(addDays(parse(wv.s),1)), e:ymd(addDays(parse(kk.s),-1)), name:"겨울방학", marker:""});
+  const items = out.map(x => {
+    let kind = "event";
+    const n = x.name;
+    if(/방학/.test(n) && !/방학식/.test(n) && x.e){
+      kind = "break";
+      if(/여름/.test(n)){ kind = "auto"; terms.t1e ||= ymd(addDays(parse(x.s),-1)); terms.t2s ||= ymd(addDays(parse(x.e),1)); }
+      else if(x.e >= `${Y+1}-02-15` || x.e >= yearEnd(Y)){ kind = "auto"; terms.t2e ||= ymd(addDays(parse(x.s),-1)); }
+    }
+    else if(/재량\s*휴업|임시\s*휴업|휴업일|휴교/.test(n)) kind = "off";
+    else if(KR_HOLI[x.s] && (HOLI_WORD.test(n) || x.marker==="★")) kind = "holi";
+    else if(HOLI_WORD.test(n) && !/주간|교육|행사|선거\s*(교육|체험)/.test(n)) kind = "offH";
+    else if(/개교\s*기념일/.test(n)) kind = x.marker==="◆" ? "event" : "off";
+    else if(x.marker==="★" && !/주간|교육|행사|식$/.test(n)) kind = "off";
+    return {...x, kind, id:uid()};
+  });
+  // 같은 날 같은 이름은 하나만
+  const seen = new Set(); const uniq = items.filter(x => { const k = x.s+"|"+x.name; if(seen.has(k)) return false; seen.add(k); return true; });
+  return {items:uniq, terms, skipped};
+}
+const IMPORT_KINDS = [["event","학교 행사"],["off","수업 없는 날"],["offH","공휴일 (수업 없음)"],["break","방학"],["holi","공휴일 · 이미 들어 있음"],["auto","방학 · 학기 날짜로 자동"],["skip","넣지 않기"]];
+
+VIEWS.calendar = () => {
+  const c = CAL(), Y = c.year;
+  const d1 = schoolDays(c.t1[0], c.t1[1]), d2 = schoolDays(c.t2[0], c.t2[1]);
+  const nat = Object.entries(KR_HOLI).filter(([d])=>d >= `${Y}-03-01` && d <= yearEnd(Y));
+  const evs = c.events.slice().sort((a,b)=>a.s.localeCompare(b.s));
+  const offs = c.offs.slice().sort((a,b)=>a.s.localeCompare(b.s));
+  const span = x => x.e && x.e!==x.s ? `${md(x.s)} ~ ${md(x.e)}` : md(x.s);
+  const empty = !c.set && !c.events.length && !c.offs.length;
+  const imp = ui.calImp;
+  return header(`${Y}학년도 학사일정`, `학교 교육과정의 학사일정을 넣어 두면 휴업일·방학에는 다이어리·시간표에 수업이 나오지 않고, 학기 구분·수업일수 계산·다이어리 행사 표시에 쓰여요.`,
+    `<button class="btn pri" data-act="calImpOpen">학교 학사일정 붙여넣기</button><button class="btn" data-act="calFileOpen">공유 파일 불러오기</button><button class="btn" data-act="calShare">공유 파일 받기</button>${Y===2026?`<button class="btn ghost" data-act="calPreset">김포호수초 2026</button>`:""}`) + `
+  ${empty && !imp ? `<div class="card" style="border-color:color-mix(in srgb,var(--accent) 35%,transparent)"><h2>우리 학교 학사일정 넣기</h2>
+    <ol class="small" style="margin:0 0 12px;padding-left:20px;line-height:1.9">
+      <li>학교 교육과정 파일(한글·PDF)에서 <b>학사일정 부분을 통째로 복사</b>해요. 월별 행사 목록이든 표든 괜찮아요.</li>
+      <li><b>학교 학사일정 붙여넣기</b>를 눌러 붙여 넣으면 날짜와 행사를 찾아서 <b>미리 보기</b>로 보여 줘요. 시업식·여름방학식·개학식·종업식을 찾으면 학기 날짜도 채워요.</li>
+      <li>미리 보기에서 종류(행사, 수업 없는 날 등)를 확인하고 <b>넣기</b>를 눌러요. 아래 학기 카드의 수업일수가 학교 문서와 같으면 끝이에요.</li>
+    </ol>
+    <div class="small muted">같은 학교 선생님이 먼저 넣었다면, 그 선생님이 <b>공유 파일 받기</b>로 받은 파일을 보내 달라고 해서 <b>공유 파일 불러오기</b>만 하면 돼요. 국가 공휴일은 처음부터 들어 있어요.</div></div>` : ""}
+  ${imp ? calImportCard(imp) : ""}
+  <div class="grid2" style="align-items:start">
+    <div class="card"><h2>학기 · 방학</h2>
+      <div class="form cal-terms">
+        <b>학년도</b><input type="number" value="${Y}" data-ch="calYear" aria-label="학년도" style="grid-column:span 2;max-width:120px">
+        <b>1학기</b><label class="f">시업식<input type="date" value="${c.t1[0]}" data-ch="calT" data-k="t1" data-i="0"></label><label class="f">여름방학식<input type="date" value="${c.t1[1]}" data-ch="calT" data-k="t1" data-i="1"></label>
+        <b>2학기</b><label class="f">개학식<input type="date" value="${c.t2[0]}" data-ch="calT" data-k="t2" data-i="0"></label><label class="f">종업식 (방학식)<input type="date" value="${c.t2[1]}" data-ch="calT" data-k="t2" data-i="1"></label>
+      </div>
+      ${c.set ? `<div class="row small" style="margin:10px 0 4px;gap:14px"><span>수업일수 1학기 <b class="num">${d1}</b>일</span><span>2학기 <b class="num">${d2}</b>일</span><span>합계 <b class="num">${d1+d2}</b>일</span></div>
+      <div class="small muted">평일 중 공휴일·휴업일·방학을 뺀 날이에요. 학교 문서의 수업일수와 다르면 빠진 휴업일이 있는지 확인해 보세요.</div>`
+      : `<div class="banner" style="margin:10px 0 0"><div class="small">아직 <b>임시 날짜</b>예요. 학교 날짜로 고치거나 학사일정을 붙여 넣으면 방학과 수업일수가 계산돼요.</div></div>`}
+      <h3 style="margin:14px 0 6px">방학</h3>
+      ${autoBreaks(c).map(b=>`<div class="cal-row"><b>${esc(b.name)}</b><span class="num">${span(b)}</span><span class="small muted">학기 날짜로 자동</span></div>`).join("")}
+      ${c.breaks.map(b=>calRow("breaks", b, `<b>${esc(b.name)}</b><span class="num">${span(b)}</span>`)).join("")}
+      <div class="small muted" style="margin-top:8px">학기 중간에 쉬는 방학(2월 종업식 학교의 겨울방학, 봄방학 등)만 따로 넣으세요.</div>
+      <div class="row" style="margin-top:6px"><input type="text" id="brName" placeholder="겨울방학" style="width:100px"><input type="date" id="brS"><span>~</span><input type="date" id="brE"><button class="btn sm" data-act="calAddBreak">방학 추가</button></div>
+    </div>
+    <div class="card"><h2>수업 없는 날 <span class="small muted">재량휴업일 · 개교기념일 등</span></h2>
+      ${offs.map(o=>calRow("offs", o, `<span class="pill bad">${esc(o.kind||"휴업")}</span><span class="num">${span(o)}</span><span>${esc(o.name)}</span>`)).join("") || `<div class="small muted">아직 없어요</div>`}
+      <div class="row" style="margin-top:8px"><input type="date" id="offS"><span>~</span><input type="date" id="offE"><input type="text" id="offName" placeholder="이름 (예: 재량휴업일)" style="flex:1;min-width:120px"><select id="offKind"><option>재량휴업일</option><option>개교기념일</option><option>공휴일</option><option>기타 휴업</option></select><button class="btn sm" data-act="calAddOff">추가</button></div>
+      <h3 style="margin:14px 0 6px">국가 공휴일 <span class="small muted">자동 · 학교가 수업하는 날이면 눌러서 빼요</span></h3>
+      <div class="row" style="gap:5px">${nat.map(([d,n])=>`<button class="chip ${c.work.includes(d)?"":"on k-미인정"}" data-act="calWork" data-d="${d}" title="${c.work.includes(d)?"수업함 (공휴일로 되돌리려면 누르기)":"공휴일 (수업하는 날이면 누르기)"}">${md(d)} ${esc(n)}</button>`).join("") || `<div class="small muted">이 학년도의 공휴일 목록은 아직 앱에 없어요. 학사일정을 붙여 넣으면 공휴일도 '수업 없는 날'로 들어가요.</div>`}</div>
+    </div>
+  </div>
+  <div class="card"><div class="spread"><h2>학교 행사 <span class="small muted">${evs.length}개 · 다이어리에 표시돼요 · 줄을 누르면 고칠 수 있어요</span></h2>${evs.length?`<button class="btn sm ghost" data-act="calClearEv">모두 지우기</button>`:""}</div>
+    <div class="row" style="margin-bottom:10px"><input type="date" id="evS2"><span>~</span><input type="date" id="evE2"><input type="text" id="evName2" placeholder="행사 이름 (예: 학부모총회)" style="flex:1;min-width:160px" data-enter="calAddEv"><button class="btn pri sm" data-act="calAddEv">행사 추가</button></div>
+    <div class="cal-ev">${evs.map(e=>calRow("events", e, `<span class="num" style="min-width:150px">${span(e)}</span><span>${esc(e.name)}</span>`)).join("") || `<div class="empty">학교 행사가 없어요</div>`}</div>
+  </div>`;
+};
+/* 학사일정 한 줄: 누르면 그 자리에서 날짜·이름·종류를 고친다 */
+function calRow(k, x, view){
+  if(ui.calEdit !== x.id) return `<div class="cal-row cal-click" data-act="calEditOpen" data-id="${x.id}" title="눌러서 고치기">${view}<button class="x" data-act="calDel" data-k="${k}" data-id="${x.id}" aria-label="삭제">×</button></div>`;
+  return `<div class="cal-row cal-edit">
+    <input type="date" id="ceS" value="${x.s}" aria-label="시작일"><span>~</span><input type="date" id="ceE" value="${x.e||""}" aria-label="끝나는 날(하루면 비움)">
+    <input type="text" id="ceName" value="${esc(x.name)}" style="flex:1;min-width:120px" data-enter="calEditSave" aria-label="이름">
+    ${k==="offs" ? `<select id="ceKind">${["재량휴업일","개교기념일","공휴일","기타 휴업"].map(o=>`<option ${x.kind===o?"selected":""}>${o}</option>`).join("")}</select>` : ""}
+    ${k!=="breaks" ? `<select id="ceMove" aria-label="종류"><option value="">${k==="events"?"학교 행사":"수업 없는 날"}</option><option value="${k==="events"?"offs":"events"}">${k==="events"?"→ 수업 없는 날로":"→ 학교 행사로"}</option></select>` : ""}
+    <button class="btn sm" data-act="calEditCancel">취소</button><button class="btn sm pri" data-act="calEditSave" data-k="${k}">저장</button></div>`;
+}
+A.calEditOpen = (el, ev) => { if(ev && ev.target.closest(".x")) return; ui.calEdit = el.dataset.id; render(); $("#ceName")?.focus(); };
+A.calEditCancel = () => { ui.calEdit = null; render(); };
+A.calEditSave = el => {
+  const c = CAL(), k = el?.dataset?.k || ["events","offs","breaks"].find(a=>c[a].some(x=>x.id===ui.calEdit)), x = c[k].find(y=>y.id===ui.calEdit);
+  if(!x) return;
+  const sDate = $("#ceS").value, eDate = $("#ceE").value, name = $("#ceName").value.trim();
+  if(!sDate || !name){ toast("날짜와 이름을 적어 주세요"); return; }
+  x.s = sDate; x.e = eDate && eDate > sDate ? eDate : ""; x.name = name;
+  if(k==="breaks" && !x.e){ toast("방학은 끝나는 날도 골라 주세요"); return; }
+  if(k==="offs") x.kind = $("#ceKind").value;
+  const mv = $("#ceMove")?.value;
+  if(mv){ c[k] = c[k].filter(y=>y!==x); if(mv==="offs") x.kind = /개교/.test(x.name) ? "개교기념일" : /재량/.test(x.name) ? "재량휴업일" : "기타 휴업"; else delete x.kind; c[mv].push(x); }
+  ui.calEdit = null; commit(); toast(mv ? (mv==="offs" ? "수업 없는 날로 옮겼어요" : "학교 행사로 옮겼어요") : "고쳤어요");
+};
+EN.calEditSave = () => A.calEditSave(null);
+function calImportCard(imp){
+  if(!imp.res) return `<div class="card"><h2>학교 학사일정 붙여넣기</h2>
+    <div class="small muted" style="margin-bottom:8px">학교 교육과정 파일의 학사일정(월별 주요 일정, 학사일정 표 등)을 복사해서 그대로 붙여 넣으세요. 줄이 섞여 있어도 날짜가 있는 줄을 찾아 읽고, 넣기 전에 미리 보여 줘요.</div>
+    <div class="row" style="margin-bottom:8px"><label class="f" style="flex-direction:row;align-items:center;gap:8px">학년도<input type="number" id="impYear" value="${imp.Y}" style="width:90px"></label><span class="small muted">3월~이듬해 2월</span></div>
+    <textarea id="calImpTx" rows="10" placeholder="예)&#10;3월&#10;◆3(화) 시업식 및 입학식&#10;◆18(수) 학부모총회&#10;★4(월) 재량휴업일&#10;4/6~4/10 친구사랑주간&#10;7.27.(월) 여름방학식&#10;◆여름방학(7.28.-8.11.)">${esc(imp.text||"")}</textarea>
+    <div class="row" style="justify-content:flex-end;margin-top:8px"><button class="btn" data-act="calImpClose">닫기</button><button class="btn pri" data-act="calImpRead">읽어 보기</button></div></div>`;
+  const r = imp.res, t = r.terms, cnt = k => r.items.filter(x=>x.kind===k).length;
+  const TL = [["t1s","시업식"],["t1e","여름방학식"],["t2s","개학식"],["t2e","종업식"]];
+  return `<div class="card"><div class="spread"><h2>미리 보기 <span class="small muted">${imp.Y}학년도 · ${r.items.length}개 찾음</span></h2><button class="btn sm" data-act="calImpBack">다시 붙여넣기</button></div>
+    <div class="row small" style="gap:6px;margin-bottom:10px">${TL.map(([k,l])=>`<label class="f" style="flex-direction:row;align-items:center;gap:6px;margin-right:8px;white-space:nowrap">${l}<input type="date" value="${t[k]||""}" data-ch="calImpTerm" data-k="${k}"></label>`).join("")}</div>
+    ${TL.some(([k])=>!t[k]) ? `<div class="small" style="color:var(--warn);margin-bottom:8px">빈 학기 날짜는 직접 골라 주세요. 비워 두면 지금 학기 날짜를 그대로 둬요.</div>` : ""}
+    <div class="small muted" style="margin-bottom:6px">학교 행사 ${cnt("event")} · 수업 없는 날 ${cnt("off")+cnt("offH")} · 방학 ${cnt("break")+cnt("auto")} · 이미 있는 공휴일 ${cnt("holi")}. 종류가 틀린 줄은 고쳐 주세요.</div>
+    <div class="scroll" style="max-height:420px;overflow:auto"><table class="t"><tbody>${r.items.map((x,i)=>`<tr class="${x.kind==="skip"||x.kind==="holi"?"muted":""}"><td class="num small" style="white-space:nowrap">${x.e?`${md(x.s)} ~ ${md(x.e)}`:md(x.s)}</td><td>${esc(x.name)}</td>
+      <td class="r"><select data-ch="calImpKind" data-i="${i}" aria-label="종류">${IMPORT_KINDS.filter(([k])=>k!=="auto" || x.kind==="auto").filter(([k])=>k!=="holi" || KR_HOLI[x.s]).map(([k,l])=>`<option value="${k}" ${x.kind===k?"selected":""}>${l}</option>`).join("")}</select></td></tr>`).join("") || `<tr><td class="empty">날짜가 있는 줄을 찾지 못했어요. '3/18 학부모총회'처럼 날짜가 앞에 오도록 고쳐서 다시 붙여 넣어 보세요.</td></tr>`}</tbody></table></div>
+    ${r.skipped.length ? `<details class="small" style="margin-top:8px"><summary>날짜를 읽지 못한 줄 ${r.skipped.length}개</summary><div class="muted" style="margin-top:6px;white-space:pre-wrap">${r.skipped.slice(0,40).map(esc).join("\n")}</div><div class="small muted" style="margin-top:4px">필요한 줄은 넣은 뒤 아래 '학교 행사'에서 직접 추가하세요.</div></details>` : ""}
+    <div class="row" style="justify-content:space-between;margin-top:10px">
+      <label class="check"><input type="checkbox" id="impReplace" ${(CAL().events.length||CAL().offs.length)?"checked":""}><span>지금 들어 있는 행사·수업 없는 날은 지우고 넣기</span></label>
+      <div class="row"><button class="btn" data-act="calImpClose">취소</button><button class="btn pri" data-act="calImpApply" ${r.items.length||TL.some(([k])=>t[k])?"":"disabled"}>넣기</button></div></div></div>`;
+}
+CH.calT = el => { const c = CAL(); c[el.dataset.k][Number(el.dataset.i)] = el.value; c.set = true; commit(); };
+CH.calYear = el => { const Y = Number(el.value); if(!(Y > 2000)) return; const c = CAL();
+  if(!c.set && !c.events.length && !c.offs.length) S.cal = calDefault(Y); else c.year = Y;
+  S.cls.year = Y; commit(); };
+A.calAddBreak = () => { const n = $("#brName").value.trim()||"방학", s = $("#brS").value, e = $("#brE").value; if(!s||!e){ toast("방학 시작일과 끝나는 날을 골라 주세요"); return; } CAL().breaks.push({id:uid(), name:n, s, e}); commit(); };
+A.calAddOff = () => { const s = $("#offS").value; if(!s){ toast("날짜를 골라 주세요"); return; } const kind = $("#offKind").value; CAL().offs.push({id:uid(), s, e:$("#offE").value||"", name:$("#offName").value.trim()||kind, kind}); commit(); };
+A.calAddEv = () => { const s = $("#evS2").value, n = $("#evName2").value.trim(); if(!s||!n){ toast("날짜와 행사 이름을 적어 주세요"); return; } CAL().events.push({id:uid(), s, e:$("#evE2").value||"", name:n}); commit(); };
+EN.calAddEv = () => A.calAddEv();
+A.calDel = el => { const c = CAL(); c[el.dataset.k] = c[el.dataset.k].filter(x=>x.id!==el.dataset.id); commit(); };
+A.calClearEv = async () => { if(await ask("학교 행사를 모두 지울까요?","지우기",true)){ CAL().events = []; commit(); } };
+A.calWork = el => { const c = CAL(), d = el.dataset.d; c.work = c.work.includes(d) ? c.work.filter(x=>x!==d) : c.work.concat(d); commit(); };
+A.calImpOpen = () => { ui.calImp = ui.calImp ? null : {Y: CAL().year, text:""}; render(); $("#calImpTx")?.focus(); };
+A.calImpClose = () => { ui.calImp = null; render(); };
+A.calImpBack = () => { ui.calImp.res = null; render(); };
+A.calImpRead = () => { const imp = ui.calImp; imp.text = $("#calImpTx").value; imp.Y = Number($("#impYear").value) || imp.Y;
+  if(!imp.text.trim()){ toast("학사일정을 붙여 넣어 주세요"); return; }
+  imp.res = calParse(imp.text, imp.Y); render(); };
+CH.calImpKind = el => { ui.calImp.res.items[Number(el.dataset.i)].kind = el.value; render(); };
+CH.calImpTerm = el => { ui.calImp.res.terms[el.dataset.k] = el.value; };
+A.calImpApply = () => {
+  const imp = ui.calImp, r = imp.res, t = r.terms, replace = $("#impReplace")?.checked;
+  let c = CAL();
+  if(c.year !== imp.Y){ S.cal = c = Object.assign(calDefault(imp.Y), {work:[]}); if(Number(S.cls.year) !== imp.Y) S.cls.year = imp.Y; }
+  if(replace){ c.events = []; c.offs = []; c.breaks = []; }
+  if(t.t1s) c.t1[0] = t.t1s; if(t.t1e) c.t1[1] = t.t1e; if(t.t2s) c.t2[0] = t.t2s; if(t.t2e) c.t2[1] = t.t2e;
+  if(t.t1s || t.t1e || t.t2s || t.t2e) c.set = true;
+  let n = {event:0, off:0, brk:0};
+  r.items.forEach(x => {
+    if(x.kind==="event"){ c.events.push({id:uid(), s:x.s, e:x.e, name:x.name}); n.event++; }
+    else if(x.kind==="off" || x.kind==="offH"){ c.offs.push({id:uid(), s:x.s, e:x.e, name:x.name, kind: x.kind==="offH" ? "공휴일" : /개교/.test(x.name) ? "개교기념일" : /재량/.test(x.name) ? "재량휴업일" : "기타 휴업"}); n.off++; }
+    else if(x.kind==="break"){ c.breaks.push({id:uid(), s:x.s, e:x.e||x.s, name:x.name.replace(/\(.*$/,"").trim()||"방학"}); n.brk++; }
+  });
+  c.preset = ""; ui.calImp = null; commit();
+  toast(`학교 행사 ${n.event}개, 수업 없는 날 ${n.off}개${n.brk?`, 방학 ${n.brk}개`:""}를 넣었어요`);
+};
+A.calShare = () => { const c = CAL();
+  saveFile(`학사일정_${c.year}학년도${S.cls.school?"_"+S.cls.school:""}.json`, JSON.stringify({type:"classbook-calendar", v:1, cal:{...c, preset:""}}, null, 1)); };
+A.calFileOpen = () => $("#fileCal").click();
+async function calFileLoad(f){
+  try{ const d = JSON.parse(await f.text()); const cal = d.type==="classbook-calendar" ? d.cal : d.cal;
+    if(!cal || !cal.t1 || !cal.t2) throw 0;
+    if(!(await ask(`${cal.year}학년도 학사일정(학교 행사 ${cal.events?.length||0}개, 수업 없는 날 ${cal.offs?.length||0}개)으로 바꿀까요? 지금 학사일정은 사라져요.`, "불러오기"))) return;
+    const nid = a => (a||[]).map(x=>({...x, id:uid()}));
+    S.cal = Object.assign(calDefault(cal.year), cal, {events:nid(cal.events), offs:nid(cal.offs), breaks:nid(cal.breaks), work:cal.work||[], set: cal.set !== false});
+    if(Number(S.cls.year) !== Number(cal.year)) S.cls.year = cal.year;
+    commit(); toast("학사일정을 불러왔어요");
+  }catch(err){ toast("학사일정 공유 파일이나 학급일지 백업 파일이 아니에요"); }
+}
+A.calPreset = async () => { if(!(await ask("김포호수초등학교 2026학년도 교육과정의 학사일정(학기, 재량휴업일, 학교 행사)으로 바꿀까요? 지금 학사일정에 넣은 내용은 사라져요.", "불러오기"))) return;
+  S.cal = presetHosu2026(); if(!S.cls.year) S.cls.year = 2026; commit(); toast("2026학년도 학사일정을 넣었어요"); };
+
+/* ───────── 평가 계획 ───────── */
+const EVAL_METHODS = ["서술·논술","구술·발표","실기","관찰","보고서","포트폴리오","토의·토론","실험·실습","지필"];
+function planAssess(p){ let a = p.assessId && S.assessments.find(x=>x.id===p.assessId);
+  if(!a){ a = S.assessments.find(x=>x.subject===p.subj && x.title===p.item); if(a) p.assessId = a.id; } return a || null; }
+function planDue(p){ if(p.date) return p.date; if(p.month){ const [y,m] = p.month.split("-").map(Number); return ymd(new Date(y, m, 0)); } return ""; }
+function planStatus(p){
+  const a = planAssess(p);
+  if(a){ const n = S.students.filter(s=>a.scores[s.id]!==undefined && a.scores[s.id]!=="").length; return {k: n>=S.students.length ? "done" : "doing", a, n}; }
+  const due = planDue(p), t = today(); if(!due) return {k:"plan"};
+  if(due < t) return {k:"late"};
+  const start = p.date || (p.month ? p.month+"-01" : due);
+  if(start <= ymd(addDays(new Date(),7))) return {k:"soon"};
+  return {k:"plan"};
+}
+const PLAN_PILL = {done:["ok","실시 완료"], doing:["acc","입력 중"], late:["bad","기한 지남"], soon:["warn","곧 실시"], plan:["","예정"]};
+function parseWhen(t, Y){ t = String(t||"").trim(); if(!t) return {};
+  let m = t.match(/^(\d{4})[-.\/](\d{1,2})[-.\/](\d{1,2})/); if(m) return {date:`${m[1]}-${pad(m[2])}-${pad(m[3])}`};
+  m = t.match(/^(\d{1,2})[.\/](\d{1,2})/); if(m){ const mm = Number(m[1]); return {date:`${mm>=3?Y:Y+1}-${pad(mm)}-${pad(m[2])}`}; }
+  m = t.match(/(\d{1,2})\s*월/); if(m){ const mm = Number(m[1]); return {month:`${mm>=3?Y:Y+1}-${pad(mm)}`}; }
+  return {}; }
+VIEWS.evalplan = () => {
+  const term = ui.epTerm || (ui.epTerm = defaultTerm()), c = CAL();
+  const all = (S.evalPlans||[]).filter(p=>p.term===term);
+  const st = all.map(p=>({p, s:planStatus(p)}));
+  const cnt = k => st.filter(x=>x.s.k===k).length;
+  const sortKey = p => p.date || (p.month ? p.month+"-99" : "9999");
+  const byMonth = {}; st.slice().sort((a,b)=>sortKey(a.p).localeCompare(sortKey(b.p))).forEach(x=>{ const k = x.p.date ? x.p.date.slice(0,7) : x.p.month || "시기 미정"; (byMonth[k] ||= []).push(x); });
+  const e = ui.epEdit;
+  const subjOpts = [...new Set(TT().subjects.map(s=>s.name).concat((S.evalPlans||[]).map(p=>p.subj)))].filter(Boolean);
+  const form = `<div class="card"><h2>${e && (S.evalPlans||[]).some(p=>p.id===e.id) ? "평가 계획 고치기" : "평가 계획 추가"}</h2>
+    <div class="form ep-form">
+      <label class="f">과목<input type="text" id="epSubj" list="epSubjList" value="${esc(e?.subj||"")}" placeholder="수학"><datalist id="epSubjList">${subjOpts.map(n=>`<option value="${esc(n)}">`).join("")}</datalist></label>
+      <label class="f">단원·영역<input type="text" id="epUnit" value="${esc(e?.unit||"")}" placeholder="5. 꺾은선그래프"></label>
+      <label class="f">성취기준(선택)<input type="text" id="epStd" value="${esc(e?.std||"")}" placeholder="[4수04-02]"></label>
+      <label class="f">평가 요소<input type="text" id="epItem" value="${esc(e?.item||"")}" placeholder="꺾은선그래프 그리고 해석하기" data-enter="epSave"></label>
+      <label class="f">방법<input type="text" id="epMethod" list="epMethodList" value="${esc(e?.method||"")}" placeholder="서술·논술"><datalist id="epMethodList">${EVAL_METHODS.map(n=>`<option value="${n}">`).join("")}</datalist></label>
+      <label class="f">날짜(알면)<input type="date" id="epDate" value="${e?.date||""}"></label>
+      <label class="f">또는 월<select id="epMonth"><option value="">-</option>${Array.from({length:12},(_,i)=>{ const mm = ((i+2)%12)+1, yy = mm>=3?c.year:c.year+1, v = `${yy}-${pad(mm)}`; return `<option value="${v}" ${e?.month===v?"selected":""}>${mm}월</option>`; }).join("")}</select></label>
+      <div class="row" style="align-self:end;justify-content:flex-end">${e?`<button class="btn" data-act="epCancel">취소</button>`:""}<button class="btn pri" data-act="epSave">${e && (S.evalPlans||[]).some(p=>p.id===e.id)?"저장":"추가"}</button></div>
+    </div></div>`;
+  return header("평가 계획", `학년 평가 계획을 넣어 두면 제때 평가했는지, 성적을 다 입력했는지 확인할 수 있어요. 성적 입력에 같은 과목·평가 요소가 있으면 자동으로 연결돼요.`,
+    `<div class="seg">${["1","2"].map(t=>`<button class="${term===t?"on":""}" data-act="epTerm" data-v="${t}">${termName(t)}</button>`).join("")}</div><button class="btn" data-act="epPasteOpen">붙여넣기로 추가</button><button class="btn" data-act="epExport">내보내기</button>`) + `
+  <div class="grid3 ep-stats">
+    <div class="card stat"><span class="l">${termName(term)} 평가</span><span class="v num">${all.length}개</span></div>
+    <div class="card stat"><span class="l">실시 완료</span><span class="v num" style="color:var(--ok)">${cnt("done")}</span><span class="small muted">입력 중 ${cnt("doing")}개</span></div>
+    <div class="card stat"><span class="l">곧 실시 (7일 안)</span><span class="v num" style="color:var(--warn)">${cnt("soon")}</span></div>
+    <div class="card stat"><span class="l">기한 지남 · 미실시</span><span class="v num" style="color:var(--bad)">${cnt("late")}</span></div>
+  </div>
+  ${ui.epPaste ? `<div class="card"><h2>붙여넣기로 추가</h2><div class="small muted" style="margin-bottom:8px">엑셀이나 한글 표에서 복사해 붙여 넣으세요. 칸 순서: <b>과목 · 단원 · 평가 요소 · 성취기준 · 방법 · 시기</b> (첫 줄에 제목이 있으면 제목에 맞춰 읽어요). 시기는 '4/15', '2026-04-15', '4월' 모두 돼요. ${termName(term)}에 들어가요.</div>
+    <textarea id="epPasteTx" rows="8" placeholder="수학	5. 꺾은선그래프	꺾은선그래프 그리고 해석하기	[4수04-02]	서술·논술	11월"></textarea>
+    <div class="row" style="justify-content:flex-end;margin-top:8px"><button class="btn" data-act="epPasteOpen">닫기</button><button class="btn pri" data-act="epPasteGo">추가하기</button></div></div>` : ""}
+  ${form}
+  <div class="card">${Object.keys(byMonth).length ? Object.entries(byMonth).map(([k,l])=>`<div class="task-group"><div class="task-gh">${k==="시기 미정"?k:`${Number(k.slice(5))}월`} <span class="muted">${l.length}</span></div>
+    <div class="scroll"><table class="t ep-t"><tbody>${l.map(({p,s})=>{ const [pc,pl] = PLAN_PILL[s.k];
+      return `<tr class="${s.k==="late"?"ep-late":""}"><td class="num small" style="width:104px;white-space:nowrap">${p.date?md(p.date):p.month?`${Number(p.month.slice(5))}월 중`:"-"}</td><td style="width:70px">${subjChip(p.subj,"sm")}</td>
+        <td><div style="font-weight:500">${esc(p.item)}</div><div class="small muted">${[p.unit, p.std, p.method].filter(Boolean).map(esc).join(" · ")}</div></td>
+        <td style="width:150px"><span class="pill ${pc}">${pl}</span>${s.a?` <span class="small muted num">입력 ${s.n}/${S.students.length}</span>`:""}</td>
+        <td class="r" style="white-space:nowrap">${s.a ? `<button class="btn sm" data-act="epOpen" data-id="${p.id}">성적 보기</button>` : `<button class="btn sm ${s.k==="late"||s.k==="soon"?"pri":""}" data-act="epStart" data-id="${p.id}">평가 시작</button>`}<button class="btn sm ghost" data-act="epEditOpen" data-id="${p.id}">고치기</button><button class="x" data-act="epDel" data-id="${p.id}" aria-label="삭제">×</button></td></tr>`; }).join("")}</tbody></table></div></div>`).join("")
+    : `<div class="empty">${termName(term)} 평가 계획이 없어요. 위에서 추가하거나 학년 평가 계획 표를 붙여 넣어 주세요.</div>`}</div>`;
+};
+A.epTerm = el => { ui.epTerm = el.dataset.v; ui.epEdit = null; render(); };
+A.epPasteOpen = () => { ui.epPaste = !ui.epPaste; render(); $("#epPasteTx")?.focus(); };
+A.epEditOpen = el => { ui.epEdit = JSON.parse(JSON.stringify(S.evalPlans.find(p=>p.id===el.dataset.id))); render(); $("#main").scrollTop = 0; };
+A.epCancel = () => { ui.epEdit = null; render(); };
+A.epSave = () => {
+  const item = $("#epItem").value.trim(), subj = $("#epSubj").value.trim(); if(!item || !subj){ toast("과목과 평가 요소를 적어 주세요"); return; }
+  const p = ui.epEdit || {id:uid(), term:ui.epTerm};
+  Object.assign(p, {subj, item, unit:$("#epUnit").value.trim(), std:$("#epStd").value.trim(), method:$("#epMethod").value.trim(), date:$("#epDate").value||"", month:$("#epDate").value ? "" : $("#epMonth").value});
+  S.evalPlans ||= []; const i = S.evalPlans.findIndex(x=>x.id===p.id); i>=0 ? S.evalPlans[i] = p : S.evalPlans.push(p);
+  ui.epEdit = null; commit(); toast("평가 계획을 저장했어요"); };
+EN.epSave = () => A.epSave();
+A.epDel = async el => { if(await ask("이 평가 계획을 지울까요? 성적 입력에 들어간 점수는 그대로 남아요.","지우기",true)){ S.evalPlans = S.evalPlans.filter(p=>p.id!==el.dataset.id); commit(); } };
+A.epStart = el => { const p = S.evalPlans.find(x=>x.id===el.dataset.id);
+  const a = {id:uid(), subject:p.subj, title:p.item, date: p.date && p.date <= today() ? p.date : today(), mode:"level", levels:LEVELS.slice(), max:100, scores:{}};
+  S.assessments.push(a); p.assessId = a.id; ui.gradeSel = a.id; commit(); location.hash = "grades"; toast("성적 입력에 평가를 만들었어요. 바로 입력하세요"); };
+A.epOpen = el => { const p = S.evalPlans.find(x=>x.id===el.dataset.id); ui.gradeSel = p.assessId; location.hash = "grades"; };
+A.epPasteGo = () => {
+  const c = CAL(), rows = $("#epPasteTx").value.split("\n").map(l=>l.replace(/\r/g,"")).filter(l=>l.trim()).map(l=>l.split("\t").map(x=>x.trim()));
+  if(!rows.length) return;
+  let cols = {subj:0, unit:1, item:2, std:3, method:4, when:5};
+  const h = rows[0].join("|");
+  if(/과목|교과/.test(h) && /평가/.test(h)){ const m = {}; rows[0].forEach((t,i)=>{ if(/과목|교과/.test(t)) m.subj = i; else if(/단원|영역/.test(t)) m.unit = i; else if(/요소|내용|평가 ?과제/.test(t)) m.item = i; else if(/성취/.test(t)) m.std = i; else if(/방법|유형/.test(t)) m.method = i; else if(/시기|날짜|일시|월/.test(t)) m.when = i; }); cols = Object.assign({}, cols, m); rows.shift(); }
+  let n = 0; S.evalPlans ||= [];
+  rows.forEach(r => { const subj = r[cols.subj]||"", item = r[cols.item] || r[cols.unit] || ""; if(!subj || !item) return;
+    S.evalPlans.push(Object.assign({id:uid(), term:ui.epTerm, subj, item, unit:r[cols.unit]||"", std:r[cols.std]||"", method:r[cols.method]||"", date:"", month:""}, parseWhen(r[cols.when], c.year))); n++; });
+  ui.epPaste = false; commit(); toast(`평가 계획 ${n}개를 넣었어요`); };
+A.epExport = () => { const rows = [["학기","과목","단원·영역","평가 요소","성취기준","방법","시기","상태","입력"]];
+  (S.evalPlans||[]).slice().sort((a,b)=>(a.term+(a.date||a.month)).localeCompare(b.term+(b.date||b.month))).forEach(p=>{ const s = planStatus(p); rows.push([termName(p.term), p.subj, p.unit, p.item, p.std, p.method, p.date || (p.month?`${Number(p.month.slice(5))}월`:""), PLAN_PILL[s.k][1], s.a?`${s.n}/${S.students.length}`:""]); });
+  exportSheets(`${clsName()}_평가계획`, [["평가 계획", rows]]); };
+function evalTodayCard(){
+  const st = (S.evalPlans||[]).map(p=>({p, s:planStatus(p)})).filter(x=>x.s.k==="late"||x.s.k==="soon"||x.s.k==="doing");
+  if(!st.length) return "";
+  const order = {late:0, doing:1, soon:2};
+  return `<div class="card"><div class="spread"><h2>평가 확인</h2><a class="btn sm" href="#evalplan">평가 계획</a></div>
+    ${st.sort((a,b)=>order[a.s.k]-order[b.s.k]).slice(0,6).map(({p,s})=>`<div class="spread" style="padding:6px 0;border-bottom:1px solid var(--line)"><span>${subjChip(p.subj,"sm")} ${esc(p.item)}</span><span><span class="pill ${PLAN_PILL[s.k][0]}">${PLAN_PILL[s.k][1]}</span>${s.a?` <span class="small muted num">${s.n}/${S.students.length}</span>`:p.date?` <span class="small muted">${md(p.date)}</span>`:""}</span></div>`).join("")}</div>`;
+}
+
+/* ───────── 새 학년도 · 지난 기록 보기 ───────── */
+function viewingArchive(){ return !!liveS; }
+A.newYearOpen = () => {
+  const c = CAL(), Y = (Number(S.cls.year)||c.year||new Date().getFullYear());
+  const bg = document.createElement("div"); bg.className = "modal-bg";
+  bg.innerHTML = `<div class="modal" style="max-width:520px"><h3>새 학년도 시작하기</h3>
+    <div class="small"><b>1. 올해 기록 보관하기</b><br><span class="muted">${Y}학년도 기록 전체를 파일로 받아 두세요. 나중에 '지난 기록 열어 보기'로 언제든 볼 수 있어요.${SY.on?" 구글 드라이브에도 보관본을 함께 저장해요.":""}</span></div>
+    <div class="row"><button class="btn pri" data-k="arch">보관 파일 받기</button><span class="small" id="archState"></span></div>
+    <div class="small" style="margin-top:6px"><b>2. 새 학년도 정보</b></div>
+    <div class="form" style="grid-template-columns:1fr 1fr 1fr"><label class="f">학년도<input type="number" id="nyYear" value="${Y+1}"></label><label class="f">학급 이름<input type="text" id="nyName" value="${esc(S.cls.name)}"></label><label class="f">학년·반<input type="text" id="nyGrade" value="" placeholder="예: 5학년 2반"></label></div>
+    <div class="small"><b>3. 그대로 가져갈 것</b></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px">
+      <label class="check"><input type="checkbox" id="kSubj" checked><span>시간표 과목·교시 시각</span></label>
+      <label class="check"><input type="checkbox" id="kQuick" checked><span>빠른 기록 문구</span></label>
+      <label class="check"><input type="checkbox" id="kJobs" checked><span>일인일역·직업 목록</span></label>
+      <label class="check"><input type="checkbox" id="kTasks" checked><span>끝나지 않은 업무</span></label>
+      <label class="check"><input type="checkbox" id="kMemo" checked><span>메모장</span></label>
+      <label class="check"><input type="checkbox" id="kBudget"><span>예산 항목(금액·지출은 비움)</span></label>
+    </div>
+    <div class="small muted">학생, 출결, 기록, 상담, 성적, 평가 계획, 다이어리, 행사, 학사일정은 비워요.</div>
+    <div class="row" style="justify-content:flex-end"><button class="btn" data-k="0">취소</button><button class="btn danger" data-k="go" id="nyGo" disabled>새 학년도 시작</button></div></div>`;
+  let archived = false;
+  bg.addEventListener("click", async e => { const k = e.target.closest("[data-k]")?.dataset.k;
+    if(e.target===bg || k==="0"){ bg.remove(); return; }
+    if(k==="arch"){ const name = `학급일지_보관_${Y}학년도_${clsName()}.json`, text = JSON.stringify(S);
+      const ok = await saveFile(name, text);
+      let drive = "";
+      if(SY.on && (GMODE ? gTokenOk() : true)){ try{ const fid = await ensureFolder(); await drv.upload(fid, name.replace(".json","")+"_"+Date.now()+".json", text); drive = " · 드라이브에도 보관함"; }catch(err){ drive = " · 드라이브 보관은 실패(파일은 받음)"; } }
+      if(ok){ archived = true; bg.querySelector("#archState").textContent = "보관했어요" + drive; bg.querySelector("#nyGo").disabled = false; } return; }
+    if(k==="go" && archived){
+      if(!(await ask("정말 새 학년도를 시작할까요? 지금 화면의 학생과 기록이 비워져요. (보관 파일은 받아 두셨어요)","새 학년도 시작",true))) return;
+      const keep = {subj:$("#kSubj").checked, quick:$("#kQuick").checked, jobs:$("#kJobs").checked, tasks:$("#kTasks").checked, memo:$("#kMemo").checked, budget:$("#kBudget").checked};
+      const old = S, ny = Number($("#nyYear").value)||Y+1, n = blank();
+      n.cls = {name: $("#nyName").value.trim() || old.cls.name, grade: $("#nyGrade").value.trim(), year: ny};
+      n.menus = old.menus; n.jobMode = old.jobMode; n.lastBackup = old.lastBackup;
+      if(keep.subj && old.timetable){ n.timetable = ttBlank(old.timetable.band); Object.assign(n.timetable, {subjects:old.timetable.subjects, periods:old.timetable.periods, times:old.timetable.times}); }
+      if(keep.quick){ n.quickTags = old.quickTags; n.quickV = old.quickV; }
+      if(keep.jobs){ n.jobs.list = old.jobs.list; n.roles.list = (old.roles||{}).list || []; }
+      if(keep.tasks) n.tasks = (old.tasks||[]).filter(t=>!t.done);
+      if(keep.memo) n.memos = old.memos;
+      if(keep.budget) n.budgets = old.budgets.map(b=>({...b, id:uid(), total:0, expenses:[]}));
+      n.cal = calDefault(ny);
+      S = n; bg.remove(); location.hash = "students"; commit(); toast(`${ny}학년도를 시작했어요. 학생과 학사일정을 넣어 주세요`);
+    }
+  });
+  document.body.appendChild(bg);
+};
+A.archiveOpen = () => $("#fileArchive").click();
+A.archiveClose = () => { if(!liveS) return; S = liveS; liveS = null; render(); toast("지금 학년도로 돌아왔어요"); };
+function archiveBanner(){ return liveS ? `<div class="banner" style="background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 30%,transparent)"><div><b style="color:var(--accent)">${esc(S.cls.year||"")}학년도 ${esc(S.cls.name||"")} 보관 기록</b>을 보는 중이에요. 여기서 바꾼 내용은 저장되지 않아요.</div><button class="btn sm pri" data-act="archiveClose">지금 학년도로 돌아가기</button></div>` : ""; }
 
 /* ───────── 업무 관리 ───────── */
 const TASK_CATS = ["학급","학년","공문·보고","행사","기타"];
@@ -1690,13 +2163,13 @@ A.qtUndo = () => { const id = ui.qtLast.pop(); if(!id) return; const r = S.recor
 /* ───────── 학생 종합 · 종합의견 ─────────
    학생 기록 + 상담 기록 + 출결·제출·성적·역할을 한 학생 기준으로 모아 보고, 학기별 종합의견을 쓴다. */
 function termRange(term){
-  const Y = Number(S.cls.year) || new Date().getFullYear();
-  if(term==="1") return [`${Y}-03-01`, `${Y}-08-15`];
-  if(term==="2") return [`${Y}-08-16`, `${Y+1}-02-28`];
+  const c = CAL(), Y = c.year;
+  if(term==="1") return [`${Y}-03-01`, c.t1[1]];            // 1학기: 3월 1일 ~ 1학기 끝(여름방학식)
+  if(term==="2") return [ymd(addDays(parse(c.t1[1]),1)), `${Y+1}-02-28`];   // 2학기: 그다음 날 ~ 학년도 끝
   return [`${Y}-03-01`, `${Y+1}-02-28`];
 }
 const termName = t => t==="1" ? "1학기" : t==="2" ? "2학기" : "올해 전체";
-function defaultTerm(){ const d = today().slice(5); return (d >= "03-01" && d <= "08-15") ? "1" : "2"; }
+function defaultTerm(){ return today() <= CAL().t1[1] ? "1" : "2"; }
 const inRange = (d, [a,b]) => d >= a && d <= b;
 function studentDigest(sid, term){
   const R = termRange(term);
@@ -2153,13 +2626,20 @@ VIEWS.settings = () => header("설정", "학급 정보, 쓰는 메뉴, 백업") 
   <div class="card"><h2>백업 파일</h2>
     <p style="margin:0 0 12px;max-width:68ch" class="muted">기록은 이 브라우저에 먼저 저장돼요. 드라이브 자동 백업과 별개로, 가끔 백업 파일을 직접 받아 두면 더 안전해요.</p>
     <div class="row"><button class="btn pri" data-act="backup">백업 파일 받기</button><button class="btn" data-act="restore">백업 파일로 복원</button><span class="small muted">${S.lastBackup?`마지막 백업 ${new Date(S.lastBackup).toLocaleString("ko-KR")}`:"아직 백업한 적이 없어요"}</span></div></div>
+  <div class="card"><h2>새 학년도</h2><p class="muted" style="margin:0 0 12px;max-width:68ch">한 해가 끝나면 올해 기록을 보관 파일로 받아 두고, 설정(과목, 빠른 기록 문구, 직업 목록 등)은 남긴 채 새 학년도를 시작할 수 있어요. 지난해 기록은 보관 파일을 열어 언제든 볼 수 있어요.</p>
+    <div class="row"><button class="btn pri" data-act="newYearOpen">새 학년도 시작하기</button><button class="btn" data-act="archiveOpen">지난 기록 열어 보기</button></div></div>
   <div class="card"><h2>처음으로</h2><div class="row"><button class="btn" data-act="loadSample">예시 데이터 다시 보기</button><button class="btn danger" data-act="resetAll">모든 데이터 지우기</button></div></div>`;
 CH.clsName = el => { const v = el.value.trim(); if(!v){ toast("학급 이름은 비워 둘 수 없어요"); el.value = S.cls.name; return; } S.cls.name = v; commit(); };
 CH.clsGrade = el => { S.cls.grade = el.value.trim(); commit(); };
-CH.clsYear = el => { S.cls.year = Number(el.value)||S.cls.year; commit(); };
+CH.clsYear = el => { S.cls.year = Number(el.value)||S.cls.year; calFollowYear(); commit(); };
 CH.menuToggle = el => { S.menus[el.dataset.k] = el.checked; commit(); };
 A.backup = async () => { const ok = await saveFile(`${clsName()}_학급일지_백업_${today()}.json`, JSON.stringify(S, null, 1)); if(ok){ S.lastBackup = Date.now(); commit(); } };
 A.restore = () => $("#fileRestore").click();
+$("#fileCal").addEventListener("change", async e => { const f = e.target.files[0]; if(f) await calFileLoad(f); e.target.value = ""; });
+$("#fileArchive").addEventListener("change", async e => { const f = e.target.files[0]; if(!f) return;
+  try{ const d = JSON.parse(await f.text()); if(!d || !Array.isArray(d.students)) throw 0;
+    if(!liveS) liveS = S; S = Object.assign(blank(), d); location.hash = "today"; render(); toast(`${d.cls?.year||""}학년도 기록을 열었어요 (읽기 전용)`);
+  }catch(err){ toast("학급일지 보관·백업 파일이 아니에요"); } e.target.value = ""; });
 $("#fileRestore").addEventListener("change", async e => { const f = e.target.files[0]; if(!f) return;
   try{ const d = JSON.parse(await f.text()); if(!d || !Array.isArray(d.students)) throw 0;
     if(await ask(`'${esc(d.cls?.name||"")}' 백업(학생 ${d.students.length}명)으로 지금 데이터를 바꿀까요? 지금 데이터는 사라져요.`,"복원",true)){ S = Object.assign(blank(), d); commit(); toast("복원했어요"); }
