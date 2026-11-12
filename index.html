@@ -595,7 +595,7 @@ function setupView(){
 A.setupGo = () => { const n = $("#setName").value.trim(); if(!n){ toast("학급 이름을 적어 주세요"); $("#setName").focus(); return; }
   S.cls.name = n; S.cls.grade = $("#setGrade").value.trim(); S.cls.year = Number($("#setYear").value) || new Date().getFullYear(); commit(); };
 EN.setupGo = () => A.setupGo();
-A.setupFromDrive = () => withLogin(async () => {
+A.setupFromDrive = () => withLogin("setupFromDrive", async () => {
   Object.assign(SY, {on:true, rev:0, dirty:false, state:"busy", msg:""}); saveSY();
   await syncCycle("manual");
   if(!S.cls.name){ if(SY.state==="error") toast(SY.msg); else toast("드라이브에 학급일지 백업이 없어요. 학급 이름을 정해 새로 시작해 주세요"); }
@@ -1503,7 +1503,7 @@ VIEWS.settings = () => header("설정", "학급 정보, 쓰는 메뉴, 백업") 
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">${MENUS.flatMap(g=>g.items).filter(([k])=>!ALWAYS.includes(k)).map(([k,l])=>`<label class="check"><input type="checkbox" ${S.menus[k]?"checked":""} data-ch="menuToggle" data-k="${k}"><span>${l}</span></label>`).join("")}</div></div>
   </div>
   <div class="card"><h2>구글 드라이브 자동 백업</h2>
-    <p style="margin:0 0 12px;max-width:68ch" class="muted">켜 두면 기록을 고칠 때마다 잠시 뒤 내 구글 드라이브의 '${GD_FOLDER}' 폴더에 자동으로 저장돼요. 다른 컴퓨터나 휴대폰에서 이 앱을 열면 드라이브의 최신 기록을 받아 오고, 열어 둔 동안에도 1분마다 확인해요. 최근 백업 ${GD_KEEP}개가 남아서 이전 시점으로 되돌릴 수도 있어요. ${GMODE ? "처음 켤 때 구글 로그인 창이 떠요. 이 앱은 자기가 만든 파일만 볼 수 있어서 드라이브의 다른 파일에는 손대지 않아요. 구글 연결은 약 1시간마다 만료되는데, 그때는 '지금 동기화'를 한 번 누르면 이어져요." : "처음 켤 때 드라이브 사용을 허락하는 창이 떠요."}</p>
+    <p style="margin:0 0 12px;max-width:68ch" class="muted">켜 두면 기록을 고칠 때마다 잠시 뒤 내 구글 드라이브의 '${GD_FOLDER}' 폴더에 자동으로 저장돼요. 다른 컴퓨터나 휴대폰에서 이 앱을 열면 드라이브의 최신 기록을 받아 오고, 열어 둔 동안에도 1분마다 확인해요. 최근 백업 ${GD_KEEP}개가 남아서 이전 시점으로 되돌릴 수도 있어요. ${GMODE ? "처음 켤 때 구글 로그인 창이 떠요. 이 앱은 자기가 만든 파일만 볼 수 있어서 드라이브의 다른 파일에는 손대지 않아요. 구글 연결은 약 1시간마다(또는 새 창을 열 때) 끊기는데, 그때는 '지금 동기화'를 한 번 누르면 구글 화면에 잠깐 다녀와서 이어져요." : "처음 켤 때 드라이브 사용을 허락하는 창이 떠요."}</p>
     <div id="syncPanel" style="display:flex;flex-direction:column;gap:10px">${syncPanelInner()}</div></div>
   <div class="card"><h2>백업 파일</h2>
     <p style="margin:0 0 12px;max-width:68ch" class="muted">기록은 이 브라우저에 먼저 저장돼요. 드라이브 자동 백업과 별개로, 가끔 백업 파일을 직접 받아 두면 더 안전해요.</p>
@@ -1528,7 +1528,7 @@ A.openSide = () => $("#side").classList.add("open");
    저장할 때마다 '학급일지 자동백업' 폴더에 학급일지_<저장시각>.json 을 새로 만들고 최근 10개만 남긴다.
    다른 기기는 1분마다(그리고 화면으로 돌아올 때) 더 최신 파일이 있는지 보고 받아 온다.          */
 const GD = "Google Drive", GD_KEEP = 10;
-const STOP_CODES = ["popup_blocked","popup_closed","gis_blocked","no_config","needs_login","auth_denied","auth_popup","gis_loading","forbidden","needs_reauth","server_not_connected","not_in_manifest","blocked_by_policy","not_granted","capability_disabled","capability_removed","approval_required","selection_required","too_large"];
+const STOP_CODES = ["auth_state","auth_error","popup_blocked","popup_closed","gis_blocked","no_config","needs_login","auth_denied","auth_popup","gis_loading","forbidden","needs_reauth","server_not_connected","not_in_manifest","blocked_by_policy","not_granted","capability_disabled","capability_removed","approval_required","selection_required","too_large"];
 let mcpApi = null, syncing = false, syncPaused = false, syncConflict = null;
 async function getMcp(){ if(mcpApi) return mcpApi; if(!(window.claude && typeof window.claude.use==="function")) return null; try{ mcpApi = await window.claude.use("mcp"); }catch(e){ mcpApi = null; } return mcpApi; }
 async function gd(tool, input){ const m = await getMcp(); if(!m) throw {code:"not_granted"}; const r = await m.callTool(GD, tool, input, {cache:false}); return r.payload; }
@@ -1537,26 +1537,36 @@ function b64utf8(b){ b = String(b).replace(/-/g,"+").replace(/_/g,"/"); const bi
 const GOOGLE_CLIENT_ID = String(window.CLASSBOOK_GOOGLE_CLIENT_ID || "").trim();
 const GMODE = !!GOOGLE_CLIENT_ID;
 const DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.file";
-let gTok = "", gTokExp = 0, gClient = null, gisReady = false;
-function gisLoad(){
-  if(!GMODE || gisReady) return;
-  const s = document.createElement("script"); s.src = "https://accounts.google.com/gsi/client"; s.async = true;
-  s.onload = () => { try{ gClient = google.accounts.oauth2.initTokenClient({client_id:GOOGLE_CLIENT_ID, scope:DRIVE_SCOPE,
-      callback: r => gHandlers.ok(r), error_callback: e => gHandlers.err(e)}); gisReady = true; }catch(e){ gisFailed = true; gisInitErr = String(e && e.message || e); } };
-  s.onerror = () => { gisFailed = true; };
-  document.head.appendChild(s);
-}
-let gisFailed = false, gisInitErr = "";
-const gHandlers = {ok:()=>{}, err:()=>{}};
+let gTok = "", gTokExp = 0;
+/* 구글 로그인: 팝업 대신 '페이지 이동' 방식(OAuth 리디렉션). 팝업 차단과 상관없이 동작한다.
+   로그인하면 구글이 이 앱 주소로 돌려보내며 주소 끝(#)에 접근 토큰을 붙여 준다. 토큰(1시간짜리)은 이 브라우저에 잠깐 둔다. */
+const G_REDIRECT = location.origin + "/";
+const G_TOK_KEY = KEY + "-gtok", G_INTENT_KEY = KEY + "-gintent";
+try{ const t = JSON.parse(localStorage.getItem(G_TOK_KEY) || "null"); if(t && t.exp > Date.now()){ gTok = t.tok; gTokExp = t.exp; } }catch(e){}
+let gReturn = null;   // 구글에서 돌아온 결과 {ok, err, intent}
+(function parseGoogleReturn(){
+  if(!GMODE) return;
+  const h = location.hash.slice(1);
+  if(!/(^|&)(access_token|error)=/.test(h)) return;
+  const p = new URLSearchParams(h);
+  let intent = null; try{ intent = JSON.parse(localStorage.getItem(G_INTENT_KEY) || "null"); localStorage.removeItem(G_INTENT_KEY); }catch(e){}
+  if(!intent || intent.state !== p.get("state")){ gReturn = {err:{code:"auth_state", message:"로그인 확인값이 맞지 않아요"}}; }
+  else if(p.get("error")){ gReturn = {err:{code: p.get("error")==="access_denied" ? "auth_denied" : "auth_error", message:p.get("error")}, intent}; }
+  else {
+    gTok = p.get("access_token"); gTokExp = Date.now() + (Number(p.get("expires_in")||3600) - 120)*1000;
+    try{ localStorage.setItem(G_TOK_KEY, JSON.stringify({tok:gTok, exp:gTokExp})); }catch(e){}
+    SY.gGranted = true; saveSY(); gReturn = {ok:true, intent};
+  }
+  history.replaceState(null, "", location.pathname + location.search + (intent && intent.route ? "#" + intent.route : ""));
+})();
 const gTokenOk = () => gTok && Date.now() < gTokExp;
-/* 반드시 버튼 클릭 안에서 바로 불러야 팝업이 막히지 않는다 */
-function gLogin(){
-  return new Promise((res, rej) => {
-    if(!gisReady || !gClient) return rej({code: gisFailed ? "gis_blocked" : "gis_loading"});
-    gHandlers.ok = r => { if(r && r.error) return rej({code:"auth_denied", message:[r.error, r.error_description].filter(Boolean).join(" ")}); gTok = r.access_token; gTokExp = Date.now() + (Number(r.expires_in||3600) - 120)*1000; SY.gGranted = true; saveSY(); res(); };
-    gHandlers.err = e => { const t = e && e.type; rej({code: t==="popup_failed_to_open" ? "popup_blocked" : t==="popup_closed" ? "popup_closed" : "auth_popup", message:t}); };
-    try{ gClient.requestAccessToken({prompt: SY.gGranted ? "" : "consent"}); }catch(e){ rej({code:"auth_popup", message:"requestAccessToken: " + (e && e.message || e)}); }
-  });
+function gLogin(action){
+  const state = Math.random().toString(36).slice(2) + Date.now().toString(36);
+  try{ localStorage.setItem(G_INTENT_KEY, JSON.stringify({state, action, route: location.hash.slice(1)})); }catch(e){}
+  const q = new URLSearchParams({client_id:GOOGLE_CLIENT_ID, redirect_uri:G_REDIRECT, response_type:"token", scope:DRIVE_SCOPE, include_granted_scopes:"true", state});
+  if(!SY.gGranted) q.set("prompt", "consent");
+  persist(); saveSY();
+  location.href = "https://accounts.google.com/o/oauth2/v2/auth?" + q.toString();
 }
 async function gfetch(url, opt={}){
   if(!gTokenOk()) throw {code:"needs_login"};
@@ -1591,9 +1601,18 @@ const drv = GMODE ? {
   limit: 950000
 };
 /* 동기화를 사용자가 누른 버튼에서 시작할 때: 구글 모드면 먼저 로그인 */
-function withLogin(fn){
+/* 동기화를 사용자가 누른 버튼에서 시작할 때: 구글 모드에서 연결이 없으면 구글 로그인 페이지로 다녀온 뒤 이어서 실행 */
+function withLogin(action, fn){
   if(!GMODE && !(window.claude && typeof window.claude.use==="function")){ syncErr({code:"no_config"}); toast("구글 연결 설정(config.js)이 아직 없어요"); render(); return; }
-  if(GMODE && !gTokenOk()){ gLogin().then(fn).catch(e=>{ syncErr(e); toast(SY.msg); render(); }); } else fn(); }
+  if(GMODE && !gTokenOk()){ toast("구글 로그인 화면으로 이동해요"); setTimeout(()=>gLogin(action), 300); return; }
+  fn();
+}
+function resumeAfterGoogle(){
+  if(!gReturn) return;
+  const r = gReturn; gReturn = null;
+  if(r.err){ syncErr(r.err); toast(SY.msg); render(); return; }
+  const f = r.intent && A[r.intent.action]; if(typeof f==="function") f();   // 이제 연결돼 있으니 바로 실행된다
+}
 const GD_FOLDER = GMODE ? "학급일지 자동백업 (웹앱)" : "학급일지 자동백업";
 function syncErr(e){
   const c = e && e.code;
@@ -1609,11 +1628,13 @@ function syncErr(e){
     blocked_by_policy:"관리자 정책으로 드라이브 사용이 막혀 있어요.",
     server_unavailable:"드라이브가 잠시 응답하지 않아요. 잠시 뒤 다시 시도할게요.",
     too_large:"기록이 너무 많아 자동 백업 한도를 넘었어요. 설정에서 '백업 파일 받기'를 써 주세요.",
-    needs_login:"구글 드라이브 연결이 만료됐어요(약 1시간마다). '지금 동기화'를 누르면 바로 다시 이어져요. 그동안 기록은 이 기기에 안전하게 저장돼요.",
+    needs_login:"구글 드라이브 연결이 끊겨 있어요(약 1시간마다, 또는 새 창을 열 때). '지금 동기화'를 누르면 구글 화면에 잠깐 다녀와서 이어져요. 그동안 기록은 이 기기에 안전하게 저장돼요.",
     gis_loading:"구글 로그인을 준비하는 중이에요. 잠시 뒤 다시 눌러 주세요.",
     gis_blocked:"구글 로그인 도구를 불러오지 못했어요. 학교 인터넷이나 광고 차단 프로그램이 accounts.google.com을 막고 있는지 확인해 주세요.",
     no_config:"아직 구글 연결 설정이 없어요. GitHub의 config.js에 구글 클라이언트 ID를 넣고 1분 뒤 Ctrl+Shift+R로 새로고침해 주세요(배포 안내 3·4단계).",
     auth_denied:"구글 드라이브 사용을 허용하지 않았어요. 다시 눌러 허용해 주세요.",
+    auth_state:"구글 로그인 확인이 맞지 않아요. 다시 한 번 눌러 주세요.",
+    auth_error:"구글 로그인에서 오류가 났어요. 구글 클라우드의 클라이언트 설정(승인된 리디렉션 URI)을 확인해 주세요.",
     auth_popup:"구글 로그인 창을 열지 못했어요. 새로고침(Ctrl+Shift+R) 후 다시 눌러 주세요.",
     popup_blocked:"크롬이 구글 로그인 창을 막았어요. 주소창 오른쪽의 팝업 차단 아이콘을 눌러 '항상 허용'을 고른 뒤 다시 눌러 주세요.",
     popup_closed:"구글 로그인 창이 끝나기 전에 닫혔어요. 창 안에 오류(예: 400 origin_mismatch, 액세스 차단됨)가 보였다면 배포 안내의 '자주 생기는 문제'를 확인해 주세요.",
@@ -1687,13 +1708,13 @@ function syncPanelInner(){
     <div class="row">${SY.on ? `<button class="btn pri" data-act="syncNow">지금 동기화</button><button class="btn" data-act="syncVersions">이전 백업 보기</button><button class="btn ghost danger" data-act="syncOff">자동 백업 끄기</button>` : `<button class="btn pri" data-act="syncOn">구글 드라이브 자동 백업 켜기</button>`}
     ${SY.folderId ? `<a class="btn ghost" href="https://drive.google.com/drive/folders/${esc(SY.folderId)}" target="_blank" rel="noopener">드라이브 폴더 열기</a>` : ""}</div>`;
 }
-A.syncOn = () => withLogin(() => { Object.assign(SY, {on:true, rev:0, dirty:true, state:"busy", msg:""}); saveSY(); syncCycle("manual"); });
+A.syncOn = () => withLogin("syncOn", () => { Object.assign(SY, {on:true, rev:0, dirty:true, state:"busy", msg:""}); saveSY(); syncCycle("manual"); });
 A.syncOff = async () => { if(await ask("구글 드라이브 자동 백업을 끌까요? 드라이브에 있는 백업 파일은 그대로 남아요.","끄기")){ Object.assign(SY, {on:false, state:"off", msg:""}); syncConflict = null; saveSY(); render(); } };
-A.syncNow = () => withLogin(() => syncCycle("manual"));
+A.syncNow = () => withLogin("syncNow", () => syncCycle("manual"));
 A.syncUseRemote = async () => { const f = syncConflict; syncConflict = null; try{ applyRemote(await readRemote(f)); toast("드라이브 기록을 불러왔어요"); }catch(e){ syncErr(e); render(); } };
 A.syncUseLocal = async () => { if(!(await ask("드라이브의 최신 기록 대신 이 기기의 기록을 올릴까요? 드라이브의 그 기록은 '이전 백업 보기'에서 다시 불러올 수 있어요.","덮어쓰기"))) return;
   SY.rev = syncConflict.rev; SY.dirty = true; syncConflict = null; saveSY(); syncCycle("manual"); };
-A.syncVersions = () => withLogin(syncVersionsOpen);
+A.syncVersions = () => withLogin("syncVersions", syncVersionsOpen);
 async function syncVersionsOpen(){
   let list; try{ list = await listRemote(); }catch(e){ syncErr(e); return; }
   const bg = document.createElement("div"); bg.className = "modal-bg";
@@ -1707,7 +1728,8 @@ async function syncVersionsOpen(){
 };
 setInterval(() => { if(document.visibilityState==="visible") syncCycle("poll"); renderSyncBits(); }, 60000);
 document.addEventListener("visibilitychange", () => { if(document.visibilityState==="hidden"){ if(SY.dirty) syncCycle("hide"); } else syncCycle("focus"); });
-gisLoad();
+/* 로그인에서 돌아온 경우: 화면을 그린 뒤 하려던 일을 이어서 */
+setTimeout(resumeAfterGoogle, 50);
 if(SY.on){ SY.state = SY.dirty ? "pending" : "ok"; setTimeout(()=>syncCycle("load"), 800); }
 if("serviceWorker" in navigator && !window.claude && location.protocol==="https:"){ navigator.serviceWorker.register("sw.js").catch(()=>{}); }
 
