@@ -225,6 +225,22 @@ th.tt-today{color:var(--accent)}
 .task-row.late .task-title{color:var(--bad)}
 .task-row.compact{padding:6px 2px}
 .task-row.editing{background:var(--accent-soft);flex-direction:column}
+.tt-modebar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 16px;border-radius:12px;margin-bottom:16px;border:1px solid var(--line);background:var(--surface)}
+.tt-modebar .small{color:var(--muted);margin-top:2px}
+.tt-modebar.week{border-left:4px solid var(--accent)}
+.tt-modebar.base{border-left:4px solid hsl(265 45% 52%);background:hsl(265 60% 97%)}
+.tt-modebar.base.editing{border:2px solid hsl(265 45% 52%);background:hsl(265 70% 95%)}
+.tt-basecard{background:hsl(265 40% 98.5%)}
+.tt-basecard:not(.tt-drafting) .tt-cell{cursor:default}
+.tt-drafting{outline:2px dashed hsl(265 45% 60%);outline-offset:-2px}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .tt-modebar.base,:root:not([data-theme="light"]) .tt-modebar.base.editing,:root:not([data-theme="light"]) .tt-basecard{background:hsl(265 25% 16%)}}
+.meet-date{min-width:62px;font-weight:600;font-size:13.5px;padding-top:1px}
+.meet-tag .dtag-k{background:hsl(265 45% 52%);color:#fff}
+.mmeet{background:hsl(265 60% 94%);color:hsl(265 40% 35%);border-radius:4px;padding:0 5px}
+.seg-n{font-size:11.5px;color:var(--muted);margin-left:3px;font-weight:600}
+.seg .on .seg-n{color:inherit;opacity:.8}
+.seg-n.bad{color:var(--bad)}
+.big-seg button{padding:8px 16px;font-size:14.5px}
 .task-tag .dtag-k{background:var(--warn-soft);color:var(--warn)}
 .task-tag.tdone{opacity:.55}
 .cs-tag .dtag-k{background:var(--violet-soft);color:var(--violet)}
@@ -548,7 +564,7 @@ function blank(){
     assessments:[], budgets:[], seats:{rows:4, cols:6, pair:true, map:[], locked:[], gfix:{}},
     jobs:{ quarter:"", list:[], draft:null, history:[] }, jobMode:"",
     roles:{ list:[], assign:{}, checks:{}, period:"", history:[] },
-    tasks:[], counsels:[], quickTags:DEFAULT_QUICK.map(x=>({...x, id:uid()})), quickV:3, timetable:ttBlank(), cal:calDefault(), evalPlans:[] };
+    tasks:[], meetings:[], submits:[], counsels:[], quickTags:DEFAULT_QUICK.map(x=>({...x, id:uid()})), quickV:3, timetable:ttBlank(), cal:calDefault(), evalPlans:[] };
 }
 function sampleData(){
   const s = blank(); s.isSample = true;
@@ -611,6 +627,17 @@ function sampleData(){
     {id:uid(), term:"2", subj:"사회", unit:"2. 필요한 것의 생산과 교환", item:"지역 간 교류 조사 보고서", std:"", method:"보고서", date:ymd(addDays(T,4)), month:""},
     {id:uid(), term:"2", subj:"체육", unit:"표현", item:"주제 표현 움직임 발표", std:"", method:"실기", date:"", month:`${T.getFullYear()}-12`}
   ];
+  s.meetings = [
+    {id:uid(), date:dk(2), time:"14:30", kind:"학년협의회", title:"11월 2주 학년협의회", place:"4학년 연구실", agenda:"학년말 행사 계획\n생활기록부 점검 일정", notes:"학예회는 반별 발표로 하기로 함\n생활기록부 1차 점검 12/4까지", todo:"", sent:2},
+    {id:uid(), date:ymd(addDays(T,6)), time:"15:00", kind:"교직원회의", title:"교직원회의", place:"시청각실", agenda:"2027학년도 교육과정 설문", notes:"", todo:"", sent:0},
+    {id:uid(), date:ymd(addDays(T,13)), time:"15:00", kind:"전학공", title:"전학공 수업 나눔", place:"도서실", agenda:"꺾은선그래프 수업 영상 공유", notes:"", todo:"", sent:0}
+  ];
+  s.submits = [
+    {id:uid(), title:"체험학습 결과 보고서 취합", due:ymd(addDays(T,-1)), to:"교무부", how:"업무포털(에듀파인)", note:"", done:false, doneAt:""},
+    {id:uid(), title:"학급 운영비 정산서", due:ymd(addDays(T,3)), to:"행정실", how:"종이", note:"영수증 원본 첨부", done:false, doneAt:""},
+    {id:uid(), title:"학교폭력 예방교육 실시 결과", due:ymd(addDays(T,9)), to:"생활부", how:"온라인 설문", note:"", done:false, doneAt:""},
+    {id:uid(), title:"11월 학급 출결 통계", due:ymd(addDays(T,-5)), to:"교무부", how:"메신저", note:"", done:true, doneAt:ymd(addDays(T,-6))}
+  ];
   s.tasks = [
     {id:uid(), title:"학교폭력 예방교육 결과 보고", due:ymd(addDays(T,-1)), cat:"공문·보고", note:"업무관리시스템", done:false, doneAt:"", created:t},
     {id:uid(), title:"강사 초청 수업 품의", due:ymd(addDays(T,2)), cat:"행사", note:"", done:false, doneAt:"", created:t},
@@ -645,7 +672,7 @@ const firstRun = !loadState();
 if(S.cls && S.cls.name==="호수평화국" && S.cls.grade==="4학년 ○반") { S.cls.name = ""; S.cls.grade = ""; }
 (S.assessments||[]).forEach(a => { if(a.levels && a.levels.join()==="잘함,보통,노력 요함") a.levels = LEVELS.slice(); });
 if(!S.roles) S.roles = { list:[], assign:{}, checks:{}, period:"", history:[] };
-S.tasks ||= []; S.counsels ||= []; if(!S.quickTags) S.quickTags = DEFAULT_QUICK.map(x=>({...x, id:uid()}));
+S.tasks ||= []; S.meetings ||= []; S.submits ||= []; S.counsels ||= []; if(!S.quickTags) S.quickTags = DEFAULT_QUICK.map(x=>({...x, id:uid()}));
 if((S.quickV||1) < 2){ const have = new Set(S.quickTags.map(x=>x.cat+"|"+x.text)); DEFAULT_QUICK.forEach(x=>{ if(!have.has(x.cat+"|"+x.text)) S.quickTags.push({...x, id:uid()}); }); S.quickV = 2; }
 if((S.quickV||1) < 3){
   S.quickTags = S.quickTags.filter(x=>!(x.cat==="기타" && QUICK_DROP.includes(x.text)));
@@ -666,7 +693,7 @@ const ui = {
   eventEdit:null, memoSel:null, memoQ:"", seatPick:null, seatView:"teacher", seatMode:"",
   roleTab:"assign",
   rnd:{ mode:"one", target:"all", customText:"", exclude:{}, drawn:[], result:null, order:null, groups:null, noRepeat:true, skipAbsent:true, groupBy:"count", groupN:6, groupSize:4, mixGender:true },
-  jobTab:"run", taskFilter:"open", taskCat:"전체", taskEdit:null, csSel:"all", csEdit:null, qtSel:null, qtEdit:false, qtLast:[], qtCat:"칭찬", qtWhen:"", sumSel:null, sumTerm:null, sumFilter:"all", sumNotes:null, sampleOk:false, calImp:null, calEdit:null, epTerm:null, epEdit:null, epPaste:false, ttMode:"week", ttWeek:today(), ttBrush:null, ttEdit:false, ttAdding:false, ttSp:false
+  jobTab:"run", taskFilter:"open", taskCat:"전체", taskEdit:null, taskTab:"task", meetEdit:null, meetAll:false, subEdit:null, subFilter:"open", ttDraft:null, csSel:"all", csEdit:null, qtSel:null, qtEdit:false, qtLast:[], qtCat:"칭찬", qtWhen:"", sumSel:null, sumTerm:null, sumFilter:"all", sumNotes:null, sampleOk:false, calImp:null, calEdit:null, epTerm:null, epEdit:null, epPaste:false, ttMode:"week", ttWeek:today(), ttBrush:null, ttEdit:false, ttAdding:false, ttSp:false
 };
 
 /* ───────── 공통 ───────── */
@@ -755,7 +782,7 @@ function commit(){ persist(); render(); }
 
 /* ───────── 라우팅 ───────── */
 function route(){ const h = location.hash.slice(1); return TITLE[h] && (S.menus[h] || ALWAYS.includes(h)) ? h : "today"; }
-window.addEventListener("hashchange", () => { $("#side").classList.remove("open"); render(); $("#main").scrollTop = 0; });
+window.addEventListener("hashchange", async () => { $("#side").classList.remove("open"); if(ui.ttDraft && location.hash.slice(1)!=="timetable") await ttDraftLeave(); render(); $("#main").scrollTop = 0; });
 
 function renderSide(cur){
   const days = S.lastBackup ? Math.floor((Date.now() - S.lastBackup)/86400000) : null;
@@ -884,7 +911,9 @@ function monthLines(k, evs, att, todos){
   schoolEvents(k).forEach(x=>L.push(`<span class="mline msch">${esc(x.name)}</span>`));
   (S.evalPlans||[]).filter(p=>p.date===k && !planAssess(p)).forEach(p=>L.push(`<span class="mline mgr">평가 예정 ${esc(p.subj)}</span>`));
   evs.forEach(e=>L.push(`<span class="mline mev">${esc(e.title)}</span>`));
+  (S.meetings||[]).filter(m=>m.date===k).forEach(m=>L.push(`<span class="mline mmeet">${m.time?esc(m.time)+" ":""}${esc(m.title)}</span>`));
   (S.tasks||[]).filter(x=>x.due===k).forEach(x=>L.push(`<span class="mline mtask ${x.done?"mdone":""}">업무 ${esc(x.title)}</span>`));
+  (S.submits||[]).filter(x=>x.due===k).forEach(x=>L.push(`<span class="mline mtask ${x.done?"mdone":""}">제출 ${esc(x.title)}</span>`));
   S.assignments.filter(a=>a.due===k).forEach(a=>{ const n = asgMiss(a).length; L.push(`<span class="mline masg">마감 ${esc(a.title)}${n?` · 미제출 ${n}`:""}</span>`); });
   (S.counsels||[]).filter(c=>c.date===k).forEach(c=>L.push(`<span class="mline mcs">상담 ${esc(sname(c.sid))}</span>`));
   (S.counsels||[]).filter(c=>c.next===k).forEach(c=>L.push(`<span class="mline mcs">상담 예정 ${esc(sname(c.sid))}</span>`));
@@ -934,6 +963,8 @@ function diaryTags(d, full){
     (S.evalPlans||[]).filter(p=>p.date===d).map(p=>{ const st = planStatus(p); return `<button class="dtag gr-tag" data-act="goEval"><span class="dtag-k">평가</span><span class="dtag-b">${esc(p.subj)} · ${esc(p.item)} <span class="small muted">${PLAN_PILL[st.k][1]}</span></span></button>`; }).join("") +
     evs.map(e=>{ const done = e.checklist.filter(c=>c.done).length;
       return `<button class="dtag ev-tag" data-act="goEvent" title="학급 행사로 이동"><span class="dtag-k">행사</span><span class="dtag-b"><b>${e.time?esc(e.time)+" ":""}${esc(e.title)}</b><span class="small muted">${esc(e.type)}${e.host?" · "+esc(e.host):""}${e.place?" · "+esc(e.place):""}${e.checklist.length?` · 준비 ${done}/${e.checklist.length}`:""}</span></span></button>`; }).join("") +
+    (S.meetings||[]).filter(m=>m.date===d).sort((a,b)=>(a.time||"").localeCompare(b.time||"")).map(m=>`<button class="dtag meet-tag" data-act="goMeet"><span class="dtag-k">회의</span><span class="dtag-b"><b>${m.time?esc(m.time)+" ":""}${esc(m.title)}</b>${m.place?` <span class="small muted">${esc(m.place)}</span>`:""}</span></button>`).join("") +
+    (S.submits||[]).filter(x=>x.due===d).map(x=>`<button class="dtag task-tag ${x.done?"tdone":""}" data-act="goSub"><span class="dtag-k">제출</span><span class="dtag-b">${esc(x.title)}${x.to?` → ${esc(x.to)}`:""}${x.done?" (제출 완료)":""}</span></button>`).join("") +
     (S.tasks||[]).filter(x=>x.due===d).map(x=>`<button class="dtag task-tag ${x.done?"tdone":""}" data-act="goTasks"><span class="dtag-k">업무</span><span class="dtag-b">${esc(x.title)}${x.done?" (완료)":""}</span></button>`).join("") +
     (S.counsels||[]).filter(c=>c.date===d).map(c=>`<button class="dtag cs-tag" data-act="goCounsel" data-s="${c.sid}"><span class="dtag-k">상담</span><span class="dtag-b"><b>${c.time?esc(c.time)+" ":""}${esc(sname(c.sid))}</b><span class="small muted">${esc(c.who)} · ${esc(c.how)} · ${esc(c.topic)}</span></span></button>`).join("") +
     (S.counsels||[]).filter(c=>c.next===d).map(c=>`<button class="dtag cs-tag" data-act="goCounsel"><span class="dtag-k">상담</span><span class="dtag-b">${esc(sname(c.sid))} 상담 예정</span></button>`).join("") +
@@ -1500,15 +1531,20 @@ VIEWS.timetable = () => {
   const head = mode==="base" ? [1,2,3,4,5].map(w=>`<th class="c">${WD[w]}</th>`).join("")
     : days.map(d=>{ const dt = parse(d), ch = Object.keys(tt.over[d]||{}).length; return `<th class="c ${d===t?"tt-today":""}"><div>${WD[dt.getDay()]} <span class="muted num">${dt.getMonth()+1}/${dt.getDate()}</span></div>${HOLI[d]?`<div class="small holi">${HOLI[d]}</div>`:""}${ch?`<button class="btn sm ghost" data-act="ttResetDay" data-d="${d}" style="padding:1px 6px;font-size:11.5px">기본으로</button>`:""}</th>`; }).join("");
   const rows = Array.from({length:tt.periods}, (_,i) => `<tr><th class="tt-p"><b>${i+1}교시</b>${tt.times[i]?`<div class="small muted num">${tt.times[i]}</div>`:""}</th>${
-    mode==="base" ? [1,2,3,4,5].map(w=>{ const v = (tt.base[w]||[])[i]||""; return `<td><button class="tt-cell" data-act="ttCell" data-w="${w}" data-i="${i}" aria-label="${WD[w]} ${i+1}교시 ${esc(cellLabel(v))||"비어 있음"}">${subjChip(v)}</button></td>`; }).join("")
+    mode==="base" ? [1,2,3,4,5].map(w=>{ const src = ui.ttDraft || tt.base, v = (src[w]||[])[i]||"", ch = ui.ttDraft && v !== ((tt.base[w]||[])[i]||""); return `<td><button class="tt-cell ${ch?"changed":""}" data-act="ttCell" data-w="${w}" data-i="${i}" aria-label="${WD[w]} ${i+1}교시 ${esc(cellLabel(v))||"비어 있음"}">${subjChip(v)}</button></td>`; }).join("")
     : days.map(d=>{ const r = ttDay(d)[i]; return `<td class="${d===t?"tt-today":""}"><button class="tt-cell ${r.changed?"changed":""}" data-act="ttCell" data-d="${d}" data-i="${i}" title="${r.changed?`기본: ${esc(cellLabel(r.base))||"없음"} → 이날만 ${esc(cellLabel(r.subj))||"비움"}`:""}">${subjChip(r.subj)}${r.changed?`<span class="tt-badge">변경</span>`:""}${r.memo?`<span class="tt-memo">${esc(r.memo)}</span>`:""}</button></td>`; }).join("")
   }</tr>`).join("");
-  return header("시간표", mode==="base" ? "요일별 기본 시간표예요. 여기서 바꾸면 앞으로 모든 주에 적용돼요." : "이번 주 시간표예요. 여기서 바꾸면 그날만 바뀌고, 기본 시간표는 그대로예요. 교시별 메모는 다이어리에서 적어요.",
-    `<div class="seg"><button class="${mode==="week"?"on":""}" data-act="ttMode" data-v="week">날짜별 시간표</button><button class="${mode==="base"?"on":""}" data-act="ttMode" data-v="base">기본 시간표</button></div>` +
+  const draft = mode==="base" && ui.ttDraft, dirty = draft && JSON.stringify(ui.ttDraft) !== JSON.stringify(tt.base);
+  const modeBar = mode==="base"
+    ? (draft ? `<div class="tt-modebar base editing"><div><b>기본 시간표를 고치는 중</b><div class="small">과목을 고르고 칸을 누르세요. <b>저장</b>을 눌러야 모든 주에 적용돼요.${dirty?` <span class="pill warn">저장 안 한 변경 있음</span>`:""}</div></div><div class="row"><button class="btn" data-act="ttDraftCancel">취소</button><button class="btn pri" data-act="ttDraftSave" ${dirty?"":"disabled"}>저장</button></div></div>`
+             : `<div class="tt-modebar base"><div><b>기본 시간표 · 매주 반복</b><div class="small">여기를 바꾸면 앞으로 모든 주에 적용돼요. 실수로 바뀌지 않게 잠겨 있어요.</div></div><button class="btn pri" data-act="ttDraftStart">기본 시간표 고치기</button></div>`)
+    : `<div class="tt-modebar week"><div><b>날짜별 시간표 · ${md(days[0])} ~ ${md(days[4])}</b><div class="small">여기서 바꾸면 <b>그날만</b> 바뀌어요. 기본 시간표는 그대로예요. 교시별 메모는 다이어리에서 적어요.</div></div></div>`;
+  return header("시간표", mode==="base" ? "요일별 기본 시간표" : "이번 주 시간표",
+    `<div class="seg big-seg"><button class="${mode==="week"?"on":""}" data-act="ttMode" data-v="week">날짜별 (이번 주)</button><button class="${mode==="base"?"on":""}" data-act="ttMode" data-v="base">기본 시간표 (매주)</button></div>` +
     (mode==="week" ? `<button class="btn" data-act="ttWk" data-n="-7">이전 주</button><button class="btn" data-act="ttWk" data-n="0">이번 주</button><button class="btn" data-act="ttWk" data-n="7">다음 주</button>` : "")) +
-  pal + `<div class="card"><div class="scroll"><table class="tt-table"><thead><tr><th></th>${head}</tr></thead><tbody>${rows}</tbody></table></div>
+  modeBar + (mode==="base" && !draft ? "" : pal) + `<div class="card ${mode==="base"?"tt-basecard":""} ${draft?"tt-drafting":""}"><div class="scroll"><table class="tt-table"><thead><tr><th></th>${head}</tr></thead><tbody>${rows}</tbody></table></div>
     ${mode==="base" && ttHasAny() ? ttHoursSummary() : ""}
-    ${mode==="base" && !ttHasAny() ? `<div class="small muted" style="margin-top:10px">위에서 과목을 고르고 칸을 차례로 누르면 금방 채워져요. 같은 과목은 한 번 고른 채로 여러 칸을 연달아 누르면 돼요.</div>` : ""}</div>`;
+    ${mode==="base" && !ttHasAny() ? `<div class="small muted" style="margin-top:10px">${draft?"위에서 과목을 고르고 칸을 차례로 누르면 금방 채워져요. 다 채우면 저장을 눌러 주세요.":"'기본 시간표 고치기'를 누르고 과목을 칠한 뒤 저장하세요."}</div>` : ""}</div>`;
 };
 function ttHoursSummary(){
   const tt = TT(), m = {};
@@ -1517,7 +1553,18 @@ function ttHoursSummary(){
   const tot = rows.reduce((a,[,x])=>[a[0]+x.h, a[1]+x.sp],[0,0]);
   return `<div class="tt-hours"><div class="small muted" style="margin-bottom:6px">주당 시수 · 담임 <b style="color:var(--ink)">${tot[0]}</b>시간 · 전담 <b style="color:var(--ink)">${tot[1]}</b>시간</div><div class="row" style="gap:6px">${rows.map(([n,x])=>`<span class="tt-h">${subjChip(n,"sm")} <span class="num">${x.h+x.sp}</span>${x.sp?`<span class="small muted">(전담 ${x.sp})</span>`:""}</span>`).join("")}</div></div>`;
 }
-A.ttMode = el => { ui.ttMode = el.dataset.v; render(); };
+A.ttMode = async el => { if(el.dataset.v===ui.ttMode) return; if(!(await ttDraftLeave())) return; ui.ttMode = el.dataset.v; render(); };
+/* 저장하지 않은 기본 시간표가 있으면 물어본다. 계속 가도 되면 true */
+async function ttDraftLeave(){
+  if(!ui.ttDraft) return true;
+  const dirty = JSON.stringify(ui.ttDraft) !== JSON.stringify(TT().base);
+  if(dirty && await ask("기본 시간표를 고친 내용을 저장할까요? '취소'를 누르면 고친 내용은 버려져요.", "저장")){ TT().base = ui.ttDraft; ui.ttDraft = null; commit(); toast("기본 시간표를 저장했어요"); return true; }
+  ui.ttDraft = null; return true;
+}
+A.ttDraftStart = () => { ui.ttDraft = JSON.parse(JSON.stringify(TT().base)); render(); };
+A.ttDraftCancel = async () => { const dirty = JSON.stringify(ui.ttDraft) !== JSON.stringify(TT().base);
+  if(dirty && !(await ask("고친 내용을 버릴까요?","버리기",true))) return; ui.ttDraft = null; render(); };
+A.ttDraftSave = () => { TT().base = ui.ttDraft; ui.ttDraft = null; commit(); toast("기본 시간표를 저장했어요. 앞으로 모든 주에 적용돼요"); };
 A.ttWk = el => { const n = Number(el.dataset.n); ui.ttWeek = n===0 ? today() : ymd(addDays(parse(ui.ttWeek), n)); render(); };
 A.ttSp = el => { ui.ttSp = el.dataset.v==="1"; render(); };
 A.ttBrush = el => { const v = el.dataset.v; ui.ttBrush = ui.ttBrush===v ? null : v; render(); };
@@ -1525,11 +1572,11 @@ A.ttEditToggle = () => { ui.ttEdit = !ui.ttEdit; render(); };
 A.ttCell = el => {
   if(ui.ttBrush===null){ toast("위에서 과목을 먼저 골라 주세요"); return; }
   const tt = TT(), i = Number(el.dataset.i);
-  const cur = el.dataset.w ? ((tt.base[el.dataset.w]||[])[i]||"") : (ttDay(el.dataset.d)[i]||{}).subj || "";
+  const cur = el.dataset.w ? (((ui.ttDraft||tt.base)[el.dataset.w]||[])[i]||"") : (ttDay(el.dataset.d)[i]||{}).subj || "";
   let v = ui.ttBrush;
   if(v==="__sp"){ if(!cur){ toast("빈 칸이에요. 먼저 과목을 칠해 주세요"); return; } v = isSp(cur) ? cellName(cur) : cellName(cur) + SP; }
   else if(v && ui.ttSp) v = v + SP;
-  if(el.dataset.w){ const w = el.dataset.w; const a = tt.base[w] ||= []; while(a.length<=i) a.push(""); a[i] = v; }
+  if(el.dataset.w){ if(!ui.ttDraft){ toast("'기본 시간표 고치기'를 먼저 눌러 주세요"); return; } const w = el.dataset.w; const a = ui.ttDraft[w] ||= []; while(a.length<=i) a.push(""); a[i] = v; render(); return; }
   else { const d = el.dataset.d, base = ((tt.base[parse(d).getDay()]||[])[i]) || ""; const o = tt.over[d] ||= {};
     if(v===base) delete o[i]; else o[i] = v; if(!Object.keys(o).length) delete tt.over[d]; }
   commit(); };
@@ -1973,11 +2020,11 @@ A.newYearOpen = () => {
       <label class="check"><input type="checkbox" id="kSubj" checked><span>시간표 과목·교시 시각</span></label>
       <label class="check"><input type="checkbox" id="kQuick" checked><span>빠른 기록 문구</span></label>
       <label class="check"><input type="checkbox" id="kJobs" checked><span>일인일역·직업 목록</span></label>
-      <label class="check"><input type="checkbox" id="kTasks" checked><span>끝나지 않은 업무</span></label>
+      <label class="check"><input type="checkbox" id="kTasks" checked><span>끝나지 않은 업무·제출</span></label>
       <label class="check"><input type="checkbox" id="kMemo" checked><span>메모장</span></label>
       <label class="check"><input type="checkbox" id="kBudget"><span>예산 항목(금액·지출은 비움)</span></label>
     </div>
-    <div class="small muted">학생, 출결, 기록, 상담, 성적, 평가 계획, 다이어리, 행사, 학사일정은 비워요.</div>
+    <div class="small muted">학생, 출결, 기록, 상담, 성적, 평가 계획, 회의, 다이어리, 행사, 학사일정은 비워요.</div>
     <div class="row" style="justify-content:flex-end"><button class="btn" data-k="0">취소</button><button class="btn danger" data-k="go" id="nyGo" disabled>새 학년도 시작</button></div></div>`;
   let archived = false;
   bg.addEventListener("click", async e => { const k = e.target.closest("[data-k]")?.dataset.k;
@@ -1996,7 +2043,7 @@ A.newYearOpen = () => {
       if(keep.subj && old.timetable){ n.timetable = ttBlank(old.timetable.band); Object.assign(n.timetable, {subjects:old.timetable.subjects, periods:old.timetable.periods, times:old.timetable.times}); }
       if(keep.quick){ n.quickTags = old.quickTags; n.quickV = old.quickV; }
       if(keep.jobs){ n.jobs.list = old.jobs.list; n.roles.list = (old.roles||{}).list || []; }
-      if(keep.tasks) n.tasks = (old.tasks||[]).filter(t=>!t.done);
+      if(keep.tasks){ n.tasks = (old.tasks||[]).filter(t=>!t.done); n.submits = (old.submits||[]).filter(t=>!t.done); }
       if(keep.memo) n.memos = old.memos;
       if(keep.budget) n.budgets = old.budgets.map(b=>({...b, id:uid(), total:0, expenses:[]}));
       n.cal = calDefault(ny);
@@ -2034,14 +2081,19 @@ VIEWS.tasks = () => {
   const order = ["기한 지남","오늘","7일 안","나중에","기한 없음","완료"];
   const groups = order.map(g => [g, list.filter(t=>taskGroup(t)===g)]).filter(([,l])=>l.length);
   const late = open.filter(t=>taskGroup(t)==="기한 지남").length;
-  return header("업무 관리", `할 일 ${open.length}개${late?` · <span style="color:var(--bad)">기한 지남 ${late}개</span>`:""} · 완료 ${done.length}개`,
-    `<div class="seg"><button class="${f==="open"?"on":""}" data-act="taskFilter" data-v="open">할 일</button><button class="${f==="done"?"on":""}" data-act="taskFilter" data-v="done">완료</button><button class="${f==="all"?"on":""}" data-act="taskFilter" data-v="all">전체</button></div>`) + `
+  const tab = ui.taskTab, mt = (S.meetings||[]), up = mt.filter(m=>m.date>=today()).length, sb = (S.submits||[]).filter(x=>!x.done), sbLate = sb.filter(x=>taskGroup(x)==="기한 지남").length;
+  const tabs = `<div class="seg big-seg"><button class="${tab==="task"?"on":""}" data-act="taskTab" data-v="task">업무 <span class="seg-n">${open.length}</span></button><button class="${tab==="meet"?"on":""}" data-act="taskTab" data-v="meet">회의 <span class="seg-n">${up}</span></button><button class="${tab==="sub"?"on":""}" data-act="taskTab" data-v="sub">제출 <span class="seg-n ${sbLate?"bad":""}">${sb.length}</span></button></div>`;
+  const sub = `할 일 ${open.length}개${late?` · <span style="color:var(--bad)">기한 지남 ${late}개</span>`:""} · 다가오는 회의 ${up}개 · 낼 것 ${sb.length}개${sbLate?` · <span style="color:var(--bad)">제출 기한 지남 ${sbLate}개</span>`:""}`;
+  if(tab==="meet") return header("업무 관리", sub, tabs) + meetView();
+  if(tab==="sub") return header("업무 관리", sub, tabs) + subView();
+  return header("업무 관리", sub, tabs) + `
   <div class="card"><div class="form" style="grid-template-columns:2fr 150px 130px auto">
     <label class="f">업무<input type="text" id="tTitle" placeholder="예: 학교폭력 예방교육 결과 보고" data-enter="taskAdd"></label>
     <label class="f">마감일(선택)<input type="date" id="tDue"></label>
     <label class="f">분류<select id="tCat">${TASK_CATS.map(c=>`<option>${c}</option>`).join("")}</select></label>
     <button class="btn pri" data-act="taskAdd">업무 추가</button></div></div>
   <div class="card"><div class="chips" style="margin-bottom:10px">${["전체",...TASK_CATS].map(c=>`<button class="chip k-plain ${cf===c?"on":""}" data-act="taskCat" data-c="${c}">${c}</button>`).join("")}${done.length && f!=="open" ? `<button class="btn sm ghost danger" data-act="taskClearDone" style="margin-left:auto">완료한 업무 모두 지우기</button>` : ""}</div>
+    <div class="seg" style="margin-bottom:10px"><button class="${f==="open"?"on":""}" data-act="taskFilter" data-v="open">할 일</button><button class="${f==="done"?"on":""}" data-act="taskFilter" data-v="done">완료</button><button class="${f==="all"?"on":""}" data-act="taskFilter" data-v="all">전체</button></div>
     ${groups.length ? groups.map(([g,l])=>`<div class="task-group"><div class="task-gh ${g==="기한 지남"?"bad":""}">${g} <span class="muted">${l.length}</span></div>${l.map(taskRow).join("")}</div>`).join("") : `<div class="empty">${f==="done"?"완료한 업무가 없어요":"할 일이 없어요. 위에서 업무를 추가해 보세요"}</div>`}
   </div>`;
 };
@@ -2059,10 +2111,127 @@ A.taskDel = async el => { if(await ask("이 업무를 지울까요?","지우기"
 A.taskClearDone = async () => { const n = S.tasks.filter(t=>t.done).length; if(await ask(`완료한 업무 ${n}개를 모두 지울까요?`,"지우기",true)){ S.tasks = S.tasks.filter(t=>!t.done); commit(); } };
 function tasksTodayCard(){
   const open = (S.tasks||[]).filter(t=>!t.done).sort((a,b)=>(a.due||"9999").localeCompare(b.due||"9999"));
-  const show = open.slice(0,5);
+  const show = open.slice(0,5), t = today(), wk = ymd(addDays(new Date(),7));
+  const meets = (S.meetings||[]).filter(m=>m.date===t).sort((a,b)=>(a.time||"").localeCompare(b.time||""));
+  const subs = (S.submits||[]).filter(x=>!x.done && x.due && x.due<=wk).sort((a,b)=>a.due.localeCompare(b.due));
   return `<div class="card"><div class="spread"><h2>업무</h2><a class="btn sm" href="#tasks">업무 관리</a></div>
-    ${show.length ? show.map(t=>{ const g = taskGroup(t); return `<div class="task-row compact ${g==="기한 지남"?"late":""}"><input type="checkbox" data-ch="taskDone" data-id="${t.id}" aria-label="완료"><div class="task-main"><div class="task-title">${esc(t.title)}</div><div class="small muted">${esc(t.cat)}${t.due?` · 마감 ${md(t.due)}`:""}</div></div>${t.due?`<span class="pill ${g==="기한 지남"?"bad":g==="오늘"?"warn":""}">${dday(t.due)}</span>`:""}</div>`; }).join("") + (open.length>5?`<div class="small muted" style="margin-top:6px">그 밖에 ${open.length-5}개</div>`:"") : `<div class="empty">남은 업무가 없어요</div>`}</div>`;
+    ${meets.map(m=>`<div class="task-row compact" data-act="goMeet" style="cursor:pointer"><span class="pill vio">회의</span><div class="task-main"><div class="task-title">${m.time?`<b class="num">${esc(m.time)}</b> `:""}${esc(m.title)}</div>${m.place||(m.agenda||"").trim()?`<div class="small muted">${esc(m.place||"")}${(m.agenda||"").trim()?` · ${esc(m.agenda.split("\n")[0])}`:""}</div>`:""}</div></div>`).join("")}
+    ${subs.map(x=>{ const g = taskGroup(x); return `<div class="task-row compact ${g==="기한 지남"?"late":""}"><input type="checkbox" data-ch="subDone" data-id="${x.id}" aria-label="제출함"><div class="task-main"><div class="task-title">${esc(x.title)}</div><div class="small muted">제출${x.to?` → ${esc(x.to)}`:""} · 마감 ${md(x.due)}</div></div><span class="pill ${g==="기한 지남"?"bad":g==="오늘"?"warn":""}">${dday(x.due)}</span></div>`; }).join("")}
+    ${show.length ? show.map(t=>{ const g = taskGroup(t); return `<div class="task-row compact ${g==="기한 지남"?"late":""}"><input type="checkbox" data-ch="taskDone" data-id="${t.id}" aria-label="완료"><div class="task-main"><div class="task-title">${esc(t.title)}</div><div class="small muted">${esc(t.cat)}${t.due?` · 마감 ${md(t.due)}`:""}</div></div>${t.due?`<span class="pill ${g==="기한 지남"?"bad":g==="오늘"?"warn":""}">${dday(t.due)}</span>`:""}</div>`; }).join("") + (open.length>5?`<div class="small muted" style="margin-top:6px">그 밖에 ${open.length-5}개</div>`:"") : (meets.length||subs.length ? "" : `<div class="empty">남은 업무가 없어요</div>`)}</div>`;
 }
+
+/* ───────── 회의 · 제출 (업무 관리 안의 탭) ───────── */
+const MEET_KINDS = ["학년협의회","교직원회의","전학공","부서·위원회","학부모","기타"];
+const SUB_HOW = ["업무포털(에듀파인)","메신저","공유 폴더","종이","온라인 설문","이메일","기타"];
+const meetPill = k => ({"학년협의회":"vio","교직원회의":"acc","전학공":"ok","부서·위원회":"warn"})[k] || "";
+function meetGroup(m){ const t = today(); return m.date === t ? "오늘" : m.date > t ? "다가오는 회의" : "지난 회의"; }
+function meetRow(m){
+  if(ui.meetEdit === m.id) return `<div class="task-row editing">
+    <div class="form" style="grid-template-columns:150px 110px 140px 1fr 1fr;flex:1">
+      <label class="f">날짜<input type="date" id="meDate" value="${m.date}"></label>
+      <label class="f">시각<input type="time" id="meTime" value="${m.time||""}"></label>
+      <label class="f">종류<select id="meKind">${MEET_KINDS.map(k=>`<option ${k===m.kind?"selected":""}>${k}</option>`).join("")}</select></label>
+      <label class="f">회의 이름<input type="text" id="meTitle" value="${esc(m.title)}"></label>
+      <label class="f">장소<input type="text" id="mePlace" value="${esc(m.place||"")}" placeholder="예: 4학년 연구실"></label>
+      <label class="f" style="grid-column:1/-1">안건 · 준비할 것<textarea id="meAgenda" rows="2" placeholder="예: 학년말 행사 계획, 생활기록부 점검 일정 · 준비물: 체험학습 결과 자료">${esc(m.agenda||"")}</textarea></label>
+      <label class="f" style="grid-column:1/-1">회의록 · 결정 사항<textarea id="meNotes" rows="5" placeholder="회의에서 정한 것을 적어 두세요">${esc(m.notes||"")}</textarea></label>
+      <label class="f" style="grid-column:1/-1">내가 할 일 <span class="small muted">한 줄에 하나 · 끝에 날짜를 쓰면 마감일이 돼요 (예: 행사 계획서 내기 11/20)</span><textarea id="meTodo" rows="3">${esc(m.todo||"")}</textarea></label>
+    </div>
+    <div class="row" style="justify-content:space-between;width:100%"><div class="row"><button class="btn sm" data-act="meetToTasks">할 일을 업무로 보내기</button><button class="btn sm" data-act="meetCopy">회의록 복사</button></div>
+      <div class="row"><button class="btn sm ghost danger" data-act="meetDel" data-id="${m.id}">지우기</button><button class="btn sm" data-act="meetCancel">닫기</button><button class="btn sm pri" data-act="meetSave">저장</button></div></div></div>`;
+  const past = m.date < today(), hasNote = !!(m.notes||"").trim();
+  return `<div class="task-row ${past && !hasNote ? "" : ""}"><div class="meet-date num">${md(m.date)}${m.time?`<div class="small muted">${esc(m.time)}</div>`:""}</div>
+    <div class="task-main" data-act="meetOpen" data-id="${m.id}" title="눌러서 열기"><div class="task-title">${esc(m.title)}</div>
+      <div class="row small muted" style="gap:6px"><span class="pill ${meetPill(m.kind)}">${esc(m.kind)}</span>${m.place?`<span>${esc(m.place)}</span>`:""}${(m.agenda||"").trim()?`<span>· 안건 ${esc(m.agenda.split("\n")[0]).slice(0,40)}</span>`:""}
+        ${hasNote?`<span class="pill ok">회의록</span>`:past?`<span class="pill">회의록 없음</span>`:""}${m.sent?`<span class="pill acc">업무 ${m.sent}개 보냄</span>`:""}</div></div>
+    <button class="x" data-act="meetDel" data-id="${m.id}" aria-label="삭제">×</button></div>`;
+}
+function meetView(){
+  const all = (S.meetings||[]).slice(), q = ui.meetAll;
+  const order = ["오늘","다가오는 회의","지난 회의"];
+  const groups = order.map(g => { let l = all.filter(m=>meetGroup(m)===g).sort((a,b)=>(a.date+(a.time||"")).localeCompare(b.date+(b.time||"")));
+    if(g==="지난 회의"){ l.reverse(); if(!q) l = l.slice(0,10); } return [g, l]; }).filter(([,l])=>l.length);
+  const pastN = all.filter(m=>meetGroup(m)==="지난 회의").length;
+  return `<div class="card"><div class="form" style="grid-template-columns:150px 110px 140px 2fr 1fr auto">
+      <label class="f">날짜<input type="date" id="mDate" value="${today()}"></label>
+      <label class="f">시각<input type="time" id="mTime"></label>
+      <label class="f">종류<select id="mKind">${MEET_KINDS.map(k=>`<option>${k}</option>`).join("")}</select></label>
+      <label class="f">회의 이름<input type="text" id="mTitle" placeholder="예: 11월 학년협의회" data-enter="meetAdd"></label>
+      <label class="f">장소(선택)<input type="text" id="mPlace" placeholder="예: 연구실" data-enter="meetAdd"></label>
+      <button class="btn pri" data-act="meetAdd">회의 추가</button></div></div>
+  <div class="card">${groups.length ? groups.map(([g,l])=>`<div class="task-group"><div class="task-gh">${g} <span class="muted">${g==="지난 회의"?pastN:l.length}</span></div>${l.map(meetRow).join("")}
+      ${g==="지난 회의" && pastN>10 ? `<button class="btn sm ghost" data-act="meetAll" style="margin-top:6px">${q?"최근 10개만 보기":`지난 회의 ${pastN}개 모두 보기`}</button>` : ""}</div>`).join("")
+    : `<div class="empty">적어 둔 회의가 없어요. 회의 날짜와 이름을 넣어 두면 다이어리에 표시되고, 회의록과 할 일도 여기에 적을 수 있어요.</div>`}</div>`;
+}
+A.meetAdd = () => { const title = $("#mTitle").value.trim(), date = $("#mDate").value; if(!title || !date){ toast("날짜와 회의 이름을 적어 주세요"); $("#mTitle").focus(); return; }
+  (S.meetings ||= []).push({id:uid(), date, time:$("#mTime").value||"", kind:$("#mKind").value, title, place:$("#mPlace").value.trim(), agenda:"", notes:"", todo:"", sent:0}); commit(); toast("회의를 추가했어요"); };
+EN.meetAdd = () => A.meetAdd();
+A.meetOpen = el => { ui.meetEdit = el.dataset.id; render(); $("#meNotes")?.focus(); };
+A.meetCancel = () => { ui.meetEdit = null; render(); };
+A.meetAll = () => { ui.meetAll = !ui.meetAll; render(); };
+function meetCollect(){ const m = S.meetings.find(x=>x.id===ui.meetEdit); if(!m) return null;
+  Object.assign(m, {date:$("#meDate").value || m.date, time:$("#meTime").value||"", kind:$("#meKind").value, title:$("#meTitle").value.trim() || m.title, place:$("#mePlace").value.trim(), agenda:$("#meAgenda").value, notes:$("#meNotes").value, todo:$("#meTodo").value}); return m; }
+A.meetSave = () => { if(!meetCollect()) return; ui.meetEdit = null; commit(); toast("저장했어요"); };
+A.meetDel = async el => { if(await ask("이 회의를 지울까요? 회의록도 함께 지워져요.","지우기",true)){ S.meetings = S.meetings.filter(m=>m.id!==el.dataset.id); if(ui.meetEdit===el.dataset.id) ui.meetEdit = null; commit(); } };
+A.meetToTasks = () => { const m = meetCollect(); if(!m) return;
+  const Y = Number(CAL().year), lines = (m.todo||"").split("\n").map(x=>x.replace(/^[-•·*\d.)\s]+/,"").trim()).filter(Boolean);
+  if(!lines.length){ toast("'내가 할 일'에 한 줄씩 적어 주세요"); $("#meTodo").focus(); return; }
+  const cat = m.kind==="학년협의회" ? "학년" : m.kind==="학부모" ? "학급" : "기타";
+  lines.forEach(l => { let due = "", title = l; const d = l.match(/\s*\(?(\d{1,2})\s*[\/.월]\s*(\d{1,2})\s*일?\.?\)?\s*(까지)?\s*$/);
+    if(d){ const mo = Number(d[1]), da = Number(d[2]); if(mo>=1 && mo<=12 && da>=1 && da<=31){ due = `${mo>=3?Y:Y+1}-${pad(mo)}-${pad(da)}`; title = l.slice(0, d.index).trim() || l; } }
+    (S.tasks ||= []).push({id:uid(), title, due, cat, note:`${md(m.date)} ${m.title}`, done:false, doneAt:"", created:today()}); });
+  m.sent = (m.sent||0) + lines.length; m.todo = ""; commit(); toast(`업무에 ${lines.length}개를 넣었어요`); };
+A.meetCopy = async () => { const m = meetCollect(); if(!m) return;
+  const txt = `[${m.kind}] ${m.title}\n${md(m.date)}${m.time?" "+m.time:""}${m.place?" · "+m.place:""}\n` + ((m.agenda||"").trim()?`\n■ 안건\n${m.agenda.trim()}\n`:"") + ((m.notes||"").trim()?`\n■ 회의록\n${m.notes.trim()}\n`:"");
+  persist(); try{ await navigator.clipboard.writeText(txt); toast("회의록을 복사했어요. 메신저에 붙여 넣으면 돼요"); }catch(e){ toast("복사가 막혀 있어요"); } };
+
+function subGroup(x){ if(x.done) return "제출 완료"; const g = taskGroup(x); return g; }
+function subRow(x){
+  if(ui.subEdit === x.id) return `<div class="task-row editing"><div class="form" style="grid-template-columns:2fr 150px 1fr 170px;flex:1">
+      <label class="f">제출할 것<input type="text" id="seTitle" value="${esc(x.title)}" data-enter="subSave"></label>
+      <label class="f">마감일<input type="date" id="seDue" value="${x.due||""}"></label>
+      <label class="f">받는 곳<input type="text" id="seTo" value="${esc(x.to||"")}" placeholder="예: 교무부, 학년부장"></label>
+      <label class="f">방법<select id="seHow">${SUB_HOW.map(h=>`<option ${h===x.how?"selected":""}>${h}</option>`).join("")}</select></label>
+      <label class="f" style="grid-column:1/-1">메모<input type="text" id="seNote" value="${esc(x.note||"")}" placeholder="예: 공문 번호, 양식 위치, 함께 낼 서류" data-enter="subSave"></label></div>
+    <div class="row"><button class="btn sm" data-act="subCancel">취소</button><button class="btn sm pri" data-act="subSave">저장</button></div></div>`;
+  const g = subGroup(x);
+  return `<div class="task-row ${x.done?"done":""} ${g==="기한 지남"?"late":""}"><input type="checkbox" ${x.done?"checked":""} data-ch="subDone" data-id="${x.id}" aria-label="제출함">
+    <div class="task-main" data-act="subOpen" data-id="${x.id}" title="눌러서 고치기"><div class="task-title">${esc(x.title)}</div>
+      <div class="row small muted" style="gap:6px">${x.to?`<span>→ ${esc(x.to)}</span>`:""}${x.how?`<span class="pill">${esc(x.how)}</span>`:""}${x.due?`<span>마감 ${md(x.due)}</span>${x.done?"":`<span class="pill ${g==="기한 지남"?"bad":g==="오늘"?"warn":""}">${dday(x.due)}</span>`}`:""}${x.done&&x.doneAt?`<span>${md(x.doneAt)} 제출</span>`:""}${x.note?`<span>· ${esc(x.note)}</span>`:""}</div></div>
+    <button class="x" data-act="subDel" data-id="${x.id}" aria-label="삭제">×</button></div>`;
+}
+function subView(){
+  const all = S.submits || [], f = ui.subFilter;
+  let list = f==="done" ? all.filter(x=>x.done) : f==="all" ? all : all.filter(x=>!x.done);
+  list = list.slice().sort((a,b)=>(a.done-b.done) || (a.done ? (b.doneAt||"").localeCompare(a.doneAt||"") : (a.due||"9999").localeCompare(b.due||"9999")));
+  const order = ["기한 지남","오늘","7일 안","나중에","기한 없음","제출 완료"];
+  const groups = order.map(g=>[g, list.filter(x=>subGroup(x)===g)]).filter(([,l])=>l.length);
+  return `<div class="card"><div class="form" style="grid-template-columns:2fr 150px 1fr 170px auto">
+      <label class="f">제출할 것<input type="text" id="sTitle" placeholder="예: 학기말 학생 출결 통계" data-enter="subAdd"></label>
+      <label class="f">마감일<input type="date" id="sDue"></label>
+      <label class="f">받는 곳(선택)<input type="text" id="sTo" placeholder="예: 교무부" data-enter="subAdd"></label>
+      <label class="f">방법<select id="sHow">${SUB_HOW.map(h=>`<option>${h}</option>`).join("")}</select></label>
+      <button class="btn pri" data-act="subAdd">추가</button></div>
+    <div class="small muted" style="margin-top:8px">학교에 내야 하는 서류·보고를 적어요. 학생 과제 제출은 '제출 체크' 메뉴에서 해요.</div></div>
+  <div class="card"><div class="spread" style="margin-bottom:8px"><div class="seg"><button class="${f==="open"?"on":""}" data-act="subFilter" data-v="open">낼 것</button><button class="${f==="done"?"on":""}" data-act="subFilter" data-v="done">제출 완료</button><button class="${f==="all"?"on":""}" data-act="subFilter" data-v="all">전체</button></div>
+      ${all.some(x=>x.done) && f!=="open" ? `<button class="btn sm ghost danger" data-act="subClearDone">제출 완료 모두 지우기</button>` : ""}</div>
+    ${groups.length ? groups.map(([g,l])=>`<div class="task-group"><div class="task-gh ${g==="기한 지남"?"bad":""}">${g} <span class="muted">${l.length}</span></div>${l.map(subRow).join("")}</div>`).join("") : `<div class="empty">${f==="done"?"제출한 것이 없어요":"낼 것이 없어요"}</div>`}</div>`;
+}
+A.subAdd = () => { const t = $("#sTitle").value.trim(); if(!t){ $("#sTitle").focus(); return; }
+  (S.submits ||= []).push({id:uid(), title:t, due:$("#sDue").value||"", to:$("#sTo").value.trim(), how:$("#sHow").value, note:"", done:false, doneAt:""}); commit(); $("#sTitle")?.focus(); };
+EN.subAdd = () => A.subAdd();
+A.subFilter = el => { ui.subFilter = el.dataset.v; render(); };
+CH.subDone = el => { const x = S.submits.find(y=>y.id===el.dataset.id); if(!x) return; x.done = el.checked; x.doneAt = el.checked ? today() : ""; commit(); if(el.checked) toast("제출 완료로 표시했어요"); };
+A.subOpen = el => { ui.subEdit = el.dataset.id; render(); $("#seTitle")?.focus(); };
+A.subCancel = () => { ui.subEdit = null; render(); };
+A.subSave = () => { const x = S.submits.find(y=>y.id===ui.subEdit); const t = $("#seTitle").value.trim(); if(!x || !t) return;
+  Object.assign(x, {title:t, due:$("#seDue").value||"", to:$("#seTo").value.trim(), how:$("#seHow").value, note:$("#seNote").value.trim()}); ui.subEdit = null; commit(); };
+EN.subSave = () => A.subSave();
+A.subDel = async el => { if(await ask("이 제출 항목을 지울까요?","지우기",true)){ S.submits = S.submits.filter(x=>x.id!==el.dataset.id); commit(); } };
+A.subClearDone = async () => { const n = S.submits.filter(x=>x.done).length; if(await ask(`제출 완료 ${n}개를 모두 지울까요?`,"지우기",true)){ S.submits = S.submits.filter(x=>!x.done); commit(); } };
+A.taskTab = el => { ui.taskTab = el.dataset.v; ui.taskEdit = ui.meetEdit = ui.subEdit = null; render(); };
+A.goMeet = () => { ui.taskTab = "meet"; location.hash = "tasks"; render(); };
+A.goSub = () => { ui.taskTab = "sub"; location.hash = "tasks"; render(); };
 
 /* ───────── 상담 기록 ───────── */
 const CS_WHO = ["학생","어머니","아버지","보호자","기타"];
