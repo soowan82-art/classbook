@@ -1528,7 +1528,7 @@ A.openSide = () => $("#side").classList.add("open");
    저장할 때마다 '학급일지 자동백업' 폴더에 학급일지_<저장시각>.json 을 새로 만들고 최근 10개만 남긴다.
    다른 기기는 1분마다(그리고 화면으로 돌아올 때) 더 최신 파일이 있는지 보고 받아 온다.          */
 const GD = "Google Drive", GD_KEEP = 10;
-const STOP_CODES = ["gis_blocked","no_config","needs_login","auth_denied","auth_popup","gis_loading","forbidden","needs_reauth","server_not_connected","not_in_manifest","blocked_by_policy","not_granted","capability_disabled","capability_removed","approval_required","selection_required","too_large"];
+const STOP_CODES = ["popup_blocked","popup_closed","gis_blocked","no_config","needs_login","auth_denied","auth_popup","gis_loading","forbidden","needs_reauth","server_not_connected","not_in_manifest","blocked_by_policy","not_granted","capability_disabled","capability_removed","approval_required","selection_required","too_large"];
 let mcpApi = null, syncing = false, syncPaused = false, syncConflict = null;
 async function getMcp(){ if(mcpApi) return mcpApi; if(!(window.claude && typeof window.claude.use==="function")) return null; try{ mcpApi = await window.claude.use("mcp"); }catch(e){ mcpApi = null; } return mcpApi; }
 async function gd(tool, input){ const m = await getMcp(); if(!m) throw {code:"not_granted"}; const r = await m.callTool(GD, tool, input, {cache:false}); return r.payload; }
@@ -1541,19 +1541,21 @@ let gTok = "", gTokExp = 0, gClient = null, gisReady = false;
 function gisLoad(){
   if(!GMODE || gisReady) return;
   const s = document.createElement("script"); s.src = "https://accounts.google.com/gsi/client"; s.async = true;
-  s.onload = () => { try{ gClient = google.accounts.oauth2.initTokenClient({client_id:GOOGLE_CLIENT_ID, scope:DRIVE_SCOPE, callback:()=>{}}); gisReady = true; }catch(e){} };
+  s.onload = () => { try{ gClient = google.accounts.oauth2.initTokenClient({client_id:GOOGLE_CLIENT_ID, scope:DRIVE_SCOPE,
+      callback: r => gHandlers.ok(r), error_callback: e => gHandlers.err(e)}); gisReady = true; }catch(e){ gisFailed = true; gisInitErr = String(e && e.message || e); } };
   s.onerror = () => { gisFailed = true; };
   document.head.appendChild(s);
 }
-let gisFailed = false;
+let gisFailed = false, gisInitErr = "";
+const gHandlers = {ok:()=>{}, err:()=>{}};
 const gTokenOk = () => gTok && Date.now() < gTokExp;
 /* 반드시 버튼 클릭 안에서 바로 불러야 팝업이 막히지 않는다 */
 function gLogin(){
   return new Promise((res, rej) => {
     if(!gisReady || !gClient) return rej({code: gisFailed ? "gis_blocked" : "gis_loading"});
-    gClient.callback = r => { if(r && r.error) return rej({code:"auth_denied", message:r.error}); gTok = r.access_token; gTokExp = Date.now() + (Number(r.expires_in||3600) - 120)*1000; SY.gGranted = true; saveSY(); res(); };
-    gClient.error_callback = e => rej({code:"auth_popup", message:e && e.type});
-    try{ gClient.requestAccessToken({prompt: SY.gGranted ? "" : "consent"}); }catch(e){ rej({code:"auth_popup"}); }
+    gHandlers.ok = r => { if(r && r.error) return rej({code:"auth_denied", message:[r.error, r.error_description].filter(Boolean).join(" ")}); gTok = r.access_token; gTokExp = Date.now() + (Number(r.expires_in||3600) - 120)*1000; SY.gGranted = true; saveSY(); res(); };
+    gHandlers.err = e => { const t = e && e.type; rej({code: t==="popup_failed_to_open" ? "popup_blocked" : t==="popup_closed" ? "popup_closed" : "auth_popup", message:t}); };
+    try{ gClient.requestAccessToken({prompt: SY.gGranted ? "" : "consent"}); }catch(e){ rej({code:"auth_popup", message:"requestAccessToken: " + (e && e.message || e)}); }
   });
 }
 async function gfetch(url, opt={}){
@@ -1612,10 +1614,12 @@ function syncErr(e){
     gis_blocked:"구글 로그인 도구를 불러오지 못했어요. 학교 인터넷이나 광고 차단 프로그램이 accounts.google.com을 막고 있는지 확인해 주세요.",
     no_config:"아직 구글 연결 설정이 없어요. GitHub의 config.js에 구글 클라이언트 ID를 넣고 1분 뒤 Ctrl+Shift+R로 새로고침해 주세요(배포 안내 3·4단계).",
     auth_denied:"구글 드라이브 사용을 허용하지 않았어요. 다시 눌러 허용해 주세요.",
-    auth_popup:"구글 로그인 창이 닫혔거나 막혔어요. 팝업 차단을 풀고 다시 눌러 주세요.",
+    auth_popup:"구글 로그인 창을 열지 못했어요. 새로고침(Ctrl+Shift+R) 후 다시 눌러 주세요.",
+    popup_blocked:"크롬이 구글 로그인 창을 막았어요. 주소창 오른쪽의 팝업 차단 아이콘을 눌러 '항상 허용'을 고른 뒤 다시 눌러 주세요.",
+    popup_closed:"구글 로그인 창이 끝나기 전에 닫혔어요. 창 안에 오류(예: 400 origin_mismatch, 액세스 차단됨)가 보였다면 배포 안내의 '자주 생기는 문제'를 확인해 주세요.",
     forbidden:"구글 드라이브가 요청을 거절했어요. 학교 계정이라면 관리자가 막았을 수 있어요. 개인 구글 계정으로 해 보세요."
   };
-  SY.state = "error"; SY.msg = map[c] || ("드라이브와 맞추다가 문제가 생겼어요" + (e && e.message ? ` (${e.message})` : ""));
+  SY.state = "error"; SY.msg = (map[c] || "드라이브와 맞추다가 문제가 생겼어요") + (e && (e.message || c) ? ` [${c||""}${e.message?": "+e.message:""}]` : "");
   if(STOP_CODES.includes(c)) syncPaused = true;
   saveSY(); renderSyncBits(); renderSoon(); return c;
 }
