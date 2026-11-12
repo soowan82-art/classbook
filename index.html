@@ -224,8 +224,16 @@ th.tt-today{color:var(--accent)}
 .qt-tab.on{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
 .qt-cat{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 
+.qt-when{display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin-bottom:10px;padding-bottom:10px;border-bottom:1px dashed var(--line)}
+.qt-when > .small{margin-right:4px}
+.wchip{border:1px solid var(--line);background:var(--surface);border-radius:7px;padding:3px 9px;font-size:12.5px;cursor:pointer;color:var(--ink);font:inherit;font-size:12.5px}
+.wchip .wsub{color:var(--muted)}
+.wchip.on{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.wchip.on .wsub{color:var(--surface);opacity:.8}
 .qchip{border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:4px 12px;font-size:13px;cursor:pointer;color:var(--ink)}
 .qchip:hover{border-color:var(--accent)}
+.qchip.q-칭찬{border-color:color-mix(in srgb,var(--ok) 45%,var(--line))}
+.qchip:not(.q-칭찬){border-color:color-mix(in srgb,var(--warn) 40%,var(--line))}
 .qchip.on{background:var(--accent);border-color:var(--accent);color:#fff}
 .todos{list-style:none;margin:0;padding:6px 6px;display:flex;flex-direction:column;gap:1px;flex:1}
 .todo{display:flex;align-items:flex-start;gap:7px;padding:5px 6px;border-radius:6px}
@@ -481,14 +489,19 @@ const TT_BANDS = {
 const ttBandSubjects = band => TT_BANDS[band].map(name=>({name, hue:TT_HUE[name]}));
 function guessBand(){ const m = String((typeof S!=="undefined" && S && S.cls && S.cls.grade) || "").match(/([1-6])\s*학년/); const g = m ? Number(m[1]) : 3; return g<=2 ? "1-2" : g<=4 ? "3-4" : "5-6"; }
 const QUICK_CATS = ["칭찬","학습","생활","교우","상담","기타"];
+/* 칭찬 탭에는 칭찬만, 나머지 탭에는 지적·관찰 사항만 */
 const QUICK_TEXTS = {
-  "칭찬":["발표를 잘함","친구를 도와줌","맡은 역할을 성실히 함","정리정돈을 잘함","인사를 잘함","바른 자세로 수업에 참여함","모둠 활동을 잘 이끎","양보와 배려를 잘함","질문을 적극적으로 함","스스로 문제를 해결함","책을 열심히 읽음","급식을 골고루 먹음"],
-  "학습":["수업에 집중을 잘함","과제를 성실히 해 옴","필기를 꼼꼼히 함","모르는 것을 질문함","수업 중 딴짓","수업 중 잡담","준비물 미지참","과제 미제출","학습지 미완성","독서록을 성실히 씀"],
-  "생활":["바른 말 사용","수업 시작 전 착석","쉬는 시간 안전 수칙 지킴","크롬북을 바르게 사용함","급식 예절을 지킴","지각","복도에서 뜀","실내화 미착용","정리정돈 미흡","바르지 않은 말 사용"],
-  "교우":["친구를 배려함","협동을 잘함","친구에게 먼저 사과함","혼자 있는 친구에게 다가감","놀이 규칙을 잘 지킴","친구와 갈등","친구를 놀림","친구에게 거친 행동"],
+  "칭찬":["발표를 잘함","친구를 도와줌","맡은 역할을 성실히 함","정리정돈을 잘함","인사를 잘함","바른 자세로 수업에 참여함","모둠 활동을 잘 이끎","양보와 배려를 잘함","질문을 적극적으로 함","스스로 문제를 해결함","책을 열심히 읽음","급식을 골고루 먹음",
+         "수업에 집중을 잘함","과제를 성실히 해 옴","필기를 꼼꼼히 함","독서록을 성실히 씀","바른 말 사용","수업 시작 전 착석","안전 수칙을 잘 지킴","크롬북을 바르게 사용함","급식 예절을 지킴","친구를 배려함","협동을 잘함","친구에게 먼저 사과함","혼자 있는 친구에게 다가감","놀이 규칙을 잘 지킴"],
+  "학습":["수업 중 딴짓","수업 중 잡담","준비물 미지참","교과서 미지참","과제 미제출","학습지 미완성","독서록 미제출","활동에 참여하지 않음","수업 중 엎드려 있음","크롬북을 수업 외 용도로 사용"],
+  "생활":["지각","복도에서 뜀","실내화 미착용","정리정돈 미흡","바르지 않은 말 사용","종이 친 뒤 늦게 착석","위험한 장난","물건을 함부로 다룸","급식을 많이 남김","휴대폰 사용"],
+  "교우":["친구와 갈등","친구를 놀림","친구에게 거친 행동","친구에게 욕설","친구 물건을 허락 없이 사용","놀이에서 친구를 끼워 주지 않음"],
   "상담":["상담이 필요해 보임(관찰)","표정이 어두움(관찰)","보호자 연락 필요"],
-  "기타":["건의 사항을 전함","보건실 다녀옴"]
+  "기타":["가정통신문 회신 미제출","분실물 발생"]
 };
+/* 예전 기본 문구 중 칭찬 탭으로 옮길 것, 지울 것 */
+const QUICK_MOVE_PRAISE = ["수업에 집중을 잘함","과제를 성실히 해 옴","필기를 꼼꼼히 함","모르는 것을 질문함","독서록을 성실히 씀","바른 말 사용","수업 시작 전 착석","쉬는 시간 안전 수칙 지킴","크롬북을 바르게 사용함","급식 예절을 지킴","친구를 배려함","협동을 잘함","친구에게 먼저 사과함","혼자 있는 친구에게 다가감","놀이 규칙을 잘 지킴"];
+const QUICK_DROP = ["건의 사항을 전함","보건실 다녀옴"];
 const DEFAULT_QUICK = Object.entries(QUICK_TEXTS).flatMap(([cat,l])=>l.map(text=>({id:uid(), cat, text})));
 function blank(){
   return { v:1, isSample:false, lastBackup:null,
@@ -498,7 +511,7 @@ function blank(){
     assessments:[], budgets:[], seats:{rows:4, cols:6, pair:true, map:[], locked:[], gfix:{}},
     jobs:{ quarter:"", list:[], draft:null, history:[] }, jobMode:"",
     roles:{ list:[], assign:{}, checks:{}, period:"", history:[] },
-    tasks:[], counsels:[], quickTags:DEFAULT_QUICK.map(x=>({...x, id:uid()})), quickV:2, timetable:ttBlank() };
+    tasks:[], counsels:[], quickTags:DEFAULT_QUICK.map(x=>({...x, id:uid()})), quickV:3, timetable:ttBlank() };
 }
 function sampleData(){
   const s = blank(); s.isSample = true;
@@ -590,6 +603,13 @@ if(S.cls && S.cls.name==="호수평화국" && S.cls.grade==="4학년 ○반") { 
 if(!S.roles) S.roles = { list:[], assign:{}, checks:{}, period:"", history:[] };
 S.tasks ||= []; S.counsels ||= []; if(!S.quickTags) S.quickTags = DEFAULT_QUICK.map(x=>({...x, id:uid()}));
 if((S.quickV||1) < 2){ const have = new Set(S.quickTags.map(x=>x.cat+"|"+x.text)); DEFAULT_QUICK.forEach(x=>{ if(!have.has(x.cat+"|"+x.text)) S.quickTags.push({...x, id:uid()}); }); S.quickV = 2; }
+if((S.quickV||1) < 3){
+  S.quickTags = S.quickTags.filter(x=>!(x.cat==="기타" && QUICK_DROP.includes(x.text)));
+  S.quickTags.forEach(x=>{ if(x.cat!=="칭찬" && QUICK_MOVE_PRAISE.includes(x.text)){ x.cat = "칭찬"; if(x.text==="쉬는 시간 안전 수칙 지킴") x.text = "안전 수칙을 잘 지킴"; if(x.text==="모르는 것을 질문함") x.text = "질문을 적극적으로 함"; } });
+  const seen = new Set(); S.quickTags = S.quickTags.filter(x=>{ const k = x.cat+"|"+x.text; if(seen.has(k)) return false; seen.add(k); return true; });
+  DEFAULT_QUICK.forEach(x=>{ if(!seen.has(x.cat+"|"+x.text)){ S.quickTags.push({...x, id:uid()}); seen.add(x.cat+"|"+x.text); } });
+  S.quickV = 3;
+}
 ["tasks","counsel","timetable"].forEach(k => { if(S.menus && S.menus[k]===undefined) S.menus[k] = true; });
 if(S.jobMode===undefined) S.jobMode = "";
 if(firstRun) persist();
@@ -602,7 +622,7 @@ const ui = {
   eventEdit:null, memoSel:null, memoQ:"", seatPick:null, seatView:"teacher", seatMode:"",
   roleTab:"assign",
   rnd:{ mode:"one", target:"all", customText:"", exclude:{}, drawn:[], result:null, order:null, groups:null, noRepeat:true, skipAbsent:true, groupBy:"count", groupN:6, groupSize:4, mixGender:true },
-  jobTab:"run", taskFilter:"open", taskCat:"전체", taskEdit:null, csSel:"all", csEdit:null, qtSel:null, qtEdit:false, qtLast:[], qtCat:"칭찬", ttMode:"week", ttWeek:today(), ttBrush:null, ttEdit:false, ttAdding:false
+  jobTab:"run", taskFilter:"open", taskCat:"전체", taskEdit:null, csSel:"all", csEdit:null, qtSel:null, qtEdit:false, qtLast:[], qtCat:"칭찬", qtWhen:"", ttMode:"week", ttWeek:today(), ttBrush:null, ttEdit:false, ttAdding:false
 };
 
 /* ───────── 공통 ───────── */
@@ -634,15 +654,58 @@ async function saveFile(filename, data){
     return true;
   }catch(e){ toast("이 화면에서는 파일을 저장할 수 없어요"); return false; }
 }
-function exportSheets(filename, sheets){ // sheets: [[name, rows]]
-  if(window.XLSX){
-    const wb = XLSX.utils.book_new();
-    sheets.forEach(([n, rows]) => { const ws = XLSX.utils.aoa_to_sheet(rows); ws["!cols"] = (rows[0]||[]).map(()=>({wch:14})); XLSX.utils.book_append_sheet(wb, ws, n.slice(0,31)); });
-    const buf = XLSX.write(wb, {type:"array", bookType:"xlsx"});
-    return saveFile(filename + ".xlsx", new Blob([buf]));
-  }
-  const csv = "﻿" + sheets.map(([n,rows]) => rows.map(r => r.map(c => `"${String(c??"").replace(/"/g,'""')}"`).join(",")).join("\n")).join("\n\n");
+function buildXlsx(sheets){
+  const wb = XLSX.utils.book_new();
+  sheets.forEach(([n, rows]) => { const ws = XLSX.utils.aoa_to_sheet(rows); ws["!cols"] = (rows[0]||[]).map(()=>({wch:14})); XLSX.utils.book_append_sheet(wb, ws, n.slice(0,31)); });
+  return XLSX.write(wb, {type:"array", bookType:"xlsx"});
+}
+function saveXlsx(filename, sheets){ // sheets: [[name, rows]]
+  if(window.XLSX) return saveFile(filename + ".xlsx", new Blob([buildXlsx(sheets)]));
+  const csv = "\uFEFF" + sheets.map(([n,rows]) => rows.map(r => r.map(c => `"${String(c??"").replace(/"/g,'""')}"`).join(",")).join("\n")).join("\n\n");
   return saveFile(filename + ".csv", csv);
+}
+const canGoogleSheet = () => !!window.XLSX && (GMODE || !!(window.claude && typeof window.claude.use==="function"));
+/* 내보내기: 엑셀 파일로 받을지, 구글 시트로 만들지 고른다 */
+function exportSheets(filename, sheets){
+  if(!canGoogleSheet()) return saveXlsx(filename, sheets);
+  const bg = document.createElement("div"); bg.className = "modal-bg";
+  bg.innerHTML = `<div class="modal"><h3>내보내기</h3><div class="small muted">${esc(filename)}</div>
+    <div style="display:flex;flex-direction:column;gap:8px" id="exBox">
+      <button class="btn" data-k="x" style="padding:12px;text-align:left"><b>엑셀 파일(.xlsx)로 받기</b><br><span class="small muted">이 기기에 파일로 저장해요</span></button>
+      <button class="btn" data-k="g" style="padding:12px;text-align:left"><b>구글 시트로 만들기</b><br><span class="small muted">내 구글 드라이브의 '${esc(SHEET_FOLDER)}' 폴더에 새 시트를 만들어요</span></button>
+    </div><div class="row" style="justify-content:flex-end"><button class="btn ghost" data-k="0">닫기</button></div></div>`;
+  bg.addEventListener("click", async e => {
+    const k = e.target.closest("[data-k]")?.dataset.k;
+    if(e.target===bg || k==="0"){ bg.remove(); return; }
+    if(k==="x"){ bg.remove(); saveXlsx(filename, sheets); return; }
+    if(k==="g"){
+      if(GMODE && !gTokenOk()){ bg.remove(); toast("구글 로그인 뒤 돌아오면 한 번 더 눌러 주세요"); setTimeout(()=>gLogin(""), 600); return; }
+      const box = bg.querySelector("#exBox"); box.innerHTML = `<div class="stage" style="min-height:90px"><span class="muted">구글 시트를 만드는 중…</span></div>`;
+      try{
+        const url = await makeGoogleSheet(filename, sheets);
+        box.innerHTML = `<div style="display:flex;flex-direction:column;gap:10px"><div>구글 시트를 만들었어요.</div>${url?`<a class="btn pri" href="${esc(url)}" target="_blank" rel="noopener" style="text-align:center;padding:10px">구글 시트 열기</a><div class="small muted" style="word-break:break-all">${esc(url)}</div>`:`<div class="small muted">드라이브의 '${esc(SHEET_FOLDER)}' 폴더에서 열어 보세요.</div>`}</div>`;
+      }catch(err){
+        const c = err && err.code;
+        const msg = {needs_login:"구글 연결이 끊겼어요. 설정에서 '지금 동기화'를 누른 뒤 다시 해 주세요.", needs_reauth:"구글 드라이브 커넥터를 다시 연결해 주세요(claude.ai 설정 → 커넥터).", server_not_connected:"구글 드라이브 커넥터가 연결되어 있지 않아요.", not_in_manifest:"이 앱의 드라이브 사용을 허용해 주세요.", approval_required:"드라이브 사용을 허용해 주세요.", forbidden:"구글이 요청을 거절했어요. 개인 구글 계정으로 해 보세요."}[c] || "구글 시트를 만들지 못했어요.";
+        box.innerHTML = `<div style="color:var(--bad)">${esc(msg)} <span class="small muted">[${esc(c||"")}${err&&err.message?": "+esc(String(err.message).slice(0,120)):""}]</span></div><button class="btn" data-k="x" style="padding:10px">대신 엑셀 파일로 받기</button>`;
+      }
+    }
+  });
+  document.body.appendChild(bg);
+}
+function abToB64(buf){ const u = new Uint8Array(buf); let s = ""; for(let i=0;i<u.length;i+=0x8000) s += String.fromCharCode.apply(null, u.subarray(i, i+0x8000)); return btoa(s); }
+async function makeGoogleSheet(filename, sheets){
+  const buf = buildXlsx(sheets), title = `${filename} (${today()})`;
+  if(!SY.sheetFolderId) { SY.sheetFolderId = (await drv.findFolder(SHEET_FOLDER)) || (await drv.createFolder(SHEET_FOLDER)); saveSY(); }
+  const XLSX_MIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+  if(GMODE){
+    const b = "cbx" + Date.now(), meta = JSON.stringify({name:title, parents:[SY.sheetFolderId], mimeType:"application/vnd.google-apps.spreadsheet"});
+    const body = new Blob([`--${b}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${meta}\r\n--${b}\r\nContent-Type: ${XLSX_MIME}\r\n\r\n`, buf, `\r\n--${b}--`]);
+    const r = await (await gfetch("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,webViewLink", {method:"POST", headers:{"Content-Type":`multipart/related; boundary=${b}`}, body})).json();
+    return r.webViewLink || (r.id ? `https://docs.google.com/spreadsheets/d/${r.id}/edit` : "");
+  }
+  const r = await gd("create_file", {title, parentId:SY.sheetFolderId, base64Content:abToB64(buf), contentMimeType:XLSX_MIME});
+  return (r && (r.viewUrl || (r.id ? `https://docs.google.com/spreadsheets/d/${r.id}/edit` : ""))) || "";
 }
 function commit(){ persist(); render(); }
 
@@ -808,7 +871,7 @@ function recTag(d, full){
   if(!recs.length) return "";
   // 같은 내용끼리 묶기: "발표를 잘함 — 김서연, 박지우"
   const groups = [];
-  recs.slice().sort((a,b)=>(stu(a.sid)?.no??99)-(stu(b.sid)?.no??99)).forEach(r => { const k = r.cat + "|" + r.text; let g = groups.find(x=>x.k===k); if(!g){ g = {k, cat:r.cat, text:r.text, names:[]}; groups.push(g); } const n = sname(r.sid); g.names.push(n); });
+  recs.slice().sort((a,b)=>(stu(a.sid)?.no??99)-(stu(b.sid)?.no??99)).forEach(r => { const k = r.cat + "|" + r.text; let g = groups.find(x=>x.k===k); if(!g){ g = {k, cat:r.cat, text:r.text, names:[]}; groups.push(g); } const n = sname(r.sid) + (r.when ? `(${r.when}${full && r.subj ? " "+r.subj : ""})` : ""); g.names.push(n); });
   const lim = full ? groups.length : 5;
   const line = g => { const cnt = {}; g.names.forEach(n=>cnt[n]=(cnt[n]||0)+1); const names = Object.entries(cnt).map(([n,c])=>c>1?`${n}×${c}`:n);
     return `<span class="dtag-row"><span class="pill ${recPill(g.cat)}" style="font-size:10.5px;padding:0 6px">${esc(g.cat)}</span> ${esc(g.text.length>40&&!full?g.text.slice(0,40)+"…":g.text)} <span class="muted">— ${names.map(esc).join(", ")}</span></span>`; };
@@ -1006,7 +1069,7 @@ const ATT_COLS = ["체험학습","질병결석","인정결석","미인정결석"
 function attMonthTable(y,m){
   const rows = attMonthRows(y,m), list = sorted().filter(s=>rows[s.id]);
   const tot = ATT_COLS.map(c=>list.reduce((a,s)=>a+rows[s.id][c],0));
-  return `<div class="spread" style="margin:4px 0 10px"><span class="small muted">${y}년 ${m}월 출결 특이사항 ${list.length}명</span><button class="btn sm" data-act="attExport">엑셀로 내보내기</button></div>
+  return `<div class="spread" style="margin:4px 0 10px"><span class="small muted">${y}년 ${m}월 출결 특이사항 ${list.length}명</span><button class="btn sm" data-act="attExport">내보내기</button></div>
   <div class="scroll"><table class="t"><thead><tr><th>번호</th><th>이름</th>${ATT_COLS.map(c=>`<th class="r">${c}</th>`).join("")}<th>내용</th></tr></thead><tbody>
   ${list.map(s=>`<tr><td class="num">${s.no}</td><td>${esc(s.name)}</td>${ATT_COLS.map(c=>`<td class="r num">${rows[s.id][c]||""}</td>`).join("")}<td class="small">${rows[s.id].dates.map(esc).join(", ")}</td></tr>`).join("") || `<tr><td colspan="11" class="empty">이번 달 출결 특이사항이 없어요</td></tr>`}
   ${list.length?`<tr><td></td><td><b>합계</b></td>${tot.map(v=>`<td class="r num"><b>${v||""}</b></td>`).join("")}<td></td></tr>`:""}</tbody></table></div>`;
@@ -1029,7 +1092,7 @@ function attFieldRows(y, m){
 }
 function attFieldTable(y,m){
   const list = attFieldRows(y,m);
-  return `<div class="spread" style="margin:4px 0 10px"><span class="small muted">${y}년 ${m}월 교외체험학습 ${list.length}건 (이어진 날짜는 한 건으로 묶어요)</span><button class="btn sm" data-act="fieldExport">올해 대장 엑셀로 내보내기</button></div>
+  return `<div class="spread" style="margin:4px 0 10px"><span class="small muted">${y}년 ${m}월 교외체험학습 ${list.length}건 (이어진 날짜는 한 건으로 묶어요)</span><button class="btn sm" data-act="fieldExport">올해 대장 내보내기</button></div>
   <div class="scroll"><table class="t"><thead><tr><th>번호</th><th>이름</th><th>기간</th><th class="r">일수</th><th>내용</th></tr></thead><tbody>
   ${list.map(r=>`<tr><td class="num">${stu(r.sid)?.no??""}</td><td>${esc(sname(r.sid))}</td><td class="num">${r.start===r.end?md(r.start):`${md(r.start)} ~ ${md(r.end)}`}</td><td class="r num">${r.days||"-"}</td><td>${esc(r.note)}</td></tr>`).join("") || `<tr><td colspan="5" class="empty">이번 달 체험학습 기록이 없어요</td></tr>`}</tbody></table></div>`;
 }
@@ -1134,7 +1197,7 @@ VIEWS.records = () => {
   const sid = ui.recSel;
   let list = S.records.filter(r => (sid==="all" || r.sid===sid) && (ui.recCat==="전체" || r.cat===ui.recCat)).sort((a,b)=>b.date.localeCompare(a.date));
   const cnt = id => S.records.filter(r=>r.sid===id).length;
-  return header("학생 기록", "학생별 누가 기록. 날짜와 분류를 붙여 두면 학기말 행동특성 쓸 때 모아 보기 쉬워요.", `<button class="btn" data-act="recExport">전체 기록 엑셀로</button>`) + quickCard() + `
+  return header("학생 기록", "학생별 누가 기록. 날짜와 분류를 붙여 두면 학기말 행동특성 쓸 때 모아 보기 쉬워요.", `<button class="btn" data-act="recExport">전체 기록 내보내기</button>`) + quickCard() + `
   <div class="split">
     <div class="card" style="padding:12px"><div class="list">
       <div class="li ${sid==="all"?"on":""}" data-act="recSel" data-id="all"><span class="t1">전체 학생</span><span class="small muted num">${S.records.length}</span></div>
@@ -1144,21 +1207,26 @@ VIEWS.records = () => {
       <div class="card"><h2>기록 추가</h2>
         <div class="form">
           <label class="f">학생<select id="recStu">${sorted().map(s=>`<option value="${s.id}" ${s.id===sid?"selected":""}>${s.no}. ${esc(s.name)}</option>`).join("")}</select></label>
-          <label class="f">날짜<input type="date" id="recDate" value="${today()}"></label>
+          <label class="f">날짜<input type="date" id="recDate" value="${today()}" data-ch="recDateCh"></label>
           <label class="f">분류<select id="recCat">${REC_CATS.map(c=>`<option>${c}</option>`).join("")}</select></label>
+          <label class="f">언제<select id="recWhen" data-ch="recWhenCh"><option value="">선택 안 함</option>${whenOptions(today()).map(o=>`<option value="${o.v}" data-subj="${esc(o.subj)}">${o.v}${o.subj?" · "+esc(o.subj):""}</option>`).join("")}</select></label>
+          <label class="f">과목<select id="recSubj"><option value="">없음</option>${TT().subjects.map(x=>`<option>${esc(x.name)}</option>`).join("")}</select></label>
           <label class="f" style="grid-column:1/-1">내용<textarea id="recText" rows="3" placeholder="관찰한 사실 위주로 적어 두세요"></textarea></label>
         </div><div class="row" style="justify-content:flex-end;margin-top:10px"><button class="btn pri" data-act="addRec">기록 저장</button></div></div>
       <div class="card"><div class="spread"><h2>${sid==="all"?"전체 기록":esc(sname(sid))+" 기록"} <span class="small muted">${list.length}</span></h2>
         <div class="chips">${["전체",...REC_CATS].map(c=>`<button class="chip k-plain ${ui.recCat===c?"on":""}" data-act="recCat" data-c="${c}">${c}</button>`).join("")}</div></div>
-        <div class="tl">${list.map(r=>`<div class="it"><div class="dt num">${r.date.replace(/-/g,". ")}<div style="margin-top:4px"><span class="pill ${recPill(r.cat)}">${r.cat}</span></div></div><div>${sid==="all"?`<div style="font-weight:600;margin-bottom:2px">${esc(sname(r.sid))}</div>`:""}<div class="tx">${esc(r.text)}</div></div><button class="x" data-act="delRec" data-id="${r.id}" aria-label="삭제">×</button></div>`).join("") || `<div class="empty">기록이 없어요</div>`}</div></div>
+        <div class="tl">${list.map(r=>`<div class="it"><div class="dt num">${r.date.replace(/-/g,". ")}<div style="margin-top:4px"><span class="pill ${recPill(r.cat)}">${r.cat}</span></div></div><div>${sid==="all"?`<div style="font-weight:600;margin-bottom:2px">${esc(sname(r.sid))}</div>`:""}<div class="tx">${r.when?`<span class="pill" style="margin-right:6px">${esc(whenLabel(r))}</span>`:""}${esc(r.text)}</div></div><button class="x" data-act="delRec" data-id="${r.id}" aria-label="삭제">×</button></div>`).join("") || `<div class="empty">기록이 없어요</div>`}</div></div>
     </div>
   </div>`;
 };
 A.recSel = el => { ui.recSel = el.dataset.id; render(); };
 A.recCat = el => { ui.recCat = el.dataset.c; render(); };
-A.addRec = () => { const text = $("#recText").value.trim(); if(!text){ $("#recText").focus(); return; } S.records.push({id:uid(), sid:$("#recStu").value, date:$("#recDate").value||today(), cat:$("#recCat").value, text}); commit(); toast("기록을 저장했어요"); };
+A.addRec = () => { const text = $("#recText").value.trim(); if(!text){ $("#recText").focus(); return; } S.records.push({id:uid(), sid:$("#recStu").value, date:$("#recDate").value||today(), cat:$("#recCat").value, text, when:$("#recWhen").value, subj:$("#recSubj").value}); commit(); toast("기록을 저장했어요"); };
+CH.recWhenCh = el => { const o = el.selectedOptions[0]; const subj = o ? o.dataset.subj || "" : ""; const sel = $("#recSubj"); if(/교시$/.test(el.value)){ if(subj && ![...sel.options].some(x=>x.value===subj)) sel.add(new Option(subj, subj)); sel.value = subj; } else sel.value = ""; };
+CH.recDateCh = el => { const w = $("#recWhen"), cur = w.value; const opts = whenOptions(el.value||today());
+  w.innerHTML = `<option value="">선택 안 함</option>` + opts.map(o=>`<option value="${o.v}" data-subj="${esc(o.subj)}">${o.v}${o.subj?" · "+esc(o.subj):""}</option>`).join(""); w.value = cur; CH.recWhenCh(w); };
 A.delRec = async el => { if(await ask("이 기록을 삭제할까요?","삭제",true)){ S.records = S.records.filter(r=>r.id!==el.dataset.id); commit(); } };
-A.recExport = () => { const rows = [["날짜","번호","이름","분류","내용"], ...S.records.slice().sort((a,b)=>(stu(a.sid)?.no??99)-(stu(b.sid)?.no??99)||a.date.localeCompare(b.date)).map(r=>[r.date, stu(r.sid)?.no??"", sname(r.sid), r.cat, r.text])];
+A.recExport = () => { const rows = [["날짜","번호","이름","분류","언제","과목","내용"], ...S.records.slice().sort((a,b)=>(stu(a.sid)?.no??99)-(stu(b.sid)?.no??99)||a.date.localeCompare(b.date)).map(r=>[r.date, stu(r.sid)?.no??"", sname(r.sid), r.cat, r.when||"", r.subj||"", r.text])];
   exportSheets(`${clsName()}_학생누가기록`, [["누가기록", rows]]); };
 
 /* ───────── 성적 ───────── */
@@ -1173,7 +1241,7 @@ VIEWS.grades = () => {
     else { const v = S.students.map(s=>a.scores[s.id]).filter(x=>x!==undefined&&x!==""); const avg = v.length ? (v.reduce((p,c)=>p+Number(c),0)/v.length).toFixed(1) : "-";
       summary = `<span class="pill">평균 <b class="num">${avg}</b>/${a.max}</span><span class="pill">최고 <b class="num">${v.length?Math.max(...v):"-"}</b></span><span class="pill">최저 <b class="num">${v.length?Math.min(...v):"-"}</b></span><span class="pill">입력 <b class="num">${v.length}/${S.students.length}</b></span>`; }
   }
-  return header("성적 입력", "평가별로 등급(매우 잘함·잘함·보통·노력 요함) 또는 점수를 입력해요.", `<button class="btn" data-act="gradeExport">전체 성적 엑셀로</button>`) + `
+  return header("성적 입력", "평가별로 등급(매우 잘함·잘함·보통·노력 요함) 또는 점수를 입력해요.", `<button class="btn" data-act="gradeExport">전체 성적 내보내기</button>`) + `
   <div class="split">
     <div class="card" style="padding:12px;display:flex;flex-direction:column;gap:8px">
       <div class="form" style="grid-template-columns:1fr 1fr">
@@ -1219,7 +1287,7 @@ VIEWS.budget = () => {
         return `<div><div class="spread"><span><b>${esc(c.name)}</b> <span class="muted small">${c.pct}%</span></span><span class="small num ${sp>lim?"":"muted"}" style="${sp>lim?"color:var(--bad);font-weight:600":""}">${sp>lim?"한도 초과 ":"잔여 "}${won(Math.abs(lim-sp))}</span></div><div class="bar ${r>1?"bad":r>.85?"warn":""}" style="margin:5px 0"><i style="width:${Math.min(100,r*100)}%"></i></div><div class="spread small muted num"><span>사용 ${won(sp)} / 한도 ${won(lim)}</span><span><button class="btn sm ghost" data-act="catPct" data-i="${i}">한도 변경</button><button class="x" data-act="delCat" data-i="${i}" aria-label="항목 삭제">×</button></span></div></div>`; }).join("")}
       <div class="small muted num">한도 합계 ${b.cats.reduce((s,c)=>s+Number(c.pct),0)}% ${b.cats.reduce((s,c)=>s+Number(c.pct),0)!==100?"· 100%가 아니에요":""}</div>
       <div class="row"><input type="text" id="catName" placeholder="새 항목" style="flex:1"><input type="number" id="catPct" placeholder="%" style="width:70px" min="0" max="100"><button class="btn sm" data-act="addCat">추가</button></div></div></div>
-    <div class="card"><div class="spread"><h2>${esc(b.name)} 지출 내역</h2><button class="btn sm" data-act="budExport">엑셀로 내보내기</button></div>
+    <div class="card"><div class="spread"><h2>${esc(b.name)} 지출 내역</h2><button class="btn sm" data-act="budExport">내보내기</button></div>
       <div class="form" style="grid-template-columns:130px 1fr 1.4fr 110px auto;margin-bottom:12px">
         <label class="f">날짜<input type="date" id="exDate" value="${today()}"></label>
         <label class="f">항목<select id="exCat">${b.cats.map(c=>`<option>${esc(c.name)}</option>`).join("")}<option>미분류</option></select></label>
@@ -1282,7 +1350,7 @@ VIEWS.seats = () => {
       <label class="check"><input type="checkbox" ${st.pair?"checked":""} data-ch="seatPair"><span>짝꿍 배치</span></label></div>
     <div class="row"><button class="btn ${mode==="lock"?"pri":""}" data-act="seatMode" data-v="lock">${mode==="lock"?"고정 완료":"학생 자리 고정"}</button>
       <button class="btn ${mode==="gender"?"pri":""}" data-act="seatMode" data-v="gender">${mode==="gender"?"성별 지정 완료":"남·여 자리 정하기"}</button>
-      <button class="btn" data-act="seatShuffle" data-g="0">무작위 섞기</button><button class="btn pri" data-act="seatShuffle" data-g="1">남녀 짝으로 섞기</button><button class="btn" data-act="seatExport">엑셀로</button></div></div>
+      <button class="btn" data-act="seatShuffle" data-g="0">무작위 섞기</button><button class="btn pri" data-act="seatShuffle" data-g="1">남녀 짝으로 섞기</button><button class="btn" data-act="seatExport">내보내기</button></div></div>
     ${mode==="gender" ? `<div class="banner" style="background:var(--bg);border-color:var(--line);margin-bottom:12px"><div class="small">남자리 <b class="num" style="color:var(--accent)">${gm}</b> / 남학생 ${nb}명 · 여자리 <b class="num" style="color:var(--violet)">${gf}</b> / 여학생 ${ng}명${gm>nb||gf>ng?` <span style="color:var(--warn)">· 정한 자리가 학생보다 많아요</span>`:""}</div>
       <div class="row"><button class="btn sm" data-act="gPreset" data-v="pair">짝마다 남·여</button><button class="btn sm" data-act="gPreset" data-v="check">체크무늬</button><button class="btn sm" data-act="gPreset" data-v="row">줄마다 번갈아</button><button class="btn sm danger" data-act="gPreset" data-v="clear">모두 지우기</button></div></div>` : ""}
     <div class="board scroll">${ui.seatView==="teacher"?"":front}<div class="seats" style="grid-template-columns:repeat(${st.cols},auto)">${order.map(seatHtml).join("")}</div>${ui.seatView==="teacher"?front:""}</div>
@@ -1509,7 +1577,7 @@ VIEWS.counsel = () => {
     </div>
     <div class="row" style="justify-content:flex-end;margin-top:12px"><button class="btn" data-act="csCancel">취소</button><button class="btn pri" data-act="csSave">저장</button></div></div>` : "";
   return header("상담 기록", "학생·보호자 상담을 날짜별로 남겨요. 다음 상담일을 적으면 '오늘' 화면과 다이어리에 함께 보여요.",
-    `<button class="btn" data-act="csExport">엑셀로</button><button class="btn pri" data-act="csNew">상담 기록 추가</button>`) + form + `
+    `<button class="btn" data-act="csExport">내보내기</button><button class="btn pri" data-act="csNew">상담 기록 추가</button>`) + form + `
   ${upcoming.length ? `<div class="card"><h2>다가오는 상담</h2><div class="row" style="gap:8px">${upcoming.slice(0,8).map(c=>`<span class="pill acc">${md(c.next)} · ${esc(sname(c.sid))}</span>`).join("")}</div></div>` : ""}
   <div class="split">
     <div class="card" style="padding:12px"><div class="list">
@@ -1549,6 +1617,11 @@ function counselTodayCard(){
 
 /* ───────── 학생 기록: 빠른 기록 ───────── */
 
+/* 기록의 '언제': 교시(시간표 과목 자동) 또는 쉬는시간·점심시간 등 */
+const WHEN_SLOTS = ["아침시간","쉬는시간","점심시간","방과후","온라인","등하교"];
+function whenOptions(d){ const rows = ttDay(d||today()); const n = rows.length || TT().periods;
+  return Array.from({length:n},(_,i)=>({v:`${i+1}교시`, subj:(rows[i]||{}).subj||""})).concat(WHEN_SLOTS.map(v=>({v, subj:""}))); }
+const whenLabel = r => r.when ? (r.subj ? `${r.when} · ${r.subj}` : r.when) : "";
 function quickCard(){
   const q = S.quickTags || [], selTag = q.find(x=>x.id===ui.qtSel), t = today();
   const cats = QUICK_CATS.concat(REC_CATS.filter(c=>!QUICK_CATS.includes(c)));
@@ -1557,19 +1630,22 @@ function quickCard(){
   return `<div class="card"><div class="spread"><h2>빠른 기록</h2><div class="row"><span class="small muted">${selTag ? `<b style="color:var(--ink)">'${esc(selTag.text)}'</b>을(를) 기록할 학생을 누르세요 · 오늘 날짜로 저장돼요` : "탭에서 문구를 고른 뒤 학생 이름을 누르면 바로 기록돼요"}</span>
       ${ui.qtLast.length ? `<button class="btn sm" data-act="qtUndo">방금 기록 취소</button>` : ""}<button class="btn sm ghost" data-act="qtEditToggle">${ui.qtEdit?"편집 끝":"문구 편집"}</button></div></div>
     <div class="qt-tabs" role="tablist">${cats.map(c=>{ const n = q.filter(x=>x.cat===c).length; return `<button role="tab" aria-selected="${c===cur}" class="qt-tab ${c===cur?"on":""}" data-act="qtTab" data-c="${c}">${c}${n?` <span class="muted">${n}</span>`:""}</button>`; }).join("")}</div>
+    <div class="qt-when"><span class="small muted">언제</span><button class="wchip ${!ui.qtWhen?"on":""}" data-act="qtWhen" data-v="">선택 안 함</button>${whenOptions(t).map(o=>`<button class="wchip ${ui.qtWhen===o.v?"on":""}" data-act="qtWhen" data-v="${o.v}">${o.v}${o.subj?` <span class="wsub">${esc(o.subj)}</span>`:""}</button>`).join("")}</div>
     <div class="qt-cat">${tags.map(x=>`<button class="qchip q-${x.cat} ${x.id===ui.qtSel?"on":""}" data-act="${ui.qtEdit?"qtDel":"qtPick"}" data-id="${x.id}">${esc(x.text)}${ui.qtEdit?' <span aria-hidden="true">×</span>':""}</button>`).join("") || `<span class="small muted">이 탭에는 문구가 없어요. '문구 편집'에서 추가하세요</span>`}</div>
     ${ui.qtEdit ? `<div class="row" style="margin-top:10px"><input type="text" id="qtText" placeholder="'${cur}' 탭에 넣을 새 문구" style="flex:1" data-enter="qtAdd"><button class="btn" data-act="qtAdd">문구 추가</button></div><div class="small muted" style="margin-top:4px">편집 중에는 문구를 누르면 지워져요.</div>` : ""}
     ${selTag && !ui.qtEdit ? `<div class="tiles" style="margin-top:12px;grid-template-columns:repeat(auto-fill,minmax(88px,1fr))">${sorted().map(s=>{ const n = todayCount(s.id); return `<button class="tile ${n?"on":""}" data-act="qtStu" data-s="${s.id}"><span class="no num">${s.no}${n?` · ${n>1?n+"번":"기록됨"}`:""}</span><span>${esc(s.name)}</span></button>`; }).join("")}</div>` : ""}
   </div>`;
 }
 A.qtTab = el => { ui.qtCat = el.dataset.c; if(ui.qtSel && !(S.quickTags||[]).some(x=>x.id===ui.qtSel && x.cat===ui.qtCat)) ui.qtSel = null; render(); };
+A.qtWhen = el => { ui.qtWhen = el.dataset.v; render(); };
 A.qtPick = el => { ui.qtSel = ui.qtSel===el.dataset.id ? null : el.dataset.id; render(); };
 A.qtEditToggle = () => { ui.qtEdit = !ui.qtEdit; render(); };
 A.qtAdd = () => { const v = $("#qtText").value.trim(); if(!v){ $("#qtText").focus(); return; } (S.quickTags ||= []).push({id:uid(), cat:ui.qtCat, text:v}); commit(); $("#qtText")?.focus(); };
 EN.qtAdd = () => A.qtAdd();
 A.qtDel = el => { S.quickTags = S.quickTags.filter(x=>x.id!==el.dataset.id); if(ui.qtSel===el.dataset.id) ui.qtSel = null; commit(); };
 A.qtStu = el => { const tag = (S.quickTags||[]).find(x=>x.id===ui.qtSel); if(!tag) return;
-  const r = {id:uid(), sid:el.dataset.s, date:today(), cat:tag.cat, text:tag.text, quick:true}; S.records.push(r); ui.qtLast.push(r.id); commit(); toast(`${sname(r.sid)} · ${tag.text}`); };
+  const w = ui.qtWhen ? whenOptions(today()).find(o=>o.v===ui.qtWhen) : null;
+  const r = {id:uid(), sid:el.dataset.s, date:today(), cat:tag.cat, text:tag.text, quick:true, when:w?w.v:"", subj:w?w.subj:""}; S.records.push(r); ui.qtLast.push(r.id); commit(); toast(`${sname(r.sid)} · ${r.when?whenLabel(r)+" · ":""}${tag.text}`); };
 A.qtUndo = () => { const id = ui.qtLast.pop(); if(!id) return; const r = S.records.find(x=>x.id===id); S.records = S.records.filter(x=>x.id!==id); commit(); if(r) toast(`${sname(r.sid)} · ${r.text} 기록을 취소했어요`); };
 
 /* ───────── 랜덤 뽑기 ─────────
@@ -1700,7 +1776,7 @@ function rolesView(){
   return top + `
   <div class="card"><div class="spread">
     <div class="row"><label class="f" style="flex-direction:row;align-items:center;gap:6px">기간<input type="text" value="${esc(R.period)}" placeholder="예: 11월 2주, 2학기 1차" data-ch="rolePeriod" style="width:170px"></label></div>
-    <div class="row"><button class="btn" data-act="roleRandom">무작위 배정</button><button class="btn" data-act="roleRotate" title="모든 학생이 앞 번호 학생의 역할을 받아요">한 칸씩 돌리기</button><button class="btn" data-act="roleSave">이번 배정 기록하기</button><button class="btn" data-act="roleExport">엑셀로</button></div></div>
+    <div class="row"><button class="btn" data-act="roleRandom">무작위 배정</button><button class="btn" data-act="roleRotate" title="모든 학생이 앞 번호 학생의 역할을 받아요">한 칸씩 돌리기</button><button class="btn" data-act="roleSave">이번 배정 기록하기</button><button class="btn" data-act="roleExport">내보내기</button></div></div>
     ${unassignedRoles.length && R.list.length ? `<div class="small muted">아무도 맡지 않은 역할: ${unassignedRoles.map(r=>esc(r.name)).join(", ")}</div>` : ""}
     ${!R.list.length ? `<div class="banner" style="margin-top:10px">아직 역할이 없어요. <button class="btn sm" data-act="roleTab" data-v="list">역할 목록 만들기</button></div>` : ""}
   </div>
@@ -1749,7 +1825,7 @@ VIEWS.jobs = () => {
     ${J.list.map(j=>`<tr><td><input type="text" value="${esc(j.name)}" data-ch="jobName" data-id="${j.id}"></td><td class="r"><input type="number" min="1" max="10" value="${j.cap}" class="scoreIn" data-ch="jobCap" data-id="${j.id}"></td><td><input type="text" value="${esc(j.desc)}" placeholder="예: 쉬는 시간마다 칠판 지우기" data-ch="jobDesc" data-id="${j.id}" style="width:100%"></td><td class="r"><button class="x" data-act="delJob" data-id="${j.id}" aria-label="삭제">×</button></td></tr>`).join("")}
     </tbody></table></div>
     <div class="row" style="margin-top:12px"><input type="text" id="jobNew" placeholder="새 직업 이름" data-enter="addJob" style="flex:1"><input type="number" id="jobNewCap" value="1" min="1" class="scoreIn"><button class="btn pri" data-act="addJob">직업 추가</button></div></div>`;
-  if(ui.jobTab==="history") return header("직업놀이", "분기마다 확정한 직업 배정 기록", tabs) + (J.history.length ? J.history.slice().reverse().map((h,ri)=>`<div class="card"><div class="spread"><h2>${esc(h.quarter)}</h2><div class="row"><span class="small muted">${new Date(h.at).toLocaleDateString("ko-KR")} 확정</span><button class="btn sm" data-act="jobHistExport" data-i="${J.history.length-1-ri}">엑셀로</button><button class="x" data-act="delHist" data-i="${J.history.length-1-ri}" aria-label="삭제">×</button></div></div>
+  if(ui.jobTab==="history") return header("직업놀이", "분기마다 확정한 직업 배정 기록", tabs) + (J.history.length ? J.history.slice().reverse().map((h,ri)=>`<div class="card"><div class="spread"><h2>${esc(h.quarter)}</h2><div class="row"><span class="small muted">${new Date(h.at).toLocaleDateString("ko-KR")} 확정</span><button class="btn sm" data-act="jobHistExport" data-i="${J.history.length-1-ri}">내보내기</button><button class="x" data-act="delHist" data-i="${J.history.length-1-ri}" aria-label="삭제">×</button></div></div>
       <div class="scroll"><table class="t"><thead><tr><th>직업</th><th>학생</th></tr></thead><tbody>${Object.entries(h.assign).filter(([,a])=>a.length).map(([jid,a])=>`<tr><td>${esc(h.names?.[jid] || S.jobs.list.find(j=>j.id===jid)?.name || "(삭제된 직업)")}</td><td>${a.map(sname).map(esc).join(", ")}</td></tr>`).join("")}</tbody></table></div></div>`).join("") : `<div class="card empty">아직 확정한 분기가 없어요</div>`);
 
   /* 직업 뽑기 진행 */
@@ -2005,6 +2081,7 @@ function resumeAfterGoogle(){
   if(r.err){ syncErr(r.err); toast(SY.msg); render(); return; }
   const f = r.intent && A[r.intent.action]; if(typeof f==="function") f();   // 이제 연결돼 있으니 바로 실행된다
 }
+const SHEET_FOLDER = (String(window.CLASSBOOK_GOOGLE_CLIENT_ID||"").trim()) ? "학급일지 시트 (웹앱)" : "학급일지 시트";
 const GD_FOLDER = GMODE ? "학급일지 자동백업 (웹앱)" : "학급일지 자동백업";
 function syncErr(e){
   const c = e && e.code;
