@@ -225,6 +225,9 @@ th.tt-today{color:var(--accent)}
 .task-row.late .task-title{color:var(--bad)}
 .task-row.compact{padding:6px 2px}
 .task-row.editing{background:var(--accent-soft);flex-direction:column}
+.att-run{display:flex;flex-direction:column;gap:6px;margin-top:6px;padding:8px 10px;border-radius:8px;background:var(--bg)}
+.att-run > span{display:flex;gap:8px;align-items:center}
+.att-run input[type=date]{width:auto;padding:4px 8px}
 .all-item{display:flex;gap:8px;align-items:flex-start}
 .all-item .all-body{flex:1;min-width:0}
 .all-k{flex:none;margin-top:10px;font-size:11px;font-weight:700;padding:1px 6px;border-radius:5px;min-width:34px;text-align:center}
@@ -1181,9 +1184,15 @@ VIEWS.attendance = () => {
       return `<div class="sa ${r?"has":""}"><div class="spread"><span class="nm"><span class="muted num small">${s.no}</span> ${esc(s.name)}</span>${r?`<button class="btn sm ghost" data-act="attClear" data-s="${s.id}">출석으로</button>`:""}</div>
       <div class="chips">${REASONS.map(x=>`<button class="chip k-${x} ${r&&r.reason===x?"on":""}" data-act="attSet" data-s="${s.id}" data-r="${x}">${x}</button>`).join("")}</div>
       ${r ? `<div class="chips">${KINDS.map(k=>`<button class="chip k-plain ${r.kind===k?"on":""}" data-act="attKind" data-s="${s.id}" data-k="${k}">${k}</button>`).join("")}</div>${r.kind!=="결석" ? `<div class="chips per-chips"><span class="small muted" style="align-self:center">${r.kind==="지각"?"몇 교시에 왔나요":r.kind==="조퇴"?"몇 교시부터 빠졌나요":"빠진 교시"}</span>${PERIODS.map(n=>`<button class="chip k-per ${(r.periods||[]).includes(n)?"on":""}" data-act="attPer" data-s="${s.id}" data-n="${n}" aria-pressed="${(r.periods||[]).includes(n)}">${n}</button>`).join("")}</div>` : ""}` : ""}
-      ${r ? `<input type="text" value="${esc(r.note)}" placeholder="사유 메모" data-in="attNote" data-s="${s.id}" id="an-${s.id}">` : ""}</div>`; }).join("")}</div></div></div>`
+      ${r ? `<input type="text" value="${esc(r.note)}" placeholder="사유 메모" data-in="attNote" data-s="${s.id}" id="an-${s.id}">` : ""}
+      ${r && r.kind==="결석" ? attRunBox(s.id) : ""}</div>`; }).join("")}</div></div></div>`
   : ui.attView==="month" ? attMonthTable(y,m) : attFieldTable(y,m)}</div>`;
 };
+function attRunBox(sid){
+  const run = attRun(sid, ui.attDay), n = run.length, i = run.indexOf(ui.attDay);
+  const info = n > 1 ? `<div class="row" style="gap:8px;justify-content:space-between"><span class="small"><b>${md(run[0])} ~ ${md(run[n-1])}</b> 등교일 ${n}일 연속 · ${i+1}일째</span><button class="btn sm ghost danger" data-act="attRunClear" data-s="${sid}">기간 모두 지우기</button></div>` : "";
+  return `<div class="att-run">${info}<div class="row" style="gap:6px"><span class="small muted">이어서</span><input type="date" id="af-${sid}" min="${ymd(addDays(parse(ui.attDay),1))}" aria-label="끝나는 날"><span class="small muted">까지</span><button class="btn sm" data-act="attFill" data-s="${sid}">등교일마다 채우기</button></div><div class="small muted">주말·공휴일·재량휴업일은 빼고 넣어요. 사유를 고치면 이어진 날에도 함께 바뀌어요.</div></div>`;
+}
 function attMonthRows(y,m){
   const pre = `${y}-${pad(m)}-`, rows = {};
   Object.entries(S.attendance).filter(([d])=>d.startsWith(pre)).forEach(([d,obj]) => Object.entries(obj).forEach(([sid,r]) => {
@@ -1227,16 +1236,50 @@ function attFieldTable(y,m){
 A.attView = el => { ui.attView = el.dataset.v; render(); };
 A.attMonth = el => { const n = Number(el.dataset.n); if(n===0){ ui.attMonth = today().slice(0,7); ui.attDay = today(); } else { const [y,m] = ui.attMonth.split("-").map(Number); const d = new Date(y, m-1+n, 1); ui.attMonth = ymd(d).slice(0,7); ui.attDay = ymd(d); } render(); };
 A.attDay = el => { ui.attDay = el.dataset.d; if(el.dataset.d.slice(0,7)!==ui.attMonth) ui.attMonth = el.dataset.d.slice(0,7); render(); };
-A.attSet = el => { const day = S.attendance[ui.attDay] ||= {}; const cur = day[el.dataset.s];
-  if(cur && cur.reason===el.dataset.r){ delete day[el.dataset.s]; } else day[el.dataset.s] = {reason:el.dataset.r, kind:cur?.kind||"결석", note:cur?.note||""};
+/* 등교일 기준 앞뒤 날짜: 주말·공휴일·재량휴업일·방학은 건너뛴다 */
+const isSchoolDay = d => { const w = parse(d).getDay(); return w!==0 && w!==6 && !offName(d); };
+function schoolStep(d, dir){ let x = parse(d); for(let i=0;i<40;i++){ x = addDays(x, dir); const k = ymd(x); if(isSchoolDay(k)) return k; } return ""; }
+/* 같은 학생이 같은 사유로 '결석'한 날이 등교일 기준으로 이어진 묶음 */
+function attRun(sid, d){
+  const r0 = S.attendance[d]?.[sid]; if(!r0 || r0.kind!=="결석") return [d];
+  const same = k => { const r = S.attendance[k]?.[sid]; return r && r.kind==="결석" && r.reason===r0.reason; };
+  const L = [d]; let k = d; while((k = schoolStep(k,-1)) && same(k)) L.unshift(k); k = d; while((k = schoolStep(k,1)) && same(k)) L.push(k);
+  return L;
+}
+A.attSet = el => { const day = S.attendance[ui.attDay] ||= {}, sid = el.dataset.s, cur = day[sid];
+  if(cur && cur.reason===el.dataset.r){ delete day[sid]; }
+  else {
+    let note = cur?.note || "", kind = cur?.kind || "결석", from = "";
+    if(!cur){   // 바로 앞(또는 뒤) 등교일에 같은 사유로 결석했으면 사유를 이어받는다
+      for(const dir of [-1, 1]){ const k = schoolStep(ui.attDay, dir), r = k && S.attendance[k]?.[sid];
+        if(r && r.reason===el.dataset.r && r.kind==="결석"){ note = r.note || ""; kind = "결석"; from = k; break; } }
+    }
+    day[sid] = {reason:el.dataset.r, kind, note};
+    if(from && note) setTimeout(()=>toast(`${md(from)}의 사유를 이어서 넣었어요`), 0);
+  }
   if(!Object.keys(day).length) delete S.attendance[ui.attDay]; commit(); };
+/* 기간으로 채우기: 오늘부터 고른 날까지 등교일마다 같은 사유로 */
+A.attFill = el => { const sid = el.dataset.s, r = S.attendance[ui.attDay]?.[sid], end = $(`#af-${sid}`)?.value;
+  if(!r) return; if(!end || end <= ui.attDay){ toast("끝나는 날을 골라 주세요"); return; }
+  let k = ui.attDay, n = 0, skip = [];
+  while((k = schoolStep(k, 1)) && k <= end){ const day = S.attendance[k] ||= {}; const o = day[sid];
+    if(o && (o.reason!==r.reason || o.kind!=="결석")){ skip.push(md(k)); continue; }
+    day[sid] = {reason:r.reason, kind:"결석", note:r.note||""}; n++; }
+  commit(); toast(`등교일 ${n}일에 같은 사유로 넣었어요${skip.length?` · 다른 기록이 있어 건너뜀: ${skip.join(", ")}`:""}`); };
+A.attRunClear = async el => { const sid = el.dataset.s, run = attRun(sid, ui.attDay);
+  if(!(await ask(`${md(run[0])} ~ ${md(run[run.length-1])} ${run.length}일의 기록을 모두 지우고 출석으로 바꿀까요?`,"지우기",true))) return;
+  run.forEach(k => { delete S.attendance[k][sid]; if(!Object.keys(S.attendance[k]).length) delete S.attendance[k]; }); commit(); };
 A.attKind = el => { const r = S.attendance[ui.attDay][el.dataset.s]; if(r.kind!==el.dataset.k) r.periods = []; r.kind = el.dataset.k; commit(); };
 A.attPer = el => { const r = S.attendance[ui.attDay][el.dataset.s], n = Number(el.dataset.n); let p = r.periods || [];
   if(r.kind==="결과") p = p.includes(n) ? p.filter(x=>x!==n) : p.concat(n);
   else p = p.includes(n) ? [] : [n];   // 지각·조퇴는 한 교시만
   r.periods = p.sort((a,b)=>a-b); commit(); };
 A.attClear = el => { delete S.attendance[ui.attDay][el.dataset.s]; if(!Object.keys(S.attendance[ui.attDay]).length) delete S.attendance[ui.attDay]; commit(); };
-IN.attNote = el => { const r = S.attendance[ui.attDay]?.[el.dataset.s]; if(r){ r.note = el.value; persist(); } };
+IN.attNote = el => { const sid = el.dataset.s, r = S.attendance[ui.attDay]?.[sid]; if(!r) return;
+  const old = r.note || ""; r.note = el.value;
+  // 이어진 결석 기간의 다른 날도 사유가 같았으면(또는 비어 있으면) 함께 바꾼다. 따로 고친 날은 그대로 둔다
+  if(r.kind==="결석") attRun(sid, ui.attDay).forEach(k => { const x = S.attendance[k][sid]; if(k!==ui.attDay && ((x.note||"")===old || !x.note)) x.note = el.value; });
+  persist(); clearTimeout(IN._attT); IN._attT = setTimeout(renderSoon, 900); };
 A.attExport = () => { const [y,m] = ui.attMonth.split("-").map(Number); const rows = attMonthRows(y,m);
   const sum = [["번호","이름",...ATT_COLS,"내용"], ...sorted().map(s=>{ const r = rows[s.id]; return [s.no, s.name, ...ATT_COLS.map(c=>r?r[c]||0:0), r?r.dates.join(", "):""]; })];
   const detail = [["날짜","번호","이름","구분","종류","교시","사유"]]; Object.keys(S.attendance).sort().filter(d=>d.startsWith(ui.attMonth)).forEach(d=>Object.entries(S.attendance[d]).forEach(([sid,r])=>detail.push([d, stu(sid)?.no??"", sname(sid), r.reason, r.kind, r.kind!=="결석"&&r.periods&&r.periods.length ? r.periods.join(",")+"교시" : "", r.note])));
