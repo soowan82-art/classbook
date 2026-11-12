@@ -160,6 +160,9 @@ table.t{width:100%;border-collapse:collapse;font-size:13.5px}
 .mdone{color:var(--muted);text-decoration:line-through}
 .subj{display:inline-flex;align-items:center;justify-content:center;min-width:52px;padding:3px 8px;border-radius:7px;font-size:13px;font-weight:600;background:hsl(var(--h) var(--s,70%) 92%);color:hsl(var(--h) var(--s,55%) 28%)}
 .subj.sm{min-width:34px;padding:0 5px;font-size:11.5px;border-radius:5px}
+.subj.sp{outline:1.5px dashed hsl(var(--h) 45% 45%);outline-offset:-1.5px}
+.sp-tag{font-style:normal;font-size:9.5px;font-weight:700;margin-left:3px;padding:0 3px;border-radius:3px;background:hsl(var(--h) 45% 40%);color:#fff;vertical-align:1px}
+.subj.sm .sp-tag{font-size:8.5px;margin-left:2px;padding:0 2px}
 .empty-subj{background:transparent;color:var(--muted);font-weight:400}
 .subj-btn{border:1px solid transparent;border-radius:8px;padding:6px 12px;cursor:pointer;font:inherit;font-weight:600;background:hsl(var(--h) 70% 92%);color:hsl(var(--h) 55% 28%)}
 .subj-btn.on{outline:2px solid var(--ink);outline-offset:2px}
@@ -183,6 +186,8 @@ table.t{width:100%;border-collapse:collapse;font-size:13.5px}
 th.tt-today,td.tt-today .tt-cell{border-color:var(--accent)}
 th.tt-today{color:var(--accent)}
 .tt-day{display:flex;flex-direction:column;gap:6px}
+.tt-hours{margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+.tt-h{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line);border-radius:8px;padding:3px 8px 3px 4px;font-size:13px}
 .tt-row{display:grid;grid-template-columns:86px 64px 34px 1fr;gap:8px;align-items:center}
 .tt-row .subj{justify-self:start}
 .tt-row .tt-pn{font-weight:600}
@@ -193,6 +198,21 @@ th.tt-today{color:var(--accent)}
 .tt-mrow{display:flex;align-items:center;gap:5px;font-size:11.5px;min-width:0}
 .tt-mmemo{color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 @media (max-width:480px){.tt-row{grid-template-columns:52px 60px 1fr}.tt-row > span:nth-child(3){display:none}}
+.sum-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.sum-stats > div{border:1px solid var(--line);border-radius:9px;padding:8px 10px;display:flex;flex-direction:column;gap:2px}
+.sum-stats > div.wide{grid-column:1/-1;flex-direction:row;gap:10px;align-items:baseline}
+.sum-stats .l{font-size:12px;color:var(--muted);flex:none}
+.sum-stats b{font-family:var(--font-display);font-size:20px}
+.sum-stats .wide b{font-size:13.5px;font-family:inherit}
+.sum-freq{display:flex;flex-direction:column;gap:6px;margin-top:12px}
+.sum-freq > div{display:flex;gap:5px;flex-wrap:wrap;align-items:center}
+.sum-freq .l{font-size:12px;font-weight:600;margin-right:4px}
+.fq{border-radius:99px;padding:2px 10px;font-size:12.5px;border:1px solid var(--line)}
+.fq.ok{background:var(--ok-soft);border-color:transparent}
+.fq.warn{background:var(--warn-soft);border-color:transparent}
+.sum-notes,.sum-ai{margin-top:12px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--bg)}
+.sum-notes pre{white-space:pre-wrap;font-family:inherit;font-size:13px;margin:6px 0 0}
+@media (max-width:600px){.sum-stats{grid-template-columns:1fr 1fr}}
 .task-group{margin-bottom:14px}
 .task-gh{font-size:12.5px;font-weight:600;color:var(--muted);padding:4px 2px;border-bottom:1px solid var(--line);margin-bottom:2px}
 .task-gh.bad{color:var(--bad)}
@@ -471,7 +491,7 @@ const HOLI = {"2026-01-01":"신정","2026-02-16":"설날 연휴","2026-02-17":"�
 const MENUS = [
   {grp:"", items:[["today","오늘"]]},
   {grp:"기록", items:[["diary","다이어리"],["timetable","시간표"],["tasks","업무 관리"],["memo","메모장"],["events","학급 행사"]]},
-  {grp:"학생", items:[["attendance","출석 체크"],["submit","제출 체크"],["records","학생 기록"],["counsel","상담 기록"],["grades","성적 입력"]]},
+  {grp:"학생", items:[["attendance","출석 체크"],["submit","제출 체크"],["records","학생 기록"],["counsel","상담 기록"],["summary","학생 종합·의견"],["grades","성적 입력"]]},
   {grp:"운영", items:[["budget","예산 관리"],["seats","자리 배치"],["random","랜덤 뽑기"],["jobs","일인일역"]]},
   {grp:"관리", items:[["students","학생 관리"],["settings","설정"]]},
 ];
@@ -548,7 +568,7 @@ function sampleData(){
   s.records = [
     {id:uid(), sid:st[0].id, date:dk(1), cat:"칭찬", text:"모둠 활동에서 친구들 의견을 끝까지 듣고 정리해 발표함."},
     {id:uid(), sid:st[4].id, date:dk(2), cat:"교우", text:"쉬는 시간 공 사용 문제로 다툼. 대화 후 서로 사과함."},
-    {id:uid(), sid:st[0].id, date:ymd(addDays(T,-12)), cat:"학습", text:"꺾은선 그래프의 물결선 의미를 스스로 설명함."}
+    {id:uid(), sid:st[0].id, date:ymd(addDays(T,-12)), cat:"칭찬", text:"꺾은선 그래프의 물결선 의미를 스스로 설명함."}
   ];
   s.assessments = [
     {id:uid(), subject:"수학", title:"꺾은선 그래프 그리기", date:dk(1), mode:"level", levels:LEVELS.slice(), max:100,
@@ -564,7 +584,7 @@ function sampleData(){
       {id:uid(), date:ymd(addDays(T,-4)), cat:"도서", purpose:"학급문고 그림책 3권", amount:39600, note:""}
     ]}];
   s.seats = {rows:4, cols:6, pair:true, map:st.map(x=>x.id), locked:[]};
-  s.timetable.base = {1:["국어","수학","사회","과학","체육",""],2:["수학","국어","영어","음악","미술","미술"],3:["국어","수학","도덕","체육","자율",""],4:["과학","과학","국어","영어","수학","사회"],5:["국어","수학","사회","음악","동아리","진로"]};
+  s.timetable.base = {1:["국어","수학","사회","과학","체육",""],2:["수학","국어","영어|전담","음악|전담","미술","미술"],3:["국어","수학","도덕","체육","자율",""],4:["과학|전담","과학|전담","국어","영어|전담","수학","사회"],5:["국어","수학","사회","음악","동아리","진로"]};
   s.timetable.over[t] = {3:"체육"};
   s.timetable.memos[t] = {0:"독서록 검사", 1:"꺾은선 그래프 익힘책 74쪽"};
   s.tasks = [
@@ -610,7 +630,7 @@ if((S.quickV||1) < 3){
   DEFAULT_QUICK.forEach(x=>{ if(!seen.has(x.cat+"|"+x.text)){ S.quickTags.push({...x, id:uid()}); seen.add(x.cat+"|"+x.text); } });
   S.quickV = 3;
 }
-["tasks","counsel","timetable"].forEach(k => { if(S.menus && S.menus[k]===undefined) S.menus[k] = true; });
+["tasks","counsel","timetable","summary"].forEach(k => { if(S.menus && S.menus[k]===undefined) S.menus[k] = true; });
 if(S.jobMode===undefined) S.jobMode = "";
 if(firstRun) persist();
 
@@ -622,7 +642,7 @@ const ui = {
   eventEdit:null, memoSel:null, memoQ:"", seatPick:null, seatView:"teacher", seatMode:"",
   roleTab:"assign",
   rnd:{ mode:"one", target:"all", customText:"", exclude:{}, drawn:[], result:null, order:null, groups:null, noRepeat:true, skipAbsent:true, groupBy:"count", groupN:6, groupSize:4, mixGender:true },
-  jobTab:"run", taskFilter:"open", taskCat:"전체", taskEdit:null, csSel:"all", csEdit:null, qtSel:null, qtEdit:false, qtLast:[], qtCat:"칭찬", qtWhen:"", ttMode:"week", ttWeek:today(), ttBrush:null, ttEdit:false, ttAdding:false
+  jobTab:"run", taskFilter:"open", taskCat:"전체", taskEdit:null, csSel:"all", csEdit:null, qtSel:null, qtEdit:false, qtLast:[], qtCat:"칭찬", qtWhen:"", sumSel:null, sumTerm:null, sumFilter:"all", sumNotes:null, sampleOk:false, ttMode:"week", ttWeek:today(), ttBrush:null, ttEdit:false, ttAdding:false, ttSp:false
 };
 
 /* ───────── 공통 ───────── */
@@ -1415,8 +1435,13 @@ function TT(){
   }
   return tt;
 }
-const ttHue = name => { const f = TT().subjects.find(s=>s.name===name); return f ? f.hue : TT_HUE[name]; };
-function subjChip(name, extra=""){ if(!name) return `<span class="subj empty-subj ${extra}">·</span>`; const h = ttHue(name); return `<span class="subj ${extra}" style="--h:${h??0};${h==null?"--s:0%":""}">${esc(name)}</span>`; }
+/* 칸 값: "과학" = 담임, "과학|전담" = 전담 */
+const SP = "|전담";
+const cellName = v => String(v||"").replace(SP, "");
+const isSp = v => String(v||"").endsWith(SP);
+const cellLabel = v => v ? cellName(v) + (isSp(v) ? "(전담)" : "") : "";
+const ttHue = name => { name = cellName(name); const f = TT().subjects.find(s=>s.name===name); return f ? f.hue : TT_HUE[name]; };
+function subjChip(v, extra=""){ if(!v) return `<span class="subj empty-subj ${extra}">·</span>`; const h = ttHue(v), sp = isSp(v); return `<span class="subj ${sp?"sp":""} ${extra}" style="--h:${h??0};${h==null?"--s:0%":""}" title="${sp?"전담 수업":"담임 수업"}">${esc(cellName(v))}${sp?`<i class="sp-tag">전담</i>`:""}</span>`; }
 /* 그날 실제 시간표: [{p, subj, base, changed, memo}] */
 function ttDay(d){
   const tt = TT(), w = parse(d).getDay(); if(w===0 || w===6) return [];
@@ -1428,9 +1453,10 @@ const ttHasAny = () => Object.values(TT().base).some(a=>a.some(Boolean));
 VIEWS.timetable = () => {
   const tt = TT(), mode = ui.ttMode, brush = ui.ttBrush;
   const mon = mondayOf(parse(ui.ttWeek)), days = [0,1,2,3,4].map(i=>ymd(addDays(mon,i))), t = today();
-  const pal = `<div class="card"><div class="spread"><h2>과목 고르기</h2><div class="row"><span class="small muted">${brush===null ? "과목을 고른 뒤 시간표 칸을 누르면 그 과목으로 바뀌어요" : brush==="" ? "누르는 칸을 비워요" : `<b style="color:var(--ink)">${esc(brush)}</b>(으)로 바꿀 칸을 누르세요`}</span><button class="btn sm ghost" data-act="ttEditToggle">${ui.ttEdit?"설정 끝":"과목·교시 설정"}</button></div></div>
+  const pal = `<div class="card"><div class="spread"><h2>과목 고르기</h2><div class="row"><span class="small muted">${brush===null ? "과목을 고른 뒤 시간표 칸을 누르면 그 과목으로 바뀌어요" : brush==="" ? "누르는 칸을 비워요" : brush==="__sp" ? "누르는 칸을 담임 수업 ↔ 전담 수업으로 바꿔요" : `<b style="color:var(--ink)">${esc(brush)}${ui.ttSp?" (전담)":""}</b>(으)로 바꿀 칸을 누르세요`}</span><button class="btn sm ghost" data-act="ttEditToggle">${ui.ttEdit?"설정 끝":"과목·교시 설정"}</button></div></div>
+    ${ui.ttEdit ? "" : `<div class="row" style="gap:8px;margin-bottom:10px"><span class="small muted">칠할 때</span><div class="seg"><button class="${!ui.ttSp?"on":""}" data-act="ttSp" data-v="0">담임 수업</button><button class="${ui.ttSp?"on":""}" data-act="ttSp" data-v="1">전담 수업</button></div><span class="small muted">전담으로 칠한 칸에는 '전담' 표시가 붙어요</span></div>`}
     <div class="row" style="gap:6px">${tt.subjects.map(s=>`<button class="subj-btn ${brush===s.name?"on":""}" data-act="${ui.ttEdit?"ttSubDel":"ttBrush"}" data-v="${esc(s.name)}" style="--h:${s.hue}">${esc(s.name)}${ui.ttEdit?" ×":""}</button>`).join("")}
-      ${ui.ttEdit?"":`<button class="subj-btn erase ${brush===""?"on":""}" data-act="ttBrush" data-v="">비우기</button><button class="subj-btn addsub" data-act="ttAddOpen">+ 과목 추가</button>`}</div>
+      ${ui.ttEdit?"":`<button class="subj-btn erase ${brush===""?"on":""}" data-act="ttBrush" data-v="">비우기</button><button class="subj-btn erase ${brush==="__sp"?"on":""}" data-act="ttBrush" data-v="__sp" title="누르는 칸의 과목은 그대로 두고 담임↔전담만 바꿔요">담임↔전담 바꾸기</button><button class="subj-btn addsub" data-act="ttAddOpen">+ 과목 추가</button>`}</div>
     ${ui.ttAdding && !ui.ttEdit ? `<div class="tt-add"><input type="text" id="ttAddName" placeholder="과목 이름 (예: 학교자율시간, 우리 고장 김포)" data-enter="ttAddGo" maxlength="20">
       <button class="btn pri sm" data-act="ttAddGo">추가</button><button class="btn sm ghost" data-act="ttAddOpen">닫기</button>
       <span class="small muted">빠른 추가:</span>${["학교자율시간","학자시","안전","정보"].filter(n=>!tt.subjects.some(x=>x.name===n)).map(n=>`<button class="chip k-plain" data-act="ttAddQuick" data-v="${n}">${n}</button>`).join("")}</div>` : ""}
@@ -1443,22 +1469,35 @@ VIEWS.timetable = () => {
   const head = mode==="base" ? [1,2,3,4,5].map(w=>`<th class="c">${WD[w]}</th>`).join("")
     : days.map(d=>{ const dt = parse(d), ch = Object.keys(tt.over[d]||{}).length; return `<th class="c ${d===t?"tt-today":""}"><div>${WD[dt.getDay()]} <span class="muted num">${dt.getMonth()+1}/${dt.getDate()}</span></div>${HOLI[d]?`<div class="small holi">${HOLI[d]}</div>`:""}${ch?`<button class="btn sm ghost" data-act="ttResetDay" data-d="${d}" style="padding:1px 6px;font-size:11.5px">기본으로</button>`:""}</th>`; }).join("");
   const rows = Array.from({length:tt.periods}, (_,i) => `<tr><th class="tt-p"><b>${i+1}교시</b>${tt.times[i]?`<div class="small muted num">${tt.times[i]}</div>`:""}</th>${
-    mode==="base" ? [1,2,3,4,5].map(w=>{ const v = (tt.base[w]||[])[i]||""; return `<td><button class="tt-cell" data-act="ttCell" data-w="${w}" data-i="${i}" aria-label="${WD[w]} ${i+1}교시 ${esc(v)||"비어 있음"}">${subjChip(v)}</button></td>`; }).join("")
-    : days.map(d=>{ const r = ttDay(d)[i]; return `<td class="${d===t?"tt-today":""}"><button class="tt-cell ${r.changed?"changed":""}" data-act="ttCell" data-d="${d}" data-i="${i}" title="${r.changed?`기본: ${r.base||"없음"} → 이날만 ${r.subj||"비움"}`:""}">${subjChip(r.subj)}${r.changed?`<span class="tt-badge">변경</span>`:""}${r.memo?`<span class="tt-memo">${esc(r.memo)}</span>`:""}</button></td>`; }).join("")
+    mode==="base" ? [1,2,3,4,5].map(w=>{ const v = (tt.base[w]||[])[i]||""; return `<td><button class="tt-cell" data-act="ttCell" data-w="${w}" data-i="${i}" aria-label="${WD[w]} ${i+1}교시 ${esc(cellLabel(v))||"비어 있음"}">${subjChip(v)}</button></td>`; }).join("")
+    : days.map(d=>{ const r = ttDay(d)[i]; return `<td class="${d===t?"tt-today":""}"><button class="tt-cell ${r.changed?"changed":""}" data-act="ttCell" data-d="${d}" data-i="${i}" title="${r.changed?`기본: ${esc(cellLabel(r.base))||"없음"} → 이날만 ${esc(cellLabel(r.subj))||"비움"}`:""}">${subjChip(r.subj)}${r.changed?`<span class="tt-badge">변경</span>`:""}${r.memo?`<span class="tt-memo">${esc(r.memo)}</span>`:""}</button></td>`; }).join("")
   }</tr>`).join("");
   return header("시간표", mode==="base" ? "요일별 기본 시간표예요. 여기서 바꾸면 앞으로 모든 주에 적용돼요." : "이번 주 시간표예요. 여기서 바꾸면 그날만 바뀌고, 기본 시간표는 그대로예요. 교시별 메모는 다이어리에서 적어요.",
     `<div class="seg"><button class="${mode==="week"?"on":""}" data-act="ttMode" data-v="week">날짜별 시간표</button><button class="${mode==="base"?"on":""}" data-act="ttMode" data-v="base">기본 시간표</button></div>` +
     (mode==="week" ? `<button class="btn" data-act="ttWk" data-n="-7">이전 주</button><button class="btn" data-act="ttWk" data-n="0">이번 주</button><button class="btn" data-act="ttWk" data-n="7">다음 주</button>` : "")) +
   pal + `<div class="card"><div class="scroll"><table class="tt-table"><thead><tr><th></th>${head}</tr></thead><tbody>${rows}</tbody></table></div>
+    ${mode==="base" && ttHasAny() ? ttHoursSummary() : ""}
     ${mode==="base" && !ttHasAny() ? `<div class="small muted" style="margin-top:10px">위에서 과목을 고르고 칸을 차례로 누르면 금방 채워져요. 같은 과목은 한 번 고른 채로 여러 칸을 연달아 누르면 돼요.</div>` : ""}</div>`;
 };
+function ttHoursSummary(){
+  const tt = TT(), m = {};
+  [1,2,3,4,5].forEach(w => (tt.base[w]||[]).slice(0, tt.periods).forEach(v => { if(!v) return; const n = cellName(v); (m[n] ||= {h:0, sp:0}); isSp(v) ? m[n].sp++ : m[n].h++; }));
+  const rows = Object.entries(m).sort((a,b)=>(b[1].h+b[1].sp)-(a[1].h+a[1].sp));
+  const tot = rows.reduce((a,[,x])=>[a[0]+x.h, a[1]+x.sp],[0,0]);
+  return `<div class="tt-hours"><div class="small muted" style="margin-bottom:6px">주당 시수 · 담임 <b style="color:var(--ink)">${tot[0]}</b>시간 · 전담 <b style="color:var(--ink)">${tot[1]}</b>시간</div><div class="row" style="gap:6px">${rows.map(([n,x])=>`<span class="tt-h">${subjChip(n,"sm")} <span class="num">${x.h+x.sp}</span>${x.sp?`<span class="small muted">(전담 ${x.sp})</span>`:""}</span>`).join("")}</div></div>`;
+}
 A.ttMode = el => { ui.ttMode = el.dataset.v; render(); };
 A.ttWk = el => { const n = Number(el.dataset.n); ui.ttWeek = n===0 ? today() : ymd(addDays(parse(ui.ttWeek), n)); render(); };
+A.ttSp = el => { ui.ttSp = el.dataset.v==="1"; render(); };
 A.ttBrush = el => { const v = el.dataset.v; ui.ttBrush = ui.ttBrush===v ? null : v; render(); };
 A.ttEditToggle = () => { ui.ttEdit = !ui.ttEdit; render(); };
 A.ttCell = el => {
   if(ui.ttBrush===null){ toast("위에서 과목을 먼저 골라 주세요"); return; }
-  const tt = TT(), i = Number(el.dataset.i), v = ui.ttBrush;
+  const tt = TT(), i = Number(el.dataset.i);
+  const cur = el.dataset.w ? ((tt.base[el.dataset.w]||[])[i]||"") : (ttDay(el.dataset.d)[i]||{}).subj || "";
+  let v = ui.ttBrush;
+  if(v==="__sp"){ if(!cur){ toast("빈 칸이에요. 먼저 과목을 칠해 주세요"); return; } v = isSp(cur) ? cellName(cur) : cellName(cur) + SP; }
+  else if(v && ui.ttSp) v = v + SP;
   if(el.dataset.w){ const w = el.dataset.w; const a = tt.base[w] ||= []; while(a.length<=i) a.push(""); a[i] = v; }
   else { const d = el.dataset.d, base = ((tt.base[parse(d).getDay()]||[])[i]) || ""; const o = tt.over[d] ||= {};
     if(v===base) delete o[i]; else o[i] = v; if(!Object.keys(o).length) delete tt.over[d]; }
@@ -1489,7 +1528,7 @@ function ttDayCard(d, editable){
   if(!rows.some(r=>r.subj) && !ttHasAny()) return `<div class="card"><div class="spread"><h2>시간표</h2><a class="btn sm" href="#timetable">시간표 입력</a></div><div class="empty">기본 시간표를 입력하면 여기에 그날 시간표가 나와요</div></div>`;
   return `<div class="card"><div class="spread"><h2>${d===today()?"오늘 시간표":"이날 시간표"}</h2><a class="btn sm" href="#timetable" data-act="ttGoWeek" data-d="${d}">시간표 바꾸기</a></div>
     <div class="tt-day">${rows.map(r=>`<div class="tt-row"><span class="tt-pn num">${r.p+1}<span class="small muted">${tt.times[r.p]?" "+tt.times[r.p]:""}</span></span>${subjChip(r.subj)}${r.changed?`<span class="tt-badge static">변경</span>`:"<span></span>"}
-      ${editable ? `<input type="text" class="tt-memo-in" value="${esc(r.memo)}" placeholder="${r.subj?esc(r.subj)+" 메모 (준비물, 진도 등)":"메모"}" data-in="ttMemo" data-d="${d}" data-i="${r.p}" id="ttm-${d}-${r.p}" aria-label="${r.p+1}교시 메모">` : `<span class="tt-memo-txt">${esc(r.memo)}</span>`}</div>`).join("")}</div></div>`;
+      ${editable ? `<input type="text" class="tt-memo-in" value="${esc(r.memo)}" placeholder="${r.subj?esc(cellLabel(r.subj))+" 메모 (준비물, 진도 등)":"메모"}" data-in="ttMemo" data-d="${d}" data-i="${r.p}" id="ttm-${d}-${r.p}" aria-label="${r.p+1}교시 메모">` : `<span class="tt-memo-txt">${esc(r.memo)}</span>`}</div>`).join("")}</div></div>`;
 }
 A.ttGoWeek = el => { ui.ttMode = "week"; ui.ttWeek = el.dataset.d; location.hash = "timetable"; };
 function ttMini(d){ // 주 보기 칸에 들어가는 작은 시간표
@@ -1620,7 +1659,7 @@ function counselTodayCard(){
 /* 기록의 '언제': 교시(시간표 과목 자동) 또는 쉬는시간·점심시간 등 */
 const WHEN_SLOTS = ["아침시간","쉬는시간","점심시간","방과후","온라인","등하교"];
 function whenOptions(d){ const rows = ttDay(d||today()); const n = rows.length || TT().periods;
-  return Array.from({length:n},(_,i)=>({v:`${i+1}교시`, subj:(rows[i]||{}).subj||""})).concat(WHEN_SLOTS.map(v=>({v, subj:""}))); }
+  return Array.from({length:n},(_,i)=>({v:`${i+1}교시`, subj:cellLabel((rows[i]||{}).subj||"")})).concat(WHEN_SLOTS.map(v=>({v, subj:""}))); }
 const whenLabel = r => r.when ? (r.subj ? `${r.when} · ${r.subj}` : r.when) : "";
 function quickCard(){
   const q = S.quickTags || [], selTag = q.find(x=>x.id===ui.qtSel), t = today();
@@ -1647,6 +1686,144 @@ A.qtStu = el => { const tag = (S.quickTags||[]).find(x=>x.id===ui.qtSel); if(!ta
   const w = ui.qtWhen ? whenOptions(today()).find(o=>o.v===ui.qtWhen) : null;
   const r = {id:uid(), sid:el.dataset.s, date:today(), cat:tag.cat, text:tag.text, quick:true, when:w?w.v:"", subj:w?w.subj:""}; S.records.push(r); ui.qtLast.push(r.id); commit(); toast(`${sname(r.sid)} · ${r.when?whenLabel(r)+" · ":""}${tag.text}`); };
 A.qtUndo = () => { const id = ui.qtLast.pop(); if(!id) return; const r = S.records.find(x=>x.id===id); S.records = S.records.filter(x=>x.id!==id); commit(); if(r) toast(`${sname(r.sid)} · ${r.text} 기록을 취소했어요`); };
+
+/* ───────── 학생 종합 · 종합의견 ─────────
+   학생 기록 + 상담 기록 + 출결·제출·성적·역할을 한 학생 기준으로 모아 보고, 학기별 종합의견을 쓴다. */
+function termRange(term){
+  const Y = Number(S.cls.year) || new Date().getFullYear();
+  if(term==="1") return [`${Y}-03-01`, `${Y}-08-15`];
+  if(term==="2") return [`${Y}-08-16`, `${Y+1}-02-28`];
+  return [`${Y}-03-01`, `${Y+1}-02-28`];
+}
+const termName = t => t==="1" ? "1학기" : t==="2" ? "2학기" : "올해 전체";
+function defaultTerm(){ const d = today().slice(5); return (d >= "03-01" && d <= "08-15") ? "1" : "2"; }
+const inRange = (d, [a,b]) => d >= a && d <= b;
+function studentDigest(sid, term){
+  const R = termRange(term);
+  const recs = S.records.filter(r=>r.sid===sid && inRange(r.date,R)).sort((a,b)=>a.date.localeCompare(b.date));
+  const cs = (S.counsels||[]).filter(c=>c.sid===sid && inRange(c.date,R)).sort((a,b)=>a.date.localeCompare(b.date));
+  const att = {}; Object.entries(S.attendance).forEach(([d,o])=>{ if(inRange(d,R) && o[sid]){ const r = o[sid]; const k = r.kind==="결석" ? (r.reason==="체험학습"?"체험학습":"결석") : r.kind; att[k] = (att[k]||0)+1; } });
+  const asg = S.assignments.filter(a=>inRange(a.due,R) && !isEx(a,sid)); const miss = asg.filter(a=>!a.submitted[sid]);
+  const grades = S.assessments.filter(a=>inRange(a.date,R) && a.scores[sid]!==undefined && a.scores[sid]!=="").map(a=>({t:`${a.subject} ${a.title}`, v: a.mode==="score" ? `${a.scores[sid]}/${a.max}점` : a.scores[sid]}));
+  const roles = [];
+  (S.jobs.history||[]).filter(h=>inRange(ymd(new Date(h.at)),R)).forEach(h=>Object.entries(h.assign).forEach(([jid,a])=>{ if(a.includes(sid)) roles.push(h.names?.[jid]||""); }));
+  (S.roles?.history||[]).filter(h=>inRange(ymd(new Date(h.at)),R)).forEach(h=>{ const rid = h.assign[sid]; if(rid) roles.push(h.names[rid]||""); });
+  if(S.roles && S.roles.assign[sid]){ const n = S.roles.list.find(x=>x.id===S.roles.assign[sid])?.name; if(n) roles.push(n); }
+  const freq = list => { const m = {}; list.forEach(r=>{ m[r.text] = (m[r.text]||0)+1; }); return Object.entries(m).sort((a,b)=>b[1]-a[1]); };
+  const praise = recs.filter(r=>r.cat==="칭찬"), issues = recs.filter(r=>r.cat!=="칭찬" && r.cat!=="상담");
+  return {R, recs, cs, att, asg, miss, grades, roles:[...new Set(roles.filter(Boolean))], praise, issues, praiseF:freq(praise), issueF:freq(issues)};
+}
+function digestNotes(D){
+  const L = [];
+  if(D.praiseF.length) L.push("칭찬: " + D.praiseF.map(([t,n])=>n>1?`${t}(${n}회)`:t).join(", "));
+  if(D.issueF.length) L.push("지도할 점: " + D.issueF.map(([t,n])=>n>1?`${t}(${n}회)`:t).join(", "));
+  if(D.roles.length) L.push("맡은 역할: " + D.roles.join(", "));
+  if(D.cs.length) L.push("상담: " + D.cs.map(c=>`${md(c.date)} ${c.topic}(${c.who})${c.followup?" → "+c.followup:""}`).join(" / "));
+  if(D.grades.length) L.push("평가: " + D.grades.map(g=>`${g.t} ${g.v}`).join(", "));
+  const a = Object.entries(D.att).map(([k,n])=>`${k} ${n}`).join(", "); if(a) L.push("출결: " + a);
+  if(D.asg.length) L.push(`과제: ${D.asg.length}개 중 ${D.asg.length-D.miss.length}개 제출`);
+  return L.map(x=>"- "+x).join("\n");
+}
+const neisBytes = s => [...String(s)].reduce((n,ch)=> n + (ch==="\n" ? 2 : /[\u0000-\u007f]/.test(ch) ? 1 : 3), 0);
+VIEWS.summary = () => {
+  if(!S.students.length) return header("학생 종합 · 의견") + noStudents();
+  const term = ui.sumTerm || (ui.sumTerm = defaultTerm());
+  if(!ui.sumSel || !stu(ui.sumSel)) ui.sumSel = sorted()[0].id;
+  const s = stu(ui.sumSel), D = studentDigest(s.id, term), op = ((S.opinions||{})[s.id]||{})[term] || "";
+  const listCount = id => { const d = studentDigest(id, term); return {p:d.praise.length, i:d.issues.length, c:d.cs.length, done: !!(((S.opinions||{})[id]||{})[term]||"").trim()}; };
+  const f = ui.sumFilter;
+  const items = [
+    ...D.recs.map(r=>({d:r.date, kind: r.cat==="칭찬"?"praise":r.cat==="상담"?"counsel":"issue", html:`<span class="pill ${recPill(r.cat)}">${esc(r.cat)}</span>${r.when?` <span class="pill">${esc(whenLabel(r))}</span>`:""} ${esc(r.text)}`})),
+    ...D.cs.map(c=>({d:c.date, kind:"counsel", html:`<span class="pill vio">상담</span> <b>${esc(c.topic)}</b> <span class="small muted">${esc(c.who)} · ${esc(c.how)}</span><div class="tx" style="margin-top:3px">${esc(c.content)}</div>${c.followup?`<div class="small"><b>후속 조치</b> ${esc(c.followup)}</div>`:""}`}))
+  ].filter(x => f==="all" || x.kind===f).sort((a,b)=>b.d.localeCompare(a.d));
+  const attTxt = Object.entries(D.att).map(([k,n])=>`${k} ${n}`).join(" · ") || "특이사항 없음";
+  const canAI = !!ui.sampleOk;
+  return header("학생 종합 · 의견", "학생 기록과 상담 기록, 출결·과제·평가·역할을 한 학생 기준으로 모아 보고 학기별 종합의견을 써요.",
+    `<div class="seg">${["1","2","all"].map(t=>`<button class="${term===t?"on":""}" data-act="sumTerm" data-v="${t}">${termName(t)}</button>`).join("")}</div><button class="btn" data-act="sumExport">의견 내보내기</button>`) + `
+  <div class="split">
+    <div class="card" style="padding:12px"><div class="small muted" style="padding:2px 6px 8px">${termName(term)} · ${D.R[0].slice(5).replace("-","/")}~${D.R[1].slice(5).replace("-","/")}</div><div class="list">
+      ${sorted().map(x=>{ const c = listCount(x.id); return `<div class="li ${x.id===s.id?"on":""}" data-act="sumSel" data-id="${x.id}"><span><span class="muted small num">${x.no}</span> ${esc(x.name)} ${c.done?'<span class="pill ok" style="font-size:10.5px">의견</span>':""}</span><span class="small num"><span style="color:var(--ok)">${c.p||""}</span>${c.i?` <span style="color:var(--warn)">${c.i}</span>`:""}${c.c?` <span style="color:var(--violet)">${c.c}</span>`:""}</span></div>`; }).join("")}
+    </div><div class="small muted" style="padding:8px 6px 0"><span style="color:var(--ok)">칭찬</span> · <span style="color:var(--warn)">지도</span> · <span style="color:var(--violet)">상담</span> 건수</div></div>
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div class="card"><div class="spread"><h2><span class="muted num" style="font-size:14px">${s.no}번</span> ${esc(s.name)} <span class="small muted">${termName(term)}</span></h2><button class="btn sm" data-act="sumNext">다음 학생 →</button></div>
+        <div class="sum-stats">
+          <div><span class="l">칭찬</span><b style="color:var(--ok)">${D.praise.length}</b></div>
+          <div><span class="l">지도할 점</span><b style="color:var(--warn)">${D.issues.length}</b></div>
+          <div><span class="l">상담</span><b style="color:var(--violet)">${D.cs.length}</b></div>
+          <div><span class="l">과제 제출</span><b>${D.asg.length ? `${D.asg.length-D.miss.length}/${D.asg.length}` : "-"}</b></div>
+          <div class="wide"><span class="l">출결</span><span>${esc(attTxt)}</span></div>
+          ${D.roles.length?`<div class="wide"><span class="l">맡은 역할</span><span>${D.roles.map(esc).join(", ")}</span></div>`:""}
+          ${D.grades.length?`<div class="wide"><span class="l">평가</span><span>${D.grades.map(g=>`${esc(g.t)} <b>${esc(g.v)}</b>`).join(" · ")}</span></div>`:""}
+        </div>
+        ${D.praiseF.length||D.issueF.length ? `<div class="sum-freq">${D.praiseF.length?`<div><span class="l" style="color:var(--ok)">자주 나온 칭찬</span>${D.praiseF.map(([t,n])=>`<span class="fq ok">${esc(t)}${n>1?` <b>${n}</b>`:""}</span>`).join("")}</div>`:""}${D.issueF.length?`<div><span class="l" style="color:var(--warn)">자주 나온 지도할 점</span>${D.issueF.map(([t,n])=>`<span class="fq warn">${esc(t)}${n>1?` <b>${n}</b>`:""}</span>`).join("")}</div>`:""}</div>` : ""}
+      </div>
+      <div class="card"><div class="spread"><h2>종합의견 <span class="small muted">${termName(term)}</span></h2><span class="small muted num" id="opCount">${op.length}자 · 약 ${neisBytes(op)}바이트</span></div>
+        <textarea rows="7" id="opText" data-in="opText" placeholder="이 학생의 ${termName(term)} 행동특성 및 종합의견을 적어 두세요. 아래 기록을 보며 쓰거나, 근거 모으기·초안 만들기를 써 보세요.">${esc(op)}</textarea>
+        <div class="row" style="margin-top:10px;justify-content:space-between"><div class="row">
+          <button class="btn" data-act="sumNotes">근거 모으기</button>
+          ${canAI ? `<label class="f" style="flex-direction:row;align-items:center;gap:6px;white-space:nowrap">분량<select id="aiLen" style="width:auto">${[200,300,400,500].map(n=>`<option value="${n}" ${n===300?"selected":""}>${n}자 안팎</option>`).join("")}</select></label><button class="btn pri" data-act="sumAI">AI 초안 만들기</button>` : ""}
+        </div><span class="small muted">입력하면 바로 저장돼요 · 바이트는 한글 3, 영문·숫자 1로 센 참고값</span></div>
+        <div id="aiBox"></div>
+        ${ui.sumNotes===s.id+term ? `<div class="sum-notes"><div class="spread"><b class="small">근거 정리 (${termName(term)})</b><button class="btn sm ghost" data-act="sumCopyNotes">복사</button></div><pre id="notesTxt">${esc(digestNotes(D)) || "이 기간 기록이 없어요"}</pre></div>` : ""}
+      </div>
+      <div class="card"><div class="spread"><h2>기록 모아 보기 <span class="small muted">${items.length}건</span></h2>
+        <div class="chips">${[["all","전체"],["praise","칭찬"],["issue","지도할 점"],["counsel","상담"]].map(([k,l])=>`<button class="chip k-plain ${f===k?"on":""}" data-act="sumFilter" data-v="${k}">${l}</button>`).join("")}</div></div>
+        <div class="tl">${items.map(x=>`<div class="it"><div class="dt num">${x.d.replace(/-/g,". ")}</div><div>${x.html}</div><span></span></div>`).join("") || `<div class="empty">${termName(term)} 기록이 없어요</div>`}</div></div>
+    </div>
+  </div>`;
+};
+A.sumTerm = el => { ui.sumTerm = el.dataset.v; render(); };
+A.sumSel = el => { ui.sumSel = el.dataset.id; render(); };
+A.sumNext = () => { const st = sorted(), i = st.findIndex(x=>x.id===ui.sumSel); ui.sumSel = st[(i+1)%st.length].id; render(); $("#main").scrollTop = 0; };
+A.sumFilter = el => { ui.sumFilter = el.dataset.v; render(); };
+A.sumNotes = () => { const k = ui.sumSel + ui.sumTerm; ui.sumNotes = ui.sumNotes===k ? null : k; render(); };
+A.sumCopyNotes = async () => { try{ await navigator.clipboard.writeText($("#notesTxt").textContent); toast("근거를 복사했어요"); }catch(e){ toast("복사가 막혀 있어요. 직접 선택해 복사해 주세요"); } };
+IN.opText = el => { const o = (S.opinions ||= {}); (o[ui.sumSel] ||= {})[ui.sumTerm] = el.value; persist(); const c = $("#opCount"); if(c) c.textContent = `${el.value.length}자 · 약 ${neisBytes(el.value)}바이트`; };
+A.sumExport = () => { const terms = ["1","2","all"];
+  const rows = [["번호","이름","학기","종합의견","글자 수"]]; sorted().forEach(s=>terms.forEach(t=>{ const v = ((S.opinions||{})[s.id]||{})[t]; if(v && v.trim()) rows.push([s.no, s.name, termName(t), v, v.length]); }));
+  if(rows.length===1){ toast("아직 적은 종합의견이 없어요"); return; }
+  exportSheets(`${clsName()}_종합의견`, [["종합의견", rows]]); };
+let aiCtl = null;
+A.sumAI = async () => {
+  const sample = window.claude && await window.claude.use("sample").catch(()=>null);
+  if(!sample){ ui.sampleOk = false; render(); return; }
+  const s = stu(ui.sumSel), term = ui.sumTerm, D = studentDigest(s.id, term), len = Number(($("#aiLen")||{}).value || 300);
+  if(!D.recs.length && !D.cs.length){ toast("이 기간 기록이 없어서 초안을 만들 수 없어요"); return; }
+  const lines = [
+    ...D.recs.map(r=>`- ${r.date} [${r.cat}]${r.when?` (${whenLabel(r)})`:""} ${r.text}`),
+    ...D.cs.map(c=>`- ${c.date} [상담] 주제: ${c.topic}${c.followup?` / 후속 조치: ${c.followup}`:""}`)
+  ].join("\n");
+  const prompt = `초등학교 담임교사가 학교생활기록부 '행동특성 및 종합의견'을 쓰는 것을 돕는 일이다. 아래는 한 학생의 ${termName(term)} 관찰 기록을 정리한 것이다(이름은 지웠다).
+
+[기록 요약]
+${digestNotes(D)}
+
+[날짜별 기록]
+${lines}
+
+작성 규칙:
+- 위 기록에 있는 사실만 근거로 쓰고, 기록에 없는 일은 지어내지 않는다.
+- 강점과 성장한 모습을 중심으로 쓰고, 지도할 점은 '~하려고 노력하고 있음', '~하는 습관을 기르면 더욱 성장할 것으로 기대됨'처럼 성장 가능성으로 표현한다.
+- 학생 이름, 성별, 가정 사정, 건강 상태, 상담에서 나온 사적인 내용, 다른 학생과의 갈등 당사자 정보는 쓰지 않는다.
+- '~함.', '~임.', '~보임.'처럼 명사형으로 끝나는 문장을 쓴다.
+- 한 문단으로, 공백 포함 ${len}자 안팎.
+- 의견 본문만 출력한다. 제목, 머리말, 설명을 붙이지 않는다.`;
+  const box = $("#aiBox"); aiCtl = new AbortController();
+  box.innerHTML = `<div class="sum-ai"><div class="spread"><b class="small">AI 초안</b><button class="btn sm ghost" data-act="sumAIStop">멈추기</button></div><div id="aiText" class="tx muted">생각하는 중…</div></div>`;
+  try{
+    const { text, truncated } = await sample(prompt, { signal: aiCtl.signal, cache: false, onText: ({text}) => { const t = $("#aiText"); if(t){ t.textContent = text; t.classList.remove("muted"); } } });
+    box.innerHTML = `<div class="sum-ai"><div class="spread"><b class="small">AI 초안 <span class="muted num">${text.length}자</span></b><div class="row"><button class="btn sm" data-act="sumAIUse" data-mode="replace">의견란에 넣기</button><button class="btn sm ghost" data-act="sumAIUse" data-mode="append">뒤에 덧붙이기</button><button class="btn sm ghost" data-act="sumAI">다시 만들기</button></div></div><div id="aiText" class="tx">${esc(text)}</div>${truncated?'<div class="small muted">길이 제한으로 중간에 끊겼어요. 분량을 줄여 다시 만들어 보세요.</div>':""}<div class="small muted" style="margin-top:6px">초안이에요. 기록과 맞는지 꼭 읽어 보고 고쳐서 쓰세요.</div></div>`;
+  }catch(e){
+    const m = {cancelled:"멈췄어요.", not_granted:"Claude 사용을 허용하지 않아 초안을 만들 수 없어요.", sampling_disabled:"이 계정에서는 Claude 초안 기능을 쓸 수 없어요.", rate_limited:"잠시 사용량이 많아요. 조금 뒤 다시 눌러 주세요.", refused:"이 기록으로는 초안을 만들지 못했어요. 기록을 조금 다듬어 다시 해 보세요."}[e && e.code] || "초안을 만들지 못했어요. 다시 눌러 주세요.";
+    if(e && ["not_granted","sampling_disabled","not_declared","capability_disabled","capability_removed"].includes(e.code)) ui.sampleOk = false;
+    box.innerHTML = `<div class="sum-ai"><div class="small" style="color:var(--bad)">${m}</div>${e && e.text ? `<div class="tx" style="margin-top:6px">${esc(e.text)}</div>` : ""}</div>`;
+  }
+};
+A.sumAIStop = () => { aiCtl && aiCtl.abort(); };
+A.sumAIUse = el => { const t = ($("#aiText")||{}).textContent || ""; const ta = $("#opText"); if(!ta) return;
+  ta.value = el.dataset.mode==="append" && ta.value.trim() ? ta.value.trim() + " " + t : t; IN.opText(ta); toast("의견란에 넣었어요"); };
+/* Claude 안에서만 AI 초안 버튼을 보인다 */
+(async () => { try{ if(window.claude && typeof window.claude.use==="function"){ const sm = await window.claude.use("sample"); ui.sampleOk = !!sm; if(sm && route()==="summary") render(); } }catch(e){} })();
 
 /* ───────── 랜덤 뽑기 ─────────
    대상: 전체 / 남자만 / 여자만 / 직접 입력(이름·번호, 명단에 없는 이름도 가능)
