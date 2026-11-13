@@ -63,6 +63,12 @@ h3{font-size:15px;font-weight:600}
 .app{display:grid;grid-template-columns:224px 1fr;height:100%}
 .side{background:var(--surface);border-right:1px solid var(--line);display:flex;flex-direction:column;overflow-y:auto}
 .brand{padding:22px 20px 16px;border-bottom:1px solid var(--line)}
+.brand-btn{display:block;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);cursor:pointer;font:inherit;color:inherit}
+.brand-btn:hover{background:var(--hover,color-mix(in srgb,var(--accent) 5%,transparent))}
+.brand-caret{font-size:12px;color:var(--muted);vertical-align:2px}
+.cls-li{display:flex;justify-content:space-between;align-items:center;gap:8px;width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);cursor:pointer;font:inherit;text-align:left}
+.cls-li.on{border-color:var(--accent);background:var(--accent-soft)}
+.cls-li:hover{border-color:var(--accent)}
 .brand .cls{font-family:var(--font-display);font-weight:700;font-size:18px}
 .brand .sub{color:var(--muted);font-size:12.5px;margin-top:2px}
 .nav{padding:10px 10px;display:flex;flex-direction:column;gap:2px;flex:1}
@@ -414,6 +420,25 @@ th.tt-today{color:var(--accent)}
 
 /* 자리 */
 .board{display:flex;flex-direction:column;gap:14px;align-items:center}
+.seat-show{position:fixed;inset:0;z-index:60;background:var(--bg);display:flex;flex-direction:column;padding:22px 28px;gap:16px;overflow:auto}
+.ss-top{display:flex;justify-content:space-between;align-items:flex-start}
+.ss-title{font-family:var(--font-display);font-size:26px;font-weight:800}
+.ss-sub{color:var(--muted);font-size:15px;margin-top:2px}
+.ss-board{display:flex;flex-direction:column;align-items:center;gap:16px;flex:1;justify-content:center}
+.ss-front{font-size:15px;padding:8px 60px}
+.ss-seats{display:grid;gap:12px}
+.ss-seat{width:clamp(84px,9vw,140px);height:clamp(54px,7vh,84px);border-radius:12px;border:1px solid var(--line);background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:clamp(15px,1.6vw,22px)}
+.ss-seat.gap{margin-right:26px}
+.ss-seat.ss-hid{color:var(--muted);font-size:clamp(20px,2vw,28px);font-weight:700;background:color-mix(in srgb,var(--line) 35%,var(--surface))}
+.ss-seat.m{border-bottom:4px solid var(--accent)}
+.ss-seat.f{border-bottom:4px solid var(--violet)}
+.ss-seat.empty{border-style:dashed;background:transparent}
+.ss-seat.pop{animation:ssPop .6s ease;box-shadow:0 0 0 4px var(--warn)}
+@keyframes ssPop{0%{transform:scale(.6)}60%{transform:scale(1.15)}100%{transform:scale(1)}}
+.ss-roll{text-align:center;font-size:clamp(34px,5vw,64px);font-weight:800;color:var(--accent);min-height:1.3em;letter-spacing:-1px}
+.ss-roll.idle{color:var(--ink)}
+.ss-bottom{display:flex;justify-content:center;gap:10px;flex-wrap:wrap}
+.btn.big{font-size:17px;padding:12px 22px}
 .desk-front{border:1px dashed var(--line);border-radius:8px;padding:6px 40px;color:var(--muted);font-size:12.5px}
 .seats{display:grid;gap:8px 8px}
 .seat{width:96px;height:58px;border:1px solid var(--line);border-radius:9px;background:var(--surface);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;position:relative;font-size:13.5px}
@@ -477,6 +502,14 @@ th.tt-today{color:var(--accent)}
 .stat .v{font-family:var(--font-display);font-size:26px;font-weight:700}
 .stat .l{color:var(--muted);font-size:12.5px}
 
+.draw-modal{max-width:460px}
+.draw-stage{background:var(--accent-soft);border-radius:12px;padding:18px;text-align:center}
+.draw-label{font-size:14px;color:var(--muted);min-height:20px}
+.draw-roll{font-size:30px;font-weight:800;letter-spacing:-.5px;margin-top:6px;min-height:42px;color:var(--accent);transition:transform .15s}
+.draw-roll.rolling{color:var(--muted);filter:blur(.3px)}
+.draw-roll.hit{transform:scale(1.15)}
+.draw-list{max-height:240px;overflow:auto;display:flex;flex-direction:column;gap:2px}
+.draw-item{display:flex;justify-content:space-between;padding:5px 8px;border-radius:6px;background:var(--bg);font-size:14px}
 .modal-bg{position:fixed;inset:0;background:rgba(10,16,24,.42);display:flex;align-items:center;justify-content:center;z-index:50;padding:16px}
 .modal{background:var(--surface);border-radius:14px;padding:22px;max-width:420px;width:100%;display:flex;flex-direction:column;gap:14px;border:1px solid var(--line)}
 .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--surface);padding:10px 16px;border-radius:10px;font-size:13.5px;z-index:60;max-width:90vw}
@@ -525,13 +558,24 @@ const VIEWS = {}, AFTER = {}, A = {}, CH = {}, EN = {}, IN = {};
 /* ───────── 저장 ───────── */
 const KEY = "hopyeong-classbook-v1";
 let storageOK = true;
-function loadState(){ try{ const r = localStorage.getItem(KEY); return r ? JSON.parse(r) : null; }catch(e){ storageOK = false; return null; } }
-function persist(){ if(liveS) return; try{ localStorage.setItem(KEY, JSON.stringify(S)); storageOK = true; }catch(e){ storageOK = false; } markDirty(); }
+/* 학급 여러 개: 학급마다 따로 저장한다. 처음 학급(c1)은 예전 저장 위치를 그대로 쓴다 */
+const REG_KEY = KEY + "-classes";
+let REG = (()=>{ try{ return JSON.parse(localStorage.getItem(REG_KEY)) || null; }catch(e){ return null; } })() || {list:[], cur:"c1", gone:[]};
+REG.gone ||= []; REG.list ||= [];
+const dataKey = id => id==="c1" ? KEY : `${KEY}-${id}`;
+function saveReg(){ try{ localStorage.setItem(REG_KEY, JSON.stringify(REG)); }catch(e){} }
+function loadState(id){ try{ const r = localStorage.getItem(dataKey(id || REG.cur)); return r ? JSON.parse(r) : null; }catch(e){ storageOK = false; return null; } }
+function regName(){ if(!S || !S.cls) return; const e = REG.list.find(c=>c.id===REG.cur), n = S.cls.name || "", y = S.cls.year || "";
+  if(!e){ REG.list.push({id:REG.cur, name:n, year:y}); saveReg(); } else if(e.name!==n || e.year!==y){ e.name = n; e.year = y; saveReg(); } }
+function persist(){ if(liveS) return; try{ localStorage.setItem(dataKey(REG.cur), JSON.stringify(S)); storageOK = true; }catch(e){ storageOK = false; } regName(); markDirty(); }
 /* 구글 드라이브 동기화 상태(이 기기에만 저장) */
-const SYNC_KEY = KEY + "-drive";
-let SY = Object.assign({on:false, folderId:"", rev:0, dirty:false, lastOk:0, state:"off", msg:""}, (()=>{ try{ return JSON.parse(localStorage.getItem(SYNC_KEY)) || {}; }catch(e){ return {}; } })());
+const syncKeyOf = id => dataKey(id) + "-drive";
+const SY_DEF = () => ({on:false, folderId:"", rev:0, dirty:false, lastOk:0, state:"off", msg:""});
+const loadSY = id => Object.assign(SY_DEF(), (()=>{ try{ return JSON.parse(localStorage.getItem(syncKeyOf(id))) || {}; }catch(e){ return {}; } })());
+const saveSYof = (id, v) => { try{ localStorage.setItem(syncKeyOf(id), JSON.stringify(v)); }catch(e){} };
+let SY = loadSY(REG.cur);
 let syncApplying = false, syncUpTimer = null;
-function saveSY(){ try{ localStorage.setItem(SYNC_KEY, JSON.stringify(SY)); }catch(e){} }
+function saveSY(){ saveSYof(REG.cur, SY); }
 function markDirty(){ if(syncApplying || !SY.on) return; SY.dirty = true; if(SY.state!=="conflict" && SY.state!=="error") SY.state = "pending"; saveSY();
   clearTimeout(syncUpTimer); syncUpTimer = setTimeout(()=>syncCycle("change"), 15000); typeof renderSyncBits==="function" && renderSyncBits(); }
 
@@ -702,6 +746,7 @@ function defaultChecklist(type){
 
 let S = loadState() || sampleData();
 const firstRun = !loadState();
+function migrateS(){
 if(S.cls && S.cls.name==="호수평화국" && S.cls.grade==="4학년 ○반") { S.cls.name = ""; S.cls.grade = ""; }
 (S.assessments||[]).forEach(a => { if(a.levels && a.levels.join()==="잘함,보통,노력 요함") a.levels = LEVELS.slice(); });
 if(!S.roles) S.roles = { list:[], assign:{}, checks:{}, period:"", history:[] };
@@ -716,6 +761,8 @@ if((S.quickV||1) < 3){
 }
 ["tasks","counsel","timetable","summary","calendar","evalplan"].forEach(k => { if(S.menus && S.menus[k]===undefined) S.menus[k] = true; });
 if(S.jobMode===undefined) S.jobMode = "";
+}
+migrateS(); regName();
 if(firstRun) persist();
 
 /* 화면 상태(저장하지 않음) */
@@ -822,7 +869,7 @@ function renderSide(cur){
   const bcol = days === null ? "var(--warn)" : days > 7 ? "var(--warn)" : "var(--ok)";
   const btxt = days === null ? "아직 백업 안 함" : days === 0 ? "오늘 백업함" : `${days}일 전 백업`;
   $("#side").innerHTML = `
-    <div class="brand"><div class="cls">${esc(clsName())}</div><div class="sub">${[S.cls.year, S.cls.grade].filter(Boolean).map(esc).join(" · ")} · ${S.students.length}명</div></div>
+    <button class="brand brand-btn" data-act="classMenu" title="학급 바꾸기·추가"><div class="cls">${esc(clsName())} <span class="brand-caret">▾</span></div><div class="sub">${[S.cls.year, S.cls.grade].filter(Boolean).map(esc).join(" · ")} · ${S.students.length}명${REG.list.length>1?` · 학급 ${REG.list.length}개`:""}</div></button>
     <nav class="nav" aria-label="메뉴">
       ${MENUS.map(g => {
         const items = g.items.filter(([k]) => S.menus[k] || ALWAYS.includes(k));
@@ -1512,11 +1559,12 @@ VIEWS.seats = () => {
   const front = `<div class="desk-front">교탁</div>`, mode = ui.seatMode;
   const gm = Object.values(st.gfix).filter(g=>g==="남").length, gf = Object.values(st.gfix).filter(g=>g==="여").length;
   const nb = S.students.filter(s=>s.gender!=="여").length, ng = S.students.length - nb;
-  const seatHtml = i => { const id = st.map[i], s = id && stu(id), c = i % st.cols, g = st.gfix[i];
+  const secret = ui.seatView==="student" && !mode;   // 학생 자리에서 볼 때(화면에 띄울 때)는 고정·성별 지정 표시를 숨긴다
+  const seatHtml = i => { const id = st.map[i], s = id && stu(id), c = i % st.cols, g = secret ? "" : st.gfix[i];
     const gap = st.pair && (ui.seatView==="student" ? (st.cols-1-c) : c) % 2 === 1 && c !== (ui.seatView==="student"?0:st.cols-1);
     const mismatch = s && g && (s.gender==="여" ? "여" : "남") !== g;
-    return `<button class="seat ${s?(s.gender==="여"?"f":"m"):"empty"} ${g==="남"?"gfix-m":g==="여"?"gfix-f":""} ${mismatch?"gmis":""} ${ui.seatPick===i?"pick":""} ${st.locked.includes(i)?"lock":""} ${gap?"gap":""}" data-act="seatClick" data-i="${i}" ${g?`title="${g}학생 자리${mismatch?" (지금 다른 성별이 앉아 있어요)":""}"`:""}>${g?`<span class="gtag">${g}</span>`:""}${s?`<span class="no num">${s.no}</span><span>${esc(s.name)}</span>`:"빈자리"}</button>`; };
-  const hint = mode==="lock" ? "고정할 자리를 누르세요. 그 학생은 섞어도 자리가 그대로예요. 다 했으면 '완료'를 누르세요."
+    return `<button class="seat ${s?(s.gender==="여"?"f":"m"):"empty"} ${g==="남"?"gfix-m":g==="여"?"gfix-f":""} ${mismatch?"gmis":""} ${ui.seatPick===i?"pick":""} ${!secret && st.locked.includes(i)?"lock":""} ${gap?"gap":""}" data-act="seatClick" data-i="${i}" ${g?`title="${g}학생 자리${mismatch?" (지금 다른 성별이 앉아 있어요)":""}"`:""}>${g?`<span class="gtag">${g}</span>`:""}${s?`<span class="no num">${s.no}</span><span>${esc(s.name)}</span>`:"빈자리"}</button>`; };
+  const hint = secret ? "학생 자리에서 보는 화면이에요. 학생에게 띄워도 되도록 고정·성별 지정 표시는 숨겼어요(교사 자리에서 보면 보여요)." : mode==="lock" ? "고정할 자리를 누르세요. 그 학생은 섞어도 자리가 그대로예요. 다 했으면 '완료'를 누르세요."
     : mode==="gender" ? "자리를 누를 때마다 남자리 → 여자리 → 지정 없음 순서로 바뀌어요. 섞을 때 그 성별 학생만 앉혀요."
     : "두 자리를 차례로 누르면 서로 바뀌어요. 고정한 자리는 섞을 때 그대로 두고, 성별을 정한 자리에는 그 성별만 앉혀요.";
   return header("자리 배치", hint,
@@ -1527,7 +1575,7 @@ VIEWS.seats = () => {
       <label class="check"><input type="checkbox" ${st.pair?"checked":""} data-ch="seatPair"><span>짝꿍 배치</span></label></div>
     <div class="row"><button class="btn ${mode==="lock"?"pri":""}" data-act="seatMode" data-v="lock">${mode==="lock"?"고정 완료":"학생 자리 고정"}</button>
       <button class="btn ${mode==="gender"?"pri":""}" data-act="seatMode" data-v="gender">${mode==="gender"?"성별 지정 완료":"남·여 자리 정하기"}</button>
-      <button class="btn" data-act="seatShuffle" data-g="0">무작위 섞기</button><button class="btn pri" data-act="seatShuffle" data-g="1">남녀 짝으로 섞기</button><button class="btn" data-act="seatExport">내보내기</button></div></div>
+      <button class="btn" data-act="seatShuffle" data-g="0">무작위 섞기</button><button class="btn" data-act="seatShuffle" data-g="1">남녀 짝으로 섞기</button><button class="btn pri" data-act="seatShow">🎲 학생 앞에서 자리 뽑기</button><button class="btn" data-act="seatExport">내보내기</button></div></div>
     ${mode==="gender" ? `<div class="banner" style="background:var(--bg);border-color:var(--line);margin-bottom:12px"><div class="small">남자리 <b class="num" style="color:var(--accent)">${gm}</b> / 남학생 ${nb}명 · 여자리 <b class="num" style="color:var(--violet)">${gf}</b> / 여학생 ${ng}명${gm>nb||gf>ng?` <span style="color:var(--warn)">· 정한 자리가 학생보다 많아요</span>`:""}</div>
       <div class="row"><button class="btn sm" data-act="gPreset" data-v="pair">짝마다 남·여</button><button class="btn sm" data-act="gPreset" data-v="check">체크무늬</button><button class="btn sm" data-act="gPreset" data-v="row">줄마다 번갈아</button><button class="btn sm danger" data-act="gPreset" data-v="clear">모두 지우기</button></div></div>` : ""}
     <div class="board scroll">${ui.seatView==="teacher"?"":front}<div class="seats" style="grid-template-columns:repeat(${st.cols},auto)">${order.map(seatHtml).join("")}</div>${ui.seatView==="teacher"?front:""}</div>
@@ -1549,31 +1597,75 @@ CH.seatRows = el => { S.seats.rows = Math.max(1,Math.min(10,Number(el.value)||1)
 CH.seatCols = el => { S.seats.cols = Math.max(1,Math.min(10,Number(el.value)||1)); reflowSeats(); };
 CH.seatPair = el => { S.seats.pair = el.checked; commit(); };
 function reflowSeats(){ const ids = S.seats.map.filter(Boolean); S.seats.map = []; S.seats.locked = []; S.seats.gfix = {}; seatFix(); ids.forEach((id,k)=>{ if(k<S.seats.map.length) S.seats.map[k]=id; }); commit(); }
-A.seatShuffle = el => { seatFix(); const st = S.seats, n = st.rows*st.cols;
-  const lockedIds = new Set(st.locked.map(i=>st.map[i]).filter(Boolean));
+/* 섞은 결과만 계산한다(고정 자리·성별 지정 자리 반영). 실제 바꾸기는 부르는 쪽에서 */
+function seatShuffleMap(pairMode){ seatFix(); const st = S.seats, n = st.rows*st.cols, map = st.map.slice(), msgs = [];
+  const lockedIds = new Set(st.locked.map(i=>map[i]).filter(Boolean));
   const free = []; for(let i=0;i<n;i++) if(!st.locked.includes(i)) free.push(i);
   const pool = shuffle(S.students.filter(s=>!lockedIds.has(s.id)));
-  if(pool.length > free.length) toast(`자리보다 학생이 ${pool.length-free.length}명 많아요`);
-  free.forEach(i=>st.map[i]=null);
+  if(pool.length > free.length) msgs.push(`자리보다 학생이 ${pool.length-free.length}명 많아요`);
+  free.forEach(i=>map[i]=null);
   const boys = pool.filter(s=>s.gender!=="여"), girls = pool.filter(s=>s.gender==="여");
-  // 1) 자리마다 앉힐 성별 정하기: 성별 지정 자리는 그대로, 남녀 짝 모드면 짝의 반대 성별
   const need = {}; free.forEach(i=>{ if(st.gfix[i]) need[i] = st.gfix[i]; });
-  if(el.dataset.g==="1"){
+  if(pairMode){
     const opp = g => g==="남" ? "여" : "남";
     for(let r=0;r<st.rows;r++) for(let c=0;c+1<st.cols;c+=2){ const a=r*st.cols+c, b=a+1; if(!free.includes(a)||!free.includes(b)) continue;
       if(need[a] && !need[b]) need[b] = opp(need[a]); else if(need[b] && !need[a]) need[a] = opp(need[b]);
       else if(!need[a] && !need[b]){ const g = Math.random()<.5 ? "남" : "여"; need[a] = g; need[b] = opp(g); } }
   }
-  // 2) 성별 지정 자리(st.gfix) 먼저, 그다음 짝 맞춤 자리에 채우기
   const unmet = [];
-  const fillNeed = cells => shuffle(cells).forEach(i => { const list = need[i]==="남" ? boys : girls; if(list.length) st.map[i] = list.pop().id; else unmet.push(i); });
+  const fillNeed = cells => shuffle(cells).forEach(i => { const list = need[i]==="남" ? boys : girls; if(list.length) map[i] = list.pop().id; else unmet.push(i); });
   fillNeed(free.filter(i=>st.gfix[i])); fillNeed(free.filter(i=>need[i] && !st.gfix[i]));
-  // 3) 남은 자리에 남은 학생
   const rest = shuffle(boys.concat(girls));
-  shuffle(free.filter(i=>!need[i])).concat(unmet).forEach(i => { if(st.map[i]===null && rest.length) st.map[i] = rest.pop().id; });
-  const mis = free.filter(i=>st.gfix[i] && st.map[i] && ((stu(st.map[i]).gender==="여"?"여":"남") !== st.gfix[i])).length;
-  if(mis) toast(`성별을 정한 자리 ${mis}곳은 학생 수가 맞지 않아 다른 성별이 앉았어요`);
-  ui.seatPick = null; commit(); };
+  shuffle(free.filter(i=>!need[i])).concat(unmet).forEach(i => { if(map[i]===null && rest.length) map[i] = rest.pop().id; });
+  const mis = free.filter(i=>st.gfix[i] && map[i] && ((stu(map[i]).gender==="여"?"여":"남") !== st.gfix[i])).length;
+  if(mis) msgs.push(`성별을 정한 자리 ${mis}곳은 학생 수가 맞지 않아 다른 성별이 앉았어요`);
+  return {map, msgs};
+}
+A.seatShuffle = el => { const r = seatShuffleMap(el.dataset.g==="1"); S.seats.map = r.map; if(r.msgs.length) toast(r.msgs.join(" · ")); ui.seatPick = null; commit(); };
+/* ───── 학생 앞에서 자리 뽑기: 큰 화면, 고정·성별 표시 없음, 자리가 하나씩 열린다 ───── */
+A.seatShow = () => {
+  seatFix(); const st = S.seats, old = st.map.slice();
+  const ov = document.createElement("div"); ov.className = "seat-show";
+  let res = null, order = [], k = 0, auto = false, busy = false, timer = null, done = false;
+  const idx = []; for(let r=0;r<st.rows;r++) for(let c=0;c<st.cols;c++) idx.push(r*st.cols+c);
+  const vis = idx.slice().reverse();   // 학생 자리에서 본 모습(교탁이 위)
+  const cell = i => { const c = i % st.cols, gap = st.pair && (st.cols-1-c) % 2 === 1 && c !== 0;
+    const id = res ? res.map[i] : st.map[i], shown = !res || order.indexOf(i) < k || !id, s = id && stu(id);
+    return `<div class="ss-seat ${gap?"gap":""} ${!id?"empty":shown?(s.gender==="여"?"f":"m"):"ss-hid"}" data-i="${i}">${!id ? "" : shown ? `<b>${esc(s.name)}</b>` : "?"}</div>`; };
+  const draw = () => {
+    ov.innerHTML = `<div class="ss-top"><div><div class="ss-title">${esc(clsName())} 자리 뽑기</div><div class="ss-sub">${res ? `${Math.min(k, order.length)} / ${order.length}명` : "버튼을 누르면 한 자리씩 뽑아요"}</div></div><button class="btn" data-k="close">${done ? "닫기" : "그만하기"}</button></div>
+      <div class="ss-board"><div class="desk-front ss-front">교탁</div><div class="ss-seats" style="grid-template-columns:repeat(${st.cols},auto)">${vis.map(cell).join("")}</div></div>
+      <div class="ss-roll ${res && !done ? "" : "idle"}" id="ssRoll"><span id="ssName">${done ? "🎉 자리 뽑기 끝!" : ""}</span></div>
+      <div class="ss-bottom">${!res ? `<button class="btn pri big" data-k="start1">🎲 자리 뽑기 시작</button><button class="btn big" data-k="start2">남녀 짝으로 뽑기</button>`
+        : done ? `<button class="btn pri big" data-k="close">이 자리로 정하기</button>`
+        : `<button class="btn pri big" data-k="next" ${busy||auto?"disabled":""}>한 명 뽑기</button><button class="btn big" data-k="auto">${auto?"자동 멈추기":"자동으로 계속"}</button><button class="btn big ghost" data-k="all">결과 바로 보기</button>`}</div>`;
+  };
+  const reveal = () => { if(busy || k >= order.length) return; busy = true; draw();
+    const i = order[k], target = stu(res.map[i]), rest = order.slice(k).map(x=>stu(res.map[x]).name);
+    const roll = ov.querySelector("#ssName"); let n = 0, wait = 40;
+    const tick = () => { roll.textContent = rest[Math.floor(Math.random()*rest.length)]; n++;
+      if(n < 16){ wait *= 1.12; timer = setTimeout(tick, wait); }
+      else { roll.textContent = target.name; k++; busy = false;
+        setTimeout(() => { if(!ov.isConnected) return; if(k >= order.length){ done = true; S.seats.map = res.map; ui.seatPick = null; commit(); }
+          draw(); const el = ov.querySelector(`.ss-seat[data-i="${i}"]`); el && el.classList.add("pop");
+          if(auto && !done) timer = setTimeout(reveal, 700); }, 350); } };
+    tick(); };
+  const start = pair => { res = seatShuffleMap(pair); order = shuffle(idx.filter(i=>res.map[i])); k = 0; done = false; draw(); };
+  ov.addEventListener("click", async e => { const b = e.target.closest("[data-k]"); if(!b) return; const key = b.dataset.k;
+    if(key==="start1") start(false); else if(key==="start2") start(true);
+    else if(key==="next") reveal();
+    else if(key==="auto"){ auto = !auto; draw(); if(auto) reveal(); else clearTimeout(timer); }
+    else if(key==="all"){ clearTimeout(timer); auto = false; busy = false; k = order.length; done = true; S.seats.map = res.map; ui.seatPick = null; commit(); draw(); }
+    else if(key==="close"){
+      clearTimeout(timer);
+      try{ document.fullscreenElement && await document.exitFullscreen(); }catch(err){}
+      if(res && !done){ ov.style.display = "none"; const keep = await ask("자리 뽑기를 중간에 그만할까요? 지금까지 뽑은 결과는 버리고 원래 자리로 돌아가요.", "그만하기"); if(!keep){ ov.style.display = ""; return; } S.seats.map = old; commit(); }
+      ov.remove(); document.removeEventListener("keydown", onKey); render(); } });
+  const onKey = e => { if(e.key===" " || e.key==="Enter"){ e.preventDefault(); ov.querySelector('[data-k="next"]:not([disabled])')?.click() || ov.querySelector('[data-k="start1"]')?.click(); } };
+  document.addEventListener("keydown", onKey);
+  document.body.appendChild(ov); draw();
+  try{ ov.requestFullscreen && ov.requestFullscreen().catch(()=>{}); }catch(e){}
+};
 A.seatExport = () => { seatFix(); const st = S.seats, rows = [];
   for(let r=0;r<st.rows;r++){ const row=[]; for(let c=0;c<st.cols;c++){ const id = st.map[r*st.cols+c]; row.push(id ? `${stu(id).no} ${stu(id).name}` : ""); } rows.push(row); }
   rows.reverse(); rows.push([]); rows.push(["(아래쪽이 교탁)"]);
@@ -1871,7 +1963,7 @@ VIEWS.calendar = () => {
   const empty = !c.set && !c.events.length && !c.offs.length;
   const imp = ui.calImp;
   return header(`${Y}학년도 학사일정`, `학교 교육과정의 학사일정을 넣어 두면 휴업일·방학에는 다이어리·시간표에 수업이 나오지 않고, 학기 구분·수업일수 계산·다이어리 행사 표시에 쓰여요.`,
-    `<button class="btn pri" data-act="calImpOpen">학교 학사일정 붙여넣기</button><button class="btn" data-act="calFileOpen">공유 파일 불러오기</button><button class="btn" data-act="calShare">공유 파일 받기</button>${Y===2026?`<button class="btn ghost" data-act="calPreset">김포호수초 2026</button>`:""}`) + `
+    `<button class="btn pri" data-act="calImpOpen">학교 학사일정 붙여넣기</button><button class="btn" data-act="calFileOpen">공유 파일 불러오기</button><button class="btn" data-act="calShare">공유 파일 받기</button>`) + `
   ${empty && !imp ? `<div class="card" style="border-color:color-mix(in srgb,var(--accent) 35%,transparent)"><h2>우리 학교 학사일정 넣기</h2>
     <ol class="small" style="margin:0 0 12px;padding-left:20px;line-height:1.9">
       <li>학교 교육과정 파일(한글·PDF)에서 <b>학사일정 부분을 통째로 복사</b>해요. 월별 행사 목록이든 표든 괜찮아요.</li>
@@ -3041,7 +3133,7 @@ function rolesView(){
   return top + `
   <div class="card"><div class="spread">
     <div class="row"><label class="f" style="flex-direction:row;align-items:center;gap:6px">기간<input type="text" value="${esc(R.period)}" placeholder="예: 11월 2주, 2학기 1차" data-ch="rolePeriod" style="width:170px"></label></div>
-    <div class="row"><button class="btn" data-act="roleRandom">무작위 배정</button><button class="btn" data-act="roleRotate" title="모든 학생이 앞 번호 학생의 역할을 받아요">한 칸씩 돌리기</button><button class="btn" data-act="roleSave">이번 배정 기록하기</button><button class="btn" data-act="roleExport">내보내기</button></div></div>
+    <div class="row"><button class="btn pri" data-act="roleDraw">🎲 추첨하기</button><button class="btn" data-act="roleRotate" title="모든 학생이 앞 번호 학생의 역할을 받아요">한 칸씩 돌리기</button><button class="btn" data-act="roleSave">이번 배정 기록하기</button><button class="btn" data-act="roleExport">내보내기</button></div></div>
     ${unassignedRoles.length && R.list.length ? `<div class="small muted">아무도 맡지 않은 역할: ${unassignedRoles.map(r=>esc(r.name)).join(", ")}</div>` : ""}
     ${!R.list.length ? `<div class="banner" style="margin-top:10px">아직 역할이 없어요. <button class="btn sm" data-act="roleTab" data-v="list">역할 목록 만들기</button></div>` : ""}
   </div>
@@ -3078,6 +3170,74 @@ A.roleHistDel = async el => { if(await ask("이 기록을 삭제할까요?","삭
 A.roleExport = () => { const R = rolesOf(); const name = id => R.list.find(r=>r.id===id)?.name || "";
   exportSheets(`${clsName()}_일인일역${R.period?"_"+R.period:""}`, [["일인일역", [["번호","이름","역할","하는 일"], ...sorted().map(s=>[s.no, s.name, name(R.assign[s.id]), R.list.find(r=>r.id===R.assign[s.id])?.desc||""])]]]); };
 
+/* ───── 직업놀이 뽑기 기본 함수 ───── */
+const newDraft = () => ({round:1, step:"apply", apply:{}, winners:{}, picks:{}, lost:{}, assign:{}});
+const remaining = (d, jid) => { const j = S.jobs.list.find(x=>x.id===jid); return j ? Number(j.cap) - (d.assign[jid]||[]).length : 0; };
+
+/* ───── 추첨 화면: 이름이 돌아가다 하나씩 멈춘다 (결과는 미리 정해 두고 보여 주기만) ───── */
+function drawShow(title, items){
+  return new Promise(done => {
+    const bg = document.createElement("div"); bg.className = "modal-bg";
+    bg.innerHTML = `<div class="modal draw-modal"><div class="spread"><h3>${esc(title)}</h3><span class="small muted num" id="drawCnt">0 / ${items.length}</span></div>
+      <div class="draw-stage"><div class="draw-label" id="drawLabel">&nbsp;</div><div class="draw-roll" id="drawRoll">준비</div></div>
+      <div class="draw-list" id="drawList"></div>
+      <div class="row" style="justify-content:flex-end"><button class="btn" data-k="all">결과 바로 보기</button><button class="btn pri" data-k="next">${items.length>1?"한 명씩 뽑기":"뽑기"}</button></div></div>`;
+    document.body.appendChild(bg);
+    const $$ = id => bg.querySelector("#"+id); let i = 0, busy = false, timer = null;
+    const addDone = it => { $$("drawList").insertAdjacentHTML("beforeend", `<div class="draw-item"><span>${esc(it.label)}</span><b>${esc(it.result)}</b></div>`); $$("drawList").scrollTop = 1e6; $$("drawCnt").textContent = `${i} / ${items.length}`; };
+    const finish = () => { const b = bg.querySelector('[data-k="next"]'); b.textContent = "닫기"; b.dataset.k = "close"; bg.querySelector('[data-k="all"]').remove(); $$("drawLabel").textContent = "추첨 끝"; $$("drawRoll").textContent = "🎉"; };
+    const step = () => { if(busy || i >= items.length) return; busy = true; const it = items[i], pool = it.pool.length ? it.pool : [it.result];
+      $$("drawLabel").textContent = it.label; const roll = $$("drawRoll"); roll.classList.add("rolling"); let n = 0, wait = 45;
+      const tick = () => { roll.textContent = pool[Math.floor(Math.random()*pool.length)]; n++; if(n < 18){ wait *= 1.1; timer = setTimeout(tick, wait); } else { roll.textContent = it.result; roll.classList.remove("rolling"); roll.classList.add("hit"); setTimeout(()=>roll.classList.remove("hit"), 400); i++; addDone(it); busy = false; if(i >= items.length) finish(); } };
+      tick(); };
+    bg.addEventListener("click", e => { const k = e.target.closest("[data-k]")?.dataset.k;
+      if(k==="next") step();
+      else if(k==="all"){ clearTimeout(timer); busy = false; const roll = $$("drawRoll"); roll.classList.remove("rolling"); while(i < items.length){ i++; addDone(items[i-1]); } finish(); }
+      else if(k==="close" || (e.target===bg && i >= items.length)){ bg.remove(); done(); } });
+  });
+}
+/* 일인일역 추첨 */
+A.roleDraw = async () => { const R = rolesOf(); if(!R.list.length){ toast("먼저 역할을 만들어 주세요"); return; }
+  const hasAny = Object.keys(R.assign).some(k=>R.list.some(r=>r.id===R.assign[k]));
+  let mode = "all";
+  if(hasAny){ mode = await choose("역할 추첨", "어떻게 추첨할까요?", [["empty","역할 없는 학생만 추첨"],["all","모두 새로 추첨"]]); if(!mode) return; }
+  const st = sorted(), taken = new Set(mode==="empty" ? Object.values(R.assign) : []);
+  const who = mode==="empty" ? st.filter(s=>!R.list.some(r=>r.id===R.assign[s.id])) : st;
+  const roles = shuffle(R.list.filter(r=>!taken.has(r.id)));
+  if(!who.length){ toast("역할 없는 학생이 없어요"); return; }
+  if(mode==="all") R.assign = {};
+  const order = shuffle(who), items = [];
+  order.forEach((s,i) => { const r = roles[i]; if(r) R.assign[s.id] = r.id; });
+  who.forEach(s => { const r = R.list.find(x=>x.id===R.assign[s.id]); items.push({label:`${s.no}번 ${s.name}`, pool:R.list.map(x=>x.name), result:r ? r.name : "역할 없음"}); });
+  commit(); await drawShow("일인일역 추첨", items);
+  if(roles.length < who.length) toast(`역할이 부족해서 ${who.length-roles.length}명은 역할이 없어요`); };
+/* 직업놀이: 처음부터 추첨으로 한 번에 */
+A.jobDrawAll = async () => { const J = S.jobs; if(!J.list.length){ toast("먼저 직업을 만들어 주세요"); return; }
+  const cap = J.list.reduce((a,j)=>a+Number(j.cap),0);
+  if(!(await ask(`지원 없이 추첨으로 모든 학생의 직업을 정할까요? (자리 ${cap}개 · 학생 ${S.students.length}명)${cap<S.students.length?` 자리가 부족해서 ${S.students.length-cap}명은 직업이 없어요.`:""}`, "추첨하기"))) return;
+  J.quarter = $("#jobQuarter")?.value.trim() || J.quarter || `${new Date().getFullYear()}년 ${Math.floor(new Date().getMonth()/3)+1}분기`;
+  const d = newDraft(), slots = shuffle(J.list.flatMap(j=>Array(Number(j.cap)).fill(j.id))), st = shuffle(S.students);
+  st.forEach((s,i)=>{ const jid = slots[i]; if(jid) (d.assign[jid] ||= []).push(s.id); });
+  d.step = "done"; J.draft = d; commit();
+  await drawShow(`${J.quarter} 직업 추첨`, sorted().map(s=>({label:`${s.no}번 ${s.name}`, pool:J.list.map(j=>j.name), result:J.list.find(j=>(d.assign[j.id]||[]).includes(s.id))?.name || "직업 없음"})));
+  toast("확인하고 '이대로 확정하기'를 누르세요"); };
+/* 정원이 넘친 직업: 추첨으로 이긴 학생 정하기 */
+A.jobRps = async el => { const d = S.jobs.draft, jid = el.dataset.j, j = S.jobs.list.find(x=>x.id===jid);
+  const ap = Object.entries(d.apply).filter(([,x])=>x===jid).map(([s])=>s), rem = remaining(d,jid);
+  const w = shuffle(ap).slice(0, rem); d.winners[jid] = w; commit();
+  await drawShow(`${j.name} 추첨 (${ap.length}명 중 ${rem}명)`, w.map((sid,i)=>({label:`${j.name} ${rem>1?`${i+1}번째 자리`:"자리"}`, pool:ap.map(sname), result:sname(sid)}))); };
+/* 떨어진 학생: 남은 직업 추첨 */
+A.jobPickDraw = async () => { const d = S.jobs.draft, items = [];
+  const losers = shuffle(Object.keys(d.picks).filter(sid=>!d.picks[sid]));
+  if(!losers.length){ toast("직업을 고르지 않은 학생이 없어요"); return; }
+  losers.forEach(sid => { const opts = S.jobs.list.filter(j=>remaining(d,j.id) - Object.entries(d.picks).filter(([o,x])=>x===j.id && o!==sid).length > 0 && !(d.assign[j.id]||[]).includes(sid) && j.id!==d.lost[sid]);
+    const pick = opts.length ? opts[Math.floor(Math.random()*opts.length)] : null; if(pick) d.picks[sid] = pick.id;
+    items.push({sid, label:sname(sid), pool:S.jobs.list.map(j=>j.name), result:pick ? pick.name : "남은 직업 없음"}); });
+  commit(); items.sort((a,b)=>(stu(a.sid)?.no||0)-(stu(b.sid)?.no||0)); await drawShow("남은 직업 추첨", items); };
+/* 버튼 여러 개 중 하나 고르기 */
+function choose(title, msg, opts){ return new Promise(res => { const bg = document.createElement("div"); bg.className = "modal-bg";
+  bg.innerHTML = `<div class="modal"><h3>${esc(title)}</h3><div class="small">${esc(msg)}</div><div class="row" style="justify-content:flex-end;flex-wrap:wrap"><button class="btn" data-k="">취소</button>${opts.map(([k,l],i)=>`<button class="btn ${i===0?"pri":""}" data-k="${k}">${esc(l)}</button>`).join("")}</div></div>`;
+  bg.addEventListener("click", e => { const b = e.target.closest("[data-k]"); if(!b && e.target!==bg) return; bg.remove(); res(b ? b.dataset.k : ""); }); document.body.appendChild(bg); }); }
 VIEWS.jobs = () => {
   if(!S.students.length) return header("일인일역") + noStudents();
   if(S.jobMode!=="role" && S.jobMode!=="job") return jobChooser();
@@ -3101,7 +3261,7 @@ VIEWS.jobs = () => {
       <ol style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px"><li>모든 학생이 1지망을 꼭 지원해요.</li><li>지원자가 정원보다 많으면 가위바위보로 정해요.</li><li>떨어진 학생은 1지망 배정이 끝난 뒤 남은 직업 중 하나를 골라요.</li><li>2지망부터는 희망자만 같은 방식으로 지원해요.</li></ol>
       <label class="f">분기 이름<input type="text" id="jobQuarter" value="${esc(J.quarter || `${new Date().getFullYear()}년 ${Math.floor(new Date().getMonth()/3)+1}분기`)}"></label>
       <div class="small muted">직업 ${J.list.length}개 · 자리 ${totalCap}개 · 학생 ${S.students.length}명 ${totalCap<S.students.length?`<span style="color:var(--bad)">· 자리가 부족해요</span>`:""}</div>
-      <div class="row"><button class="btn pri" data-act="jobStart" ${J.list.length?"":"disabled"}>1지망 받기 시작</button><button class="btn" data-act="jobTab" data-v="list">직업 목록 고치기</button></div>
+      <div class="row"><button class="btn pri" data-act="jobStart" ${J.list.length?"":"disabled"}>1지망 받기 시작</button><button class="btn" data-act="jobDrawAll" ${J.list.length?"":"disabled"}>🎲 지원 없이 추첨으로 정하기</button><button class="btn" data-act="jobTab" data-v="list">직업 목록 고치기</button></div>
     </div>`;
 
   const r = d.round, first = r===1;
@@ -3128,7 +3288,7 @@ VIEWS.jobs = () => {
     const allSet = over.every(j=>(d.winners[j.id]||[]).length===remaining(d,j.id));
     return top + `<div class="small muted">정원보다 지원자가 많은 직업은 교실에서 가위바위보를 하고, 이긴 학생 이름을 눌러 주세요. 이긴 학생 수가 남은 자리 수와 같아야 해요.</div>
       ${over.length ? `<div class="jobs">${over.map(j=>{ const rem = remaining(d,j.id), ap = Object.entries(d.apply).filter(([,x])=>x===j.id).map(([sid])=>sid), w = d.winners[j.id]||[];
-        return `<div class="job over"><div class="spread"><b>${esc(j.name)}</b><span class="pill ${w.length===rem?"ok":"warn"}">이긴 학생 ${w.length}/${rem}</span></div><div class="names">${ap.map(sid=>`<button class="nm-chip ${w.includes(sid)?"win":""}" data-act="jobWin" data-j="${j.id}" data-s="${sid}" aria-pressed="${w.includes(sid)}">${esc(sname(sid))}</button>`).join("")}</div><button class="btn sm ghost" data-act="jobRps" data-j="${j.id}">컴퓨터가 대신 정하기</button></div>`; }).join("")}</div>` : `<div class="banner" style="background:var(--ok-soft)">정원을 넘은 직업이 없어요. 모두 1지망대로 배정돼요.</div>`}
+        return `<div class="job over"><div class="spread"><b>${esc(j.name)}</b><span class="pill ${w.length===rem?"ok":"warn"}">이긴 학생 ${w.length}/${rem}</span></div><div class="names">${ap.map(sid=>`<button class="nm-chip ${w.includes(sid)?"win":""}" data-act="jobWin" data-j="${j.id}" data-s="${sid}" aria-pressed="${w.includes(sid)}">${esc(sname(sid))}</button>`).join("")}</div><button class="btn sm ghost" data-act="jobRps" data-j="${j.id}">🎲 추첨으로 정하기</button></div>`; }).join("")}</div>` : `<div class="banner" style="background:var(--ok-soft)">정원을 넘은 직업이 없어요. 모두 1지망대로 배정돼요.</div>`}
       ${ok.length ? `<div><h3 style="margin-bottom:6px">바로 배정되는 직업</h3><div class="jobs">${ok.map(j=>`<div class="job"><b>${esc(j.name)}</b><div class="names">${Object.entries(d.apply).filter(([,x])=>x===j.id).map(([sid])=>`<span class="nm-chip static">${esc(sname(sid))}</span>`).join("")}</div></div>`).join("")}</div></div>` : ""}
       <div class="row" style="justify-content:space-between"><button class="btn" data-act="jobBack" data-to="apply">지원 다시 받기</button><button class="btn pri" data-act="jobToPick" ${allSet?"":"disabled"}>배정하고 다음으로</button></div></div>`;
   }
@@ -3140,7 +3300,7 @@ VIEWS.jobs = () => {
       <div class="scroll"><table class="t"><thead><tr><th>번호</th><th>이름</th><th>지원했던 직업</th><th>남은 직업 중 선택</th></tr></thead><tbody>
       ${losers.map(stu).filter(Boolean).sort((a,b)=>a.no-b.no).map(s=>`<tr><td class="num">${s.no}</td><td>${esc(s.name)}</td><td class="muted">${esc(S.jobs.list.find(j=>j.id===d.lost[s.id])?.name||"")}</td><td><select data-ch="jobPick" data-s="${s.id}"><option value="">${first?"선택하세요":"고르지 않음"}</option>${opts(s.id).map(j=>`<option value="${j.id}" ${d.picks[s.id]===j.id?"selected":""}>${esc(j.name)} (남은 ${remaining(d,j.id)})</option>`).join("")}</select></td></tr>`).join("")}
       </tbody></table></div>` : `<div class="banner" style="background:var(--ok-soft)">떨어진 학생이 없어요.</div>`) + `
-      <div class="row" style="justify-content:flex-end"><button class="btn pri" data-act="jobRoundEnd" ${allPicked?"":"disabled"}>${r}지망 라운드 마치기</button></div></div>`;
+      <div class="row" style="justify-content:flex-end">${losers.some(sid=>!d.picks[sid]) ? `<button class="btn" data-act="jobPickDraw">🎲 남은 직업 추첨</button>` : ""}<button class="btn pri" data-act="jobRoundEnd" ${allPicked?"":"disabled"}>${r}지망 라운드 마치기</button></div></div>`;
   }
   /* done: 라운드 사이 */
   const unassigned = sorted().filter(s=>!holding(s.id).length);
@@ -3164,7 +3324,6 @@ A.jobToResolve = () => { const d = S.jobs.draft; d.winners = {}; d.step = "resol
 A.jobBack = el => { S.jobs.draft.step = el.dataset.to; commit(); };
 A.jobWin = el => { const d = S.jobs.draft, jid = el.dataset.j, sid = el.dataset.s, w = d.winners[jid] ||= [];
   if(w.includes(sid)) d.winners[jid] = w.filter(x=>x!==sid); else if(w.length < remaining(d,jid)) w.push(sid); else { toast("남은 자리만큼 이미 골랐어요. 다른 학생을 먼저 빼 주세요"); return; } commit(); };
-A.jobRps = el => { const d = S.jobs.draft, jid = el.dataset.j; const ap = Object.entries(d.apply).filter(([,x])=>x===jid).map(([s])=>s); d.winners[jid] = shuffle(ap).slice(0, remaining(d,jid)); commit(); toast("무작위로 정했어요"); };
 A.jobToPick = () => { const d = S.jobs.draft; d.picks = {}; d.lost = {};
   S.jobs.list.forEach(j => { const ap = Object.entries(d.apply).filter(([,x])=>x===j.id).map(([s])=>s); if(!ap.length) return;
     const win = ap.length > remaining(d,j.id) ? (d.winners[j.id]||[]) : ap;
@@ -3226,7 +3385,84 @@ A.delStu = async el => { const s = stu(el.dataset.id); if(await ask(`${esc(s.nam
 A.clearStu = async () => { if(await ask("학생 명단을 모두 지울까요?","모두 지우기",true)){ S.students = []; commit(); } };
 
 /* ───────── 설정 ───────── */
+/* ───────── 학급 바꾸기 · 추가 · 삭제 ───────── */
+function switchClass(id){
+  if(id===REG.cur) return; if(liveS){ toast("지난 기록을 보는 중에는 학급을 바꿀 수 없어요"); return; }
+  if(ui.ttDraft) ui.ttDraft = null;
+  persist(); clearTimeout(syncUpTimer);
+  const prevOn = SY.on, prevFolder = SY.folderId;
+  REG.cur = id; saveReg();
+  S = loadState(id) || blank(); migrateS();
+  SY = loadSY(id); syncConflict = null;
+  if(prevOn && !SY.on) Object.assign(SY, {on:true, rev:0, dirty:!!S.cls.name, state:"pending"});
+  SY.folderId ||= prevFolder; saveSY();
+  Object.assign(ui, {taskEdit:null, meetEdit:null, subEdit:null, csEdit:null, csFollow:null, epImp:null, epEdit:null, calImp:null, calEdit:null, gradeSel:null, budgetSel:null, submitSel:null, memoSel:null, recSel:"all", csSel:"all", eventEdit:null, seatPick:null});
+  Object.assign(ui.rnd, {exclude:{}, drawn:[], result:null, order:null, groups:null});
+  regName(); location.hash = "today"; render(); $("#main").scrollTop = 0;
+  if(S.cls.name) toast(`'${clsName()}'(으)로 바꿨어요`);
+  if(SY.on) setTimeout(()=>syncCycle("load"), 300);
+}
+A.classGo = el => switchClass(el.dataset.id);
+A.classMenu = () => {
+  const bg = document.createElement("div"); bg.className = "modal-bg";
+  bg.innerHTML = `<div class="modal"><h3>학급</h3>
+    <div style="display:flex;flex-direction:column;gap:6px">${REG.list.map(c=>`<button class="cls-li ${c.id===REG.cur?"on":""}" data-id="${c.id}"><span><b>${esc(c.name||"이름 없는 학급")}</b> <span class="small muted">${esc(c.year||"")}</span></span>${c.id===REG.cur?`<span class="pill acc">지금</span>`:""}</button>`).join("")}</div>
+    <div class="row" style="justify-content:space-between"><button class="btn" data-k="add">+ 학급 추가</button><button class="btn ghost" data-k="0">닫기</button></div></div>`;
+  bg.addEventListener("click", e => { const c = e.target.closest("[data-id]"), k = e.target.closest("[data-k]")?.dataset.k;
+    if(c){ bg.remove(); switchClass(c.dataset.id); return; }
+    if(k==="add"){ bg.remove(); A.classAdd(); return; }
+    if(k==="0" || e.target===bg) bg.remove(); });
+  document.body.appendChild(bg);
+};
+A.classAdd = () => {
+  if(liveS){ toast("지난 기록을 보는 중에는 학급을 추가할 수 없어요"); return; }
+  const bg = document.createElement("div"); bg.className = "modal-bg";
+  bg.innerHTML = `<div class="modal" style="max-width:480px"><h3>새 학급 추가</h3>
+    <div class="small muted">담임 학급과 별도로 전담·동아리·방과후 반 등을 따로 관리할 수 있어요. 학생과 기록은 학급마다 따로예요.</div>
+    <label class="f">학급 이름<input type="text" id="caName" placeholder="예: 5학년 2반 과학, 독서 동아리"></label>
+    <div class="form" style="grid-template-columns:1fr 1fr"><label class="f">학년·반 (선택)<input type="text" id="caGrade" placeholder="예: 5학년 2반"></label><label class="f">학년도<input type="number" id="caYear" value="${esc(S.cls.year||new Date().getFullYear())}"></label></div>
+    <div class="small"><b>지금 학급(${esc(clsName())})에서 가져올 것</b></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px">
+      <label class="check"><input type="checkbox" id="caCal" checked><span>학사일정</span></label>
+      <label class="check"><input type="checkbox" id="caTT" checked><span>시간표 과목·교시 시각</span></label>
+      <label class="check"><input type="checkbox" id="caQuick" checked><span>빠른 기록 문구</span></label>
+      <label class="check"><input type="checkbox" id="caMenu" checked><span>쓰는 메뉴 설정</span></label>
+      <label class="check"><input type="checkbox" id="caJobs"><span>일인일역·직업 목록</span></label>
+      <label class="check"><input type="checkbox" id="caEval"><span>평가 계획</span></label>
+    </div>
+    <div class="row" style="justify-content:flex-end"><button class="btn" data-k="0">취소</button><button class="btn pri" data-k="go">추가하고 열기</button></div></div>`;
+  bg.addEventListener("click", e => { const k = e.target.closest("[data-k]")?.dataset.k;
+    if(k==="0" || e.target===bg){ bg.remove(); return; }
+    if(k!=="go") return;
+    const name = bg.querySelector("#caName").value.trim(); if(!name){ toast("학급 이름을 적어 주세요"); bg.querySelector("#caName").focus(); return; }
+    const ck = id => bg.querySelector("#"+id).checked, old = S, n = blank(), Y = Number(bg.querySelector("#caYear").value) || new Date().getFullYear();
+    n.cls = {name, grade:bg.querySelector("#caGrade").value.trim(), year:Y};
+    const cp = x => JSON.parse(JSON.stringify(x));
+    if(ck("caCal") && old.cal){ n.cal = cp(old.cal); n.cal.events.forEach(x=>x.id=uid()); n.cal.offs.forEach(x=>x.id=uid()); n.cal.breaks.forEach(x=>x.id=uid()); if(n.cal.year!==Y) n.cal = calDefault(Y); }
+    if(ck("caTT") && old.timetable){ n.timetable = ttBlank(old.timetable.band); Object.assign(n.timetable, cp({subjects:old.timetable.subjects, periods:old.timetable.periods, times:old.timetable.times})); }
+    if(ck("caQuick")){ n.quickTags = cp(old.quickTags); n.quickV = old.quickV; }
+    if(ck("caMenu")){ n.menus = cp(old.menus); }
+    if(ck("caJobs")){ n.jobs.list = cp(old.jobs.list); n.roles.list = cp((old.roles||{}).list||[]); n.jobMode = old.jobMode; }
+    if(ck("caEval")) n.evalPlans = cp(old.evalPlans||[]).map(p=>({...p, id:uid(), assessId:""}));
+    const id = "c" + Date.now().toString(36) + Math.random().toString(36).slice(2,5);
+    try{ localStorage.setItem(dataKey(id), JSON.stringify(n)); }catch(err){ toast("이 기기에 저장할 공간이 부족해요"); return; }
+    REG.list.push({id, name, year:Y}); saveReg(); bg.remove(); switchClass(id); toast(`'${name}' 학급을 만들었어요. 학생을 등록해 주세요`);
+  });
+  document.body.appendChild(bg); setTimeout(()=>bg.querySelector("#caName").focus(), 0);
+};
+A.classDel = async el => {
+  const id = el.dataset.id, c = REG.list.find(x=>x.id===id); if(!c || REG.list.length < 2) return;
+  if(!(await ask(`'${c.name||"이름 없는 학급"}' 학급과 그 학급의 학생·기록을 모두 지울까요? 되돌릴 수 없어요. 필요하면 그 학급을 열어 먼저 '백업 파일 받기'를 해 두세요.${SY.on?" 드라이브의 그 학급 백업도 휴지통으로 옮겨요.":""}`, "학급 삭제", true))) return;
+  if(id===REG.cur) switchClass(REG.list.find(x=>x.id!==id).id);
+  if(SY.on){ try{ const fid = await ensureFolder(), raw = await drv.list(fid), re = id==="c1" ? /^학급일지_\d+\.json$/ : new RegExp(`^학급일지_${id}_\\d+\\.json$`);
+      for(const f of raw.filter(f=>re.test(String(f.title)))) await drv.trash(f.id); }catch(e){ toast("드라이브 백업은 지우지 못했어요. 드라이브에서 직접 지워 주세요"); } }
+  try{ localStorage.removeItem(dataKey(id)); localStorage.removeItem(syncKeyOf(id)); }catch(e){}
+  REG.list = REG.list.filter(x=>x.id!==id); REG.gone.push(id); saveReg(); render(); toast("학급을 지웠어요");
+};
 VIEWS.settings = () => header("설정", "학급 정보, 쓰는 메뉴, 백업") + `
+  <div class="card"><div class="spread"><h2>학급 목록 <span class="small muted">학급마다 학생·기록이 따로 저장돼요</span></h2><button class="btn pri sm" data-act="classAdd">+ 학급 추가</button></div>
+    <div style="display:flex;flex-direction:column;gap:6px;margin-top:8px">${REG.list.map(c=>`<div class="row" style="gap:8px"><button class="cls-li ${c.id===REG.cur?"on":""}" data-act="classGo" data-id="${c.id}" style="flex:1"><span><b>${esc(c.name||"이름 없는 학급")}</b> <span class="small muted">${esc(c.year||"")}</span></span>${c.id===REG.cur?`<span class="pill acc">지금 학급</span>`:`<span class="small muted">열기</span>`}</button>${REG.list.length>1?`<button class="btn sm ghost danger" data-act="classDel" data-id="${c.id}">삭제</button>`:""}</div>`).join("")}</div>
+    <div class="small muted" style="margin-top:8px">왼쪽 맨 위 학급 이름을 눌러도 바꿀 수 있어요.${SY.on?" 드라이브 자동 백업은 모든 학급에 적용되고, 다른 기기에서도 학급 목록이 맞춰져요(학급을 한 번 열어야 올라가요).":""}</div></div>
   <div class="grid2" style="align-items:start">
     <div class="card"><h2>학급 정보</h2><div class="form" style="grid-template-columns:1fr 1fr">
       <label class="f" style="grid-column:1/-1">학급 이름<input type="text" value="${esc(S.cls.name)}" data-ch="clsName"></label>
@@ -3272,7 +3508,7 @@ A.openSide = () => $("#side").classList.add("open");
    저장할 때마다 '학급일지 자동백업' 폴더에 학급일지_<저장시각>.json 을 새로 만들고 최근 10개만 남긴다.
    다른 기기는 1분마다(그리고 화면으로 돌아올 때) 더 최신 파일이 있는지 보고 받아 온다.          */
 const GD = "Google Drive", GD_KEEP = 10;
-const STOP_CODES = ["auth_state","auth_error","popup_blocked","popup_closed","gis_blocked","no_config","needs_login","auth_denied","auth_popup","gis_loading","forbidden","needs_reauth","server_not_connected","not_in_manifest","blocked_by_policy","not_granted","capability_disabled","capability_removed","approval_required","selection_required","too_large"];
+const STOP_CODES = ["auth_state","auth_error","popup_blocked","popup_closed","gis_blocked","no_config","no_runtime","needs_login","auth_denied","auth_popup","gis_loading","forbidden","needs_reauth","server_not_connected","not_in_manifest","blocked_by_policy","not_granted","capability_disabled","capability_removed","approval_required","selection_required","too_large"];
 let mcpApi = null, syncing = false, syncPaused = false, syncConflict = null;
 async function getMcp(){ if(mcpApi) return mcpApi; if(!(window.claude && typeof window.claude.use==="function")) return null; try{ mcpApi = await window.claude.use("mcp"); }catch(e){ mcpApi = null; } return mcpApi; }
 async function gd(tool, input){ const m = await getMcp(); if(!m) throw {code:"not_granted"}; const r = await m.callTool(GD, tool, input, {cache:false}); return r.payload; }
@@ -3328,7 +3564,7 @@ const qs = o => Object.entries(o).map(([k,v])=>`${k}=${encodeURIComponent(v)}`).
 const drv = GMODE ? {
   async findFolder(name){ const r = await (await gfetch(`${GAPI}?${qs({q:`name = '${name}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false`, fields:"files(id,name)", spaces:"drive"})}`)).json(); return (r.files||[])[0]?.id || ""; },
   async createFolder(name){ const r = await (await gfetch(GAPI+"?fields=id", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({name, mimeType:"application/vnd.google-apps.folder"})})).json(); return r.id; },
-  async list(fid){ const r = await (await gfetch(`${GAPI}?${qs({q:`'${fid}' in parents and trashed = false`, orderBy:"modifiedTime desc", pageSize:30, fields:"files(id,name)", spaces:"drive"})}`)).json(); return (r.files||[]).map(f=>({id:f.id, title:f.name})); },
+  async list(fid){ const r = await (await gfetch(`${GAPI}?${qs({q:`'${fid}' in parents and trashed = false`, orderBy:"modifiedTime desc", pageSize:200, fields:"files(id,name)", spaces:"drive"})}`)).json(); return (r.files||[]).map(f=>({id:f.id, title:f.name})); },
   async upload(fid, title, text){ const b = "cb" + Date.now();
     const body = `--${b}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify({name:title, parents:[fid], mimeType:"application/json"})}\r\n--${b}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${text}\r\n--${b}--`;
     await gfetch("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id", {method:"POST", headers:{"Content-Type":`multipart/related; boundary=${b}`}, body}); },
@@ -3338,7 +3574,7 @@ const drv = GMODE ? {
 } : {
   async findFolder(name){ const r = await gd("search_files", {query:`title = '${name}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false`, pageSize:5, excludeContentSnippets:true}); return ((r && r.files) || [])[0]?.id || ""; },
   async createFolder(name){ return (await gd("create_file", {title:name, contentMimeType:"application/vnd.google-apps.folder"})).id; },
-  async list(fid){ const r = await gd("search_files", {query:`parentId = '${fid}' and title contains '학급일지_' and trashed = false`, orderBy:"modifiedTime desc", pageSize:30, excludeContentSnippets:true}); return ((r && r.files) || []).map(f=>({id:f.id, title:f.title})); },
+  async list(fid){ const r = await gd("search_files", {query:`parentId = '${fid}' and title contains '학급일지_' and trashed = false`, orderBy:"modifiedTime desc", pageSize:100, excludeContentSnippets:true}); return ((r && r.files) || []).map(f=>({id:f.id, title:f.title})); },
   async upload(fid, title, text){ await gd("create_file", {title, parentId:fid, textContent:text, contentMimeType:"application/json", disableConversionToGoogleType:true}); },
   async download(id){ const r = await gd("download_file_content", {fileId:id}); return b64utf8(r.content); },
   async trash(id){ await gd("trash_file", {fileId:id}); },
@@ -3346,8 +3582,16 @@ const drv = GMODE ? {
 };
 /* 동기화를 사용자가 누른 버튼에서 시작할 때: 구글 모드면 먼저 로그인 */
 /* 동기화를 사용자가 누른 버튼에서 시작할 때: 구글 모드에서 연결이 없으면 구글 로그인 페이지로 다녀온 뒤 이어서 실행 */
-function withLogin(action, fn){
-  if(!GMODE && !(window.claude && typeof window.claude.use==="function")){ syncErr({code:"no_config"}); toast("구글 연결 설정(config.js)이 아직 없어요"); render(); return; }
+/* claude.ai 아티팩트 화면인지(웹앱 배포본과 구분) */
+const IN_ARTIFACT = (() => { try{ return /claude/i.test(location.hostname) || /claude\.ai/i.test(document.referrer) || !!(location.ancestorOrigins && Array.from(location.ancestorOrigins).some(o => /claude/i.test(o))); }catch(e){ return false; } })();
+const hasClaude = () => !!(window.claude && typeof window.claude.use === "function");
+/* claude 연결 도구는 화면이 뜬 뒤 조금 늦게 준비될 수 있어서 몇 초 기다려 본다 */
+async function waitClaude(ms){ const end = Date.now() + ms; while(!hasClaude() && Date.now() < end) await new Promise(r => setTimeout(r, 200)); return hasClaude(); }
+async function withLogin(action, fn){
+  if(!GMODE && !hasClaude()){
+    toast("드라이브 연결을 준비하는 중이에요");
+    if(!(await waitClaude(6000))){ syncErr({code: IN_ARTIFACT || !location.protocol.startsWith("http") ? "no_runtime" : "no_config"}); toast(SY.msg.replace(/\s*\[.*\]$/,"")); render(); return; }
+  }
   if(GMODE && !gTokenOk()){ toast("구글 로그인 화면으로 이동해요"); setTimeout(()=>gLogin(action), 300); return; }
   fn();
 }
@@ -3367,7 +3611,7 @@ function syncErr(e){
     selection_required:"연결된 구글 드라이브가 여러 개예요. 뜨는 창에서 하나를 골라 주세요.",
     not_in_manifest:"이 앱의 드라이브 사용이 허용되지 않았어요. '지금 동기화'를 누르고 허용해 주세요.",
     approval_required:"드라이브 사용 허락이 필요해요. '지금 동기화'를 누르고 허용해 주세요.",
-    not_granted:"이 화면에서는 드라이브를 쓸 수 없어요. claude.ai에서 앱을 열어 주세요.",
+    not_granted:"드라이브 사용 허락을 받지 못했어요. '지금 동기화'를 다시 누르고 뜨는 창에서 구글 드라이브 사용을 허용해 주세요. 그래도 안 되면 claude.ai 설정 → 커넥터에서 Google Drive가 연결돼 있는지 확인해 주세요.",
     capability_disabled:"이 화면에서는 드라이브를 쓸 수 없어요. claude.ai에서 앱을 열어 주세요.",
     capability_removed:"이 화면에서는 드라이브를 쓸 수 없어요. claude.ai에서 앱을 열어 주세요.",
     blocked_by_policy:"관리자 정책으로 드라이브 사용이 막혀 있어요.",
@@ -3376,6 +3620,7 @@ function syncErr(e){
     needs_login:"구글 드라이브 연결이 끊겨 있어요(약 1시간마다, 또는 새 창을 열 때). '지금 동기화'를 누르면 구글 화면에 잠깐 다녀와서 이어져요. 그동안 기록은 이 기기에 안전하게 저장돼요.",
     gis_loading:"구글 로그인을 준비하는 중이에요. 잠시 뒤 다시 눌러 주세요.",
     gis_blocked:"구글 로그인 도구를 불러오지 못했어요. 학교 인터넷이나 광고 차단 프로그램이 accounts.google.com을 막고 있는지 확인해 주세요.",
+    no_runtime:"이 화면에서는 구글 드라이브를 연결할 수 없어요. 컴퓨터(크롬북)의 크롬에서 claude.ai에 로그인한 뒤 학급일지 아티팩트를 열어 주세요. Claude 모바일 앱이나 내려받은 파일로 연 화면에서는 드라이브 연결이 안 돼요. 다른 선생님과 함께 쓰는 웹앱 주소(Vercel)를 쓰면 어디서든 돼요.",
     no_config:"아직 구글 연결 설정이 없어요. GitHub의 config.js에 구글 클라이언트 ID를 넣고 1분 뒤 Ctrl+Shift+R로 새로고침해 주세요(배포 안내 3·4단계).",
     auth_denied:"구글 드라이브 사용을 허용하지 않았어요. 다시 눌러 허용해 주세요.",
     auth_state:"구글 로그인 확인이 맞지 않아요. 다시 한 번 눌러 주세요.",
@@ -3395,9 +3640,28 @@ async function ensureFolder(){
   SY.folderId = (await drv.findFolder(GD_FOLDER)) || (await drv.createFolder(GD_FOLDER));
   saveSY(); return SY.folderId;
 }
+const fileTag = () => REG.cur==="c1" ? "" : REG.cur + "_";
 async function listRemote(){
-  const fid = await ensureFolder();
-  return (await drv.list(fid)).map(f => ({id:f.id, rev:Number((String(f.title).match(/학급일지_(\d+)\.json/)||[])[1]||0)})).filter(f=>f.rev).sort((a,b)=>b.rev-a.rev);
+  const fid = await ensureFolder(), raw = await drv.list(fid);
+  discoverClasses(raw);
+  const re = REG.cur==="c1" ? /^학급일지_(\d+)\.json$/ : new RegExp(`^학급일지_${REG.cur}_(\\d+)\\.json$`);
+  return raw.map(f => ({id:f.id, rev:Number((String(f.title).match(re)||[])[1]||0)})).filter(f=>f.rev).sort((a,b)=>b.rev-a.rev);
+}
+/* 다른 기기에서 만든 학급이 드라이브에 있으면 이 기기 학급 목록에도 넣는다 */
+let discovering = false;
+async function discoverClasses(raw){
+  if(discovering) return; const ids = {};
+  raw.forEach(f => { const t = String(f.title); let m = t.match(/^학급일지_(\d+)\.json$/); if(m){ (ids.c1 ||= []).push({id:f.id, rev:+m[1]}); return; }
+    m = t.match(/^학급일지_(c[a-z0-9]+)_(\d+)\.json$/); if(m) (ids[m[1]] ||= []).push({id:f.id, rev:+m[2]}); });
+  const todo = Object.keys(ids).filter(id => !REG.list.some(c=>c.id===id) && !REG.gone.includes(id));
+  if(!todo.length) return; discovering = true;
+  try{ for(const id of todo){ const top = ids[id].sort((a,b)=>b.rev-a.rev)[0]; const j = await readRemote(top);
+      if(!j.data.cls || !j.data.cls.name) continue;
+      try{ localStorage.setItem(dataKey(id), JSON.stringify(j.data)); }catch(e){ continue; }
+      saveSYof(id, Object.assign(SY_DEF(), {on:true, folderId:SY.folderId, rev:j.savedAt, state:"ok", lastOk:Date.now()}));
+      REG.list.push({id, name:j.data.cls.name, year:j.data.cls.year||""}); saveReg(); toast(`드라이브에서 '${j.data.cls.name}' 학급을 가져왔어요`); }
+    render(); }
+  catch(e){} finally{ discovering = false; }
 }
 async function readRemote(f){
   const j = JSON.parse(await drv.download(f.id));
@@ -3412,7 +3676,7 @@ async function uploadNow(){
   const fid = await ensureFolder(), savedAt = Date.now();
   const text = JSON.stringify({app:"classbook", v:1, savedAt, data:S});
   if(new Blob([text]).size > drv.limit) throw {code:"too_large"};
-  await drv.upload(fid, `학급일지_${savedAt}.json`, text);
+  await drv.upload(fid, `학급일지_${fileTag()}${savedAt}.json`, text);
   Object.assign(SY, {rev:savedAt, dirty:false, lastOk:Date.now(), state:"ok", msg:""}); saveSY();
 }
 async function cleanupRemote(){ try{ const l = await listRemote(); for(const f of l.slice(GD_KEEP)) await drv.trash(f.id); }catch(e){} }
@@ -3453,8 +3717,10 @@ function syncPanelInner(){
     <div class="row">${SY.on ? `<button class="btn pri" data-act="syncNow">지금 동기화</button><button class="btn" data-act="syncVersions">이전 백업 보기</button><button class="btn ghost danger" data-act="syncOff">자동 백업 끄기</button>` : `<button class="btn pri" data-act="syncOn">구글 드라이브 자동 백업 켜기</button>`}
     ${SY.folderId ? `<a class="btn ghost" href="https://drive.google.com/drive/folders/${esc(SY.folderId)}" target="_blank" rel="noopener">드라이브 폴더 열기</a>` : ""}</div>`;
 }
-A.syncOn = () => withLogin("syncOn", () => { Object.assign(SY, {on:true, rev:0, dirty:true, state:"busy", msg:""}); saveSY(); syncCycle("manual"); });
-A.syncOff = async () => { if(await ask("구글 드라이브 자동 백업을 끌까요? 드라이브에 있는 백업 파일은 그대로 남아요.","끄기")){ Object.assign(SY, {on:false, state:"off", msg:""}); syncConflict = null; saveSY(); render(); } };
+A.syncOn = () => withLogin("syncOn", () => { Object.assign(SY, {on:true, rev:0, dirty:true, state:"busy", msg:""}); saveSY(); syncAllClasses(true); syncCycle("manual"); });
+/* 자동 백업 켜기·끄기는 모든 학급에 함께 적용(다른 학급은 열 때 맞춘다) */
+function syncAllClasses(on){ REG.list.forEach(c => { if(c.id===REG.cur) return; const v = loadSY(c.id); if(on && !v.on) Object.assign(v, {on:true, rev:0, dirty:true, state:"pending", folderId:v.folderId||SY.folderId}); if(!on) Object.assign(v, {on:false, state:"off", msg:""}); saveSYof(c.id, v); }); }
+A.syncOff = async () => { if(await ask("구글 드라이브 자동 백업을 끌까요? 드라이브에 있는 백업 파일은 그대로 남아요.","끄기")){ Object.assign(SY, {on:false, state:"off", msg:""}); syncConflict = null; saveSY(); syncAllClasses(false); render(); } };
 A.syncNow = () => withLogin("syncNow", () => syncCycle("manual"));
 A.syncUseRemote = async () => { const f = syncConflict; syncConflict = null; try{ applyRemote(await readRemote(f)); toast("드라이브 기록을 불러왔어요"); }catch(e){ syncErr(e); render(); } };
 A.syncUseLocal = async () => { if(!(await ask("드라이브의 최신 기록 대신 이 기기의 기록을 올릴까요? 드라이브의 그 기록은 '이전 백업 보기'에서 다시 불러올 수 있어요.","덮어쓰기"))) return;
