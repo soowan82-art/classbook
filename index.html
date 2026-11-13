@@ -632,7 +632,7 @@ function lookCard(){
 }
 A.lookAccent = el => { LOOK.accent = el.dataset.v; saveLook(); render(); };
 A.lookMode = el => { LOOK.mode = el.dataset.v; saveLook(); render(); };
-const APP_VER = "2026.11.13-15";
+const APP_VER = "2026.11.13-20";
 const LOGO_SVG = `<svg class="brand-logo" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" fill="#1F6E8C"/><g transform="translate(256 258) scale(1.13) translate(-256 -258)"><rect x="140" y="112" width="232" height="292" rx="30" fill="#FFFFFF"/><rect x="140" y="112" width="44" height="292" rx="22" fill="#D7E9F0"/><rect x="162" y="112" width="22" height="292" fill="#D7E9F0"/><path d="M318 112 H352 V214 L335 198 L318 214 Z" fill="#F2B84B"/><path d="M212 196 L236 220 L284 168" fill="none" stroke="#1F6E8C" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/><rect x="212" y="262" width="124" height="16" rx="8" fill="#9CC5D4"/><rect x="212" y="306" width="96" height="16" rx="8" fill="#9CC5D4"/><rect x="212" y="350" width="112" height="16" rx="8" fill="#C9DFE8"/></g></svg>`;
 let storageOK = true;
 /* 학급 여러 개: 학급마다 따로 저장한다. 처음 학급(c1)은 예전 저장 위치를 그대로 쓴다 */
@@ -2056,8 +2056,8 @@ A.ttCalMonGo = el => { ui.ttCalMonth = el.dataset.v; render(); };
 /* ───── 주간학습안내 → 시간표 교시별 메모 ─────
    한글(.hwpx)·워드·엑셀·PDF 파일이나 복사한 표에서 요일×교시 칸을 찾아, 그 칸의 학습 내용을 그날 그 교시 메모로 넣는다 */
 const WG_WD = {"월":1,"화":2,"수":3,"목":4,"금":5};
-function wgWd(t){ t = String(t||"").replace(/\s+/g,""); if(!t || t.length > 24) return 0;
-  const m = t.match(/\(([월화수목금])\)/) || t.match(/([월화수목금])요일/) || t.match(/^([월화수목금])$/) || t.match(/일\(?([월화수목금])\)?$/);
+function wgWd(t){ t = String(t||""); if(t.includes("\n")){ for(const l of t.split("\n")){ const w = wgWd(l); if(w) return w; } return 0; } t = t.replace(/\s+/g,""); if(!t || t.length > 24) return 0;
+  const m = t.match(/\(([월화수목금])\)/) || t.match(/([월화수목금])요일/) || t.match(/^([월화수목금])$/) || t.match(/일\(?([월화수목금])\)?$/) || t.match(/^([월화수목금])[(\[]\d{1,2}(일|\)|\])/);
   return m ? WG_WD[m[1]] : 0; }
 function wgDate(t){ t = String(t||"").replace(/\d{4}\s*[./년-]\s*/g, "");
   let m = t.match(/(\d{1,2})\s*월\s*(\d{1,2})\s*일/) || t.match(/(\d{1,2})\s*[./]\s*(\d{1,2})(?!\d)/);
@@ -2088,7 +2088,7 @@ function wgCell(list){
       for(const n of names){ const re = new RegExp("^" + n.replace(/[()]/g,"\\$&").replace(/\s/g,"\\s*") + "(?:\\s*\\(전담\\))?\\s*(?:[:：\\-·)\\]]\\s*|\\s+)");
         if(re.test(L0)){ subj = wgSubjName(n) || n; lines[0] = L0.replace(re, ""); break; } } }
   }
-  return {subj, text: lines.filter(Boolean).join(" ").replace(/\s+/g," ").trim()};
+  return {subj, text: lines.filter(x => x && !/^[-–—·.]+$/.test(x)).join(" ").replace(/\s+/g," ").trim()};
 }
 const wgSame = (a, b) => { b = cellName(b); if(!a) return true; if(wgNorm(a) === wgNorm(b)) return true; return a === "창체" && ["자율","동아리","진로","창체"].includes(b); };
 /* 요일이 가로(열)로 놓인 표 */
@@ -2099,7 +2099,8 @@ function wgGrids(tb){
     const map = {}; rows[h].forEach((t, c) => { const w = wgWd(t); if(w) map[c] = w; });
     if(new Set(Object.values(map)).size < 3){ h++; continue; }
     const cols = Object.keys(map).map(Number), first = Math.min(...cols), dates = {};
-    [h-1, h, h+1].forEach(r => { if(!rows[r]) return; cols.forEach(c => { const d = wgDate(rows[r][c]); if(d && !dates[map[c]]) dates[map[c]] = d; }); });
+    [h-1, h, h+1].forEach(r => { if(!rows[r] || (r > h && rows[r].slice(0, first).some(wgPer))) return;
+      cols.forEach(c => { const t = rows[r][c]; if(!t || t.length > 24 || /\(\s*\d+\s*\/\s*\d+\s*\)/.test(t)) return; const d = wgDate(t); if(d && !dates[map[c]]) dates[map[c]] = d; }); });
     const cells = {}; let found = 0, r = h + 1;
     for(; r < rows.length; r++){
       const row = rows[r];
@@ -2142,8 +2143,14 @@ function wgFromTables(tables){
     if(ds.length){ const [wd, d] = ds[0]; mon = addDays(new Date(wgYear(d.m), d.m - 1, d.d), -(Number(wd) - 1)); mon = mondayOf(mon); }
     else { const d = wgDate(w.ctx); if(d) mon = mondayOf(new Date(wgYear(d.m), d.m - 1, d.d)); }
     const dated = !!mon; if(!mon){ mon = fb; fb = addDays(fb, 7); }
-    const cells = {}; Object.entries(w.cells).forEach(([wd, ps]) => { cells[wd] = {}; Object.entries(ps).forEach(([p, L]) => { const c = wgCell(L); if(c.subj || c.text) cells[wd][p] = c; }); });
-    return {mon: ymd(mon), dated, cells};
+    const cells = {}, offs = {};
+    Object.entries(w.cells).forEach(([wd, ps]) => {
+      const lines = Object.values(ps).flat().join("\n").split("\n").map(x => x.replace(/\s+/g,"")).filter(Boolean);
+      if(lines.length && lines.every(x => x.length <= 2)){ offs[wd] = lines.join(""); return; }   // 세로로 쓴 '재량휴업일' 같은 칸
+      const one = Object.values(ps).length && Object.values(ps).every(L => L.join("") === Object.values(ps)[0].join(""));
+      if(one && /휴업|휴일|공휴|방학|개교기념|대체/.test(Object.values(ps)[0].join("")) && !wgCell(Object.values(ps)[0]).subj){ offs[wd] = Object.values(ps)[0].join(" "); return; }
+      cells[wd] = {}; Object.entries(ps).forEach(([p, L]) => { const c = wgCell(L); if(c.subj || c.text) cells[wd][p] = c; }); });
+    return {mon: ymd(mon), dated, cells, offs};
   }).filter(w => Object.values(w.cells).some(x => Object.keys(x).length));
 }
 /* 복사한 표(한글·엑셀·워드에서 복사하면 HTML 표가 같이 온다) */
@@ -2160,27 +2167,51 @@ function htmlTables(html){
 }
 /* PDF: 요일 글자가 놓인 가로 위치를 열로, 교시 글자가 놓인 세로 위치를 줄로 삼아 칸을 다시 맞춘다 */
 function wgPdfTables(lines){
-  const heads = lines.map((L, i) => ({i, ws: L.cells.filter(c => wgWd(c.s))})).filter(x => new Set(x.ws.map(c => wgWd(c.s))).size >= 3);
+  const perHead = t => /교시/.test(t) ? wgPer(t) : 0;
+  let T = wgPdfGrid(lines, wgWd, wgPer);                 // 요일이 가로, 교시가 세로
+  if(!T.length) T = wgPdfGrid(lines, perHead, wgWd);     // 교시가 가로, 요일이 세로
+  return T;
+}
+/* 옆 칸 글자와 붙어 한 덩어리로 읽힌 글을 칸 경계에서 다시 나눈다 */
+function wgSplit(cells, colOf, cx){
+  const out = [];
+  cells.forEach(c => { const P = c.parts || [c]; let cur = null;
+    P.forEach(pt => { const k = colOf(cx(pt)); if(cur && cur.k === k){ cur.s += (pt.x - cur.x2 > 1.5 && !/\s$/.test(cur.s) ? " " : "") + pt.s; cur.x2 = Math.max(cur.x2, pt.x2); }
+      else { if(cur) out.push(cur); cur = {k, x:pt.x, x2:pt.x2, s:pt.s}; } cur.sp = !!pt.sp || /\s$/.test(pt.s); });
+    if(cur) out.push(cur); });
+  out.forEach(c => c.s = c.s.replace(/\s+/g, " ").trim());
+  return out.filter(c => c.s);
+}
+function wgPdfGrid(lines, headOf, rowOf){
+  const heads = lines.map((L, i) => ({i, ws: L.cells.filter(c => headOf(c.s))})).filter(x => new Set(x.ws.map(c => headOf(c.s))).size >= 3);
   return heads.map((H, k) => {
     const L0 = lines[H.i], end = k + 1 < heads.length ? heads[k+1].i : lines.length, cx = c => (c.x + c.x2) / 2;
-    const seen = new Set(), days = H.ws.filter(c => { const w = wgWd(c.s); if(seen.has(w)) return false; seen.add(w); return true; }).sort((a, b) => cx(a) - cx(b));
-    const xs = days.map(cx), step = xs.length > 1 ? (xs[xs.length-1] - xs[0]) / (xs.length - 1) : 80, left = xs[0] - step / 2;
+    const seen = new Set(), cols = H.ws.filter(c => { const w = headOf(c.s); if(seen.has(w)) return false; seen.add(w); return true; }).sort((a, b) => cx(a) - cx(b));
+    const xs = cols.map(cx), step = xs.length > 1 ? (xs[xs.length-1] - xs[0]) / (xs.length - 1) : 80, left = xs[0] - step / 2;
     const colOf = x => { let b = 0; xs.forEach((v, i) => { if(Math.abs(x - v) < Math.abs(x - xs[b])) b = i; }); return b; };
-    const head = days.map(c => c.s);
-    [H.i - 1, H.i + 1].forEach(j => { const L = lines[j]; if(!L || Math.abs(L.y - L0.y) > L0.h * 2.5) return; L.cells.forEach(c => { if(cx(c) >= left && wgDate(c.s)){ const i = colOf(cx(c)); head[i] = c.s + " " + head[i]; } }); });
+    const head = cols.map(c => c.s);
+    // 제목 칸이 두 줄(날짜 + 요일)이면 위아래 줄도 붙인다
+    [H.i - 2, H.i - 1, H.i + 1, H.i + 2].forEach(j => { const L = lines[j]; if(!L || Math.abs(L.y - L0.y) > L0.h * 2.6) return;
+      L.cells.forEach(c => { if(cx(c) >= left && c.s.length <= 12 && (c.x2 - c.x) < step * .9 && (wgDate(c.s) || /^\(?[월화수목금]\)?$/.test(c.s.trim()))){ const i = colOf(cx(c)); if(!head[i].includes(c.s)) head[i] = j < H.i ? c.s + " " + head[i] : head[i] + " " + c.s; } }); });
+    const body0 = H.i + 1 + (lines[H.i + 1] && Math.abs(lines[H.i + 1].y - L0.y) < L0.h * 2.6 && lines[H.i + 1].cells.every(c => cx(c) < left || wgDate(c.s) || /^\(?[월화수목금]\)?$/.test(c.s.trim())) ? 1 : 0);
     const anchors = [];
-    for(let j = H.i + 1; j < end; j++){ const L = lines[j]; L.cells.forEach(c => { if(cx(c) >= left) return; const p = wgPer(c.s), prev = anchors[anchors.length - 1];
-      if(!p && prev && (/\d{1,2}\s*:\s*\d{2}/.test(c.s) || L.y - prev.y < L.h * 1.6)) return; anchors.push({y:L.y, p, s:c.s}); }); }
-    if(!anchors.some(a => a.p)) return null;
-    const gaps = anchors.slice(1).map((a, i) => a.y - anchors[i].y).sort((a, b) => a - b), gap = gaps.length ? gaps[gaps.length >> 1] : L0.h * 4;
-    const grid = anchors.map(() => days.map(() => []));
-    for(let j = H.i + 1; j < end; j++){ const L = lines[j];
-      if(L.y < anchors[0].y - gap * .6 || L.y > anchors[anchors.length - 1].y + gap * .6) continue;
+    for(let j = body0; j < end; j++){ const L = lines[j]; L.cells.forEach(c => { if(cx(c) >= left) return; const p = rowOf(c.s), prev = anchors[anchors.length - 1];
+      if(!p && prev && L.y - prev.yEnd < L.h * 1.8){ prev.s += "\n" + c.s; prev.yEnd = L.y; return; }   // 칸 안의 둘째 줄(시간·날짜)
+      anchors.push({y:L.y, yEnd:L.y, p, s:c.s}); }); }
+    anchors.forEach(a => { if(!a.p) a.p = rowOf(a.s); a.y = (a.y + a.yEnd) / 2; });
+    if(anchors.filter(a => a.p).length < 1) return null;
+    const ys = anchors.map(a => a.y), gaps = ys.slice(1).map((y, i) => y - ys[i]).sort((a, b) => a - b), gap = gaps.length ? gaps[gaps.length >> 1] : L0.h * 4;
+    const grid = anchors.map(() => cols.map(() => [])), colRight = cols.map(() => 0);
+    for(let j = body0; j < end; j++){ const L = lines[j];
+      if(L.y < anchors[0].y - gap * .7 || L.y > anchors[anchors.length - 1].y + gap * .7) continue;
       let ai = 0; anchors.forEach((a, i) => { if(Math.abs(L.y - a.y) < Math.abs(L.y - anchors[ai].y)) ai = i; });
-      L.cells.forEach(c => { if(cx(c) < left || (Math.abs(L.y - L0.y) < 1 )) return; if(wgDate(c.s) && wgWd(c.s)) return; grid[ai][colOf(cx(c))].push(c.s); });
+      wgSplit(L.cells, colOf, cx).forEach(c => { if(cx(c) < left) return; const k = colOf(cx(c)); grid[ai][k].push({s:c.s, x2:c.x2, h:L.h, sp:c.sp}); colRight[k] = Math.max(colRight[k], c.x2); });
     }
-    const t = [["교시", ...head]].concat(anchors.map((a, i) => [a.p ? `${a.p}교시` : a.s, ...grid[i].map(l => l.join("\n"))]));
-    t.ctx = lines.slice(Math.max(0, H.i - 3), H.i).map(L => L.cells.map(c => c.s).join(" ")).join("\n");
+    // 칸 너비 끝까지 찬 줄이 한글로 끝나고 다음 줄이 한글로 시작하면 낱말 중간에서 끊긴 것 → 붙인다
+    const joinCell = (l, k) => l.reduce((acc, it, i) => { if(!i) return it.s; const pv = l[i-1];
+      return acc + (!pv.sp && /[가-힣]$/.test(pv.s) && !/(^|\s)[수것줄데때등중뿐듯번개명]$/.test(pv.s) && /^[가-힣]/.test(it.s) && pv.x2 >= colRight[k] - pv.h * 2.2 ? "" : "\n") + it.s; }, "");
+    const t = [["", ...head]].concat(anchors.map((a, i) => [a.s, ...grid[i].map((l, k) => joinCell(l, k))]));
+    t.ctx = lines.slice(Math.max(0, H.i - 4), H.i).map(L => L.cells.map(c => c.s).join(" ")).join("\n");
     return t;
   }).filter(Boolean);
 }
@@ -2189,13 +2220,14 @@ async function wgFileLoad(f){
     let tables;
     if(/\.pdf$/i.test(f.name)){ let lines; try{ lines = await pdfLines(await f.arrayBuffer()); }catch(e){ throw new Error(e && e.message==="script" ? "PDF 도구를 불러오지 못했어요. 인터넷 연결을 확인하거나 한글(.hwpx) 파일을 올려 주세요" : "PDF를 열지 못했어요"); }
       if(!lines.length) throw new Error("이 PDF에는 글자가 없어요(스캔한 그림). 한글(.hwpx) 파일을 올리거나 표를 복사해 붙여 넣어 주세요");
-      tables = wgPdfTables(lines); }
+      tables = wgPdfTables(lines); if(!wgFromTables(tables).length) tables = tables.concat([pdfToTable(lines)]); }
     else tables = await readTablesFromFile(f);
+    ui.wgDiag = `${f.name} · 표 ${tables.length}개` + (tables[0] ? ` · 첫 표 위쪽: ${tables[0].slice(0,3).map(r => r.filter(Boolean).slice(0,6).join(" | ")).join(" / ").slice(0,160)}` : "");
     wgShow(wgFromTables(tables), f.name);
-  }catch(err){ console.error(err); toast(err && err.message && /[가-힣]/.test(err.message) ? err.message : "파일을 읽지 못했어요. 표를 복사해 붙여 넣어 주세요"); }
+  }catch(err){ showErr("주간학습안내 읽기", err); }
 }
 function wgShow(weeks, src){
-  if(!weeks.length){ toast("요일(월~금)과 교시가 있는 표를 찾지 못했어요. 표를 복사해 붙여 넣어 보세요"); return; }
+  if(!weeks.length){ showErr("주간학습안내", {message: "요일(월~금)과 교시가 있는 표를 찾지 못했어요" + (ui.wgDiag ? ` [${ui.wgDiag}]` : "")}); ui.wgDiag = ""; return; }
   ui.wg = {src, weeks, keep:false, subj:true}; ui.wgOpen = false; ui.ttMode = "week"; ui.ttWeek = weeks[0].mon; render();
 }
 function wgCard(){
@@ -2219,7 +2251,7 @@ function wgCard(){
         <div class="small ${keepOld?"muted":""}">${keepOld ? `(지금 메모 그대로) ${esc(old)}` : esc(c.text) || `<span class="muted">내용 없음</span>`}</div>${old && !W.keep && c.text && old !== c.text ? `<div class="small muted" style="text-decoration:line-through">${esc(old)}</div>` : ""}</td>`; }).join("")}</tr>`).join("");
     return `<div class="wg-week"><div class="row" style="gap:8px;margin:12px 0 6px"><b>${md(days[0])} ~ ${md(days[4])}</b><input type="date" value="${w.mon}" data-ch="wgWeek" data-w="${wi}" aria-label="넣을 주 바꾸기" title="다른 주에 넣으려면 날짜를 고르세요">
       ${w.dated ? `<span class="small muted">파일의 날짜로 맞췄어요</span>` : `<span class="pill warn">파일에 날짜가 없어 이 주로 넣어요 · 맞는지 확인</span>`}${W.weeks.length > 1 ? `<button class="x" data-act="wgDropWeek" data-w="${wi}" aria-label="이 주 빼기">×</button>` : ""}</div>
-      <div class="scroll"><table class="tt-table wg-t"><thead><tr><th></th>${days.map(d => `<th class="c">${md(d)}</th>`).join("")}</tr></thead><tbody>${rows}</tbody></table></div></div>`; }).join("");
+      <div class="scroll"><table class="tt-table wg-t"><thead><tr><th></th>${days.map((d, k) => `<th class="c">${md(d)}${(w.offs||{})[k+1] ? `<div class="small holi">${esc(w.offs[k+1])} · 안 넣음</div>` : ""}</th>`).join("")}</tr></thead><tbody>${rows}</tbody></table></div></div>`; }).join("");
   return `<div class="card"><div class="spread"><h2>주간학습안내 미리 보기 <span class="small muted">${esc(W.src)} · ${W.weeks.length}주</span></h2><button class="btn sm" data-act="wgClose">닫기</button></div>
     <div class="row" style="gap:8px 16px;margin-top:6px"><label class="row small" style="gap:6px"><input type="checkbox" ${W.subj?"checked":""} data-ch="wgOpt" data-k="subj">과목이 시간표와 다르면 그날 시간표도 주간학습안내대로 바꾸기</label>
       <label class="row small" style="gap:6px"><input type="checkbox" ${W.keep?"checked":""} data-ch="wgOpt" data-k="keep">이미 적어 둔 메모는 그대로 두기</label></div>
@@ -2738,8 +2770,10 @@ async function pdfLines(buf){
   const items = []; let off = 0;
   for(let p = 1; p <= pdf.numPages; p++){
     const page = await pdf.getPage(p), vp = page.getViewport({scale:1}), tc = await page.getTextContent();
-    tc.items.forEach(it => { if(!it.str || !it.str.trim()) return; const h = Math.abs(it.transform[3]) || it.height || 10;
-      items.push({x:it.transform[4], x2:it.transform[4] + (it.width || it.str.length * h * .9), y:off + vp.height - it.transform[5], h, s:it.str}); });
+    // 화면 좌표로 바꿔서 읽는다(가로로 돌려 저장한 PDF도 바르게)
+    tc.items.forEach(it => { if(!it.str || !it.str.trim()){ if(it.str && items.length && items[items.length-1].pg === p) items[items.length-1].sp = true; return; } const t = pdfjsLib.Util.transform(vp.transform, it.transform), h = Math.hypot(t[2], t[3]) || it.height || 10;
+      if(Math.abs(t[1]) > Math.abs(t[0]) * 2) return;   // 세로로 쓴 글은 건너뛴다
+      items.push({x:t[4], x2:t[4] + (it.width || it.str.length * h * .9), y:off + t[5], h, s:it.str, pg:p}); });
     off += vp.height + 40;
   }
   items.sort((a, b) => a.y - b.y || a.x - b.x);
@@ -2748,8 +2782,8 @@ async function pdfLines(buf){
   lines.forEach(L => {
     L.items.sort((a, b) => a.x - b.x); const cells = [];
     L.items.forEach(it => { const c = cells[cells.length - 1], gap = c ? it.x - c.x2 : 99;
-      if(c && gap < L.h * .9){ c.s += (gap > L.h * .15 && !/\s$/.test(c.s) ? " " : "") + it.s; c.x2 = Math.max(c.x2, it.x2); }
-      else cells.push({x:it.x, x2:it.x2, s:it.s}); });
+      if(c && gap < L.h * .9){ c.s += (gap > L.h * .15 && !/\s$/.test(c.s) ? " " : "") + it.s; c.x2 = Math.max(c.x2, it.x2); c.parts.push({x:it.x, x2:it.x2, s:it.s, sp:it.sp}); }
+      else cells.push({x:it.x, x2:it.x2, s:it.s, parts:[{x:it.x, x2:it.x2, s:it.s, sp:it.sp}]}); });
     cells.forEach(c => c.s = c.s.replace(/\s+/g, " ").trim()); L.cells = cells.filter(c => c.s);
   });
   return lines.filter(L => L.cells.length);
@@ -3893,8 +3927,15 @@ function fmtPhone(v){ let d = String(v||"").replace(/[^\d]/g,""); if(!d) return 
   if(x.length===10) return `${x.slice(0,3)}-${x.slice(3,6)}-${x.slice(6)}`;
   if(x.length===8) return `${x.slice(0,4)}-${x.slice(4)}`;
   return String(v).trim(); }
-const RE_PHONE = /(?:\+?82[-\s]?)?0\d{1,2}[-.\s]?\d{3,4}[-.\s]?\d{4}|^\d{3,4}-\d{4}$/;
-function ctRel(t){ t = String(t||""); if(/어머니|엄마|^모$|\(모\)|모친/.test(t)) return "어머니"; if(/아버지|아빠|^부$|\(부\)|부친/.test(t)) return "아버지";
+/* 전화번호 모양: 010-1234-5678 · 010 1234 5678 · 010.1234.5678 · 01012345678 · (앞 0이 빠진) 1012345678 · 031)123-4567 */
+const RE_PHONE_G = /(?:\+?82[\s\-–—.]*)?(?:0?1[016789]|0\d{1,2})[\s\-–—.)]*\d{3,4}[\s\-–—.]*\d{4}(?!\d)/g;
+const RE_PHONE = new RegExp(RE_PHONE_G.source);
+const normDigits = t => String(t ?? "").replace(/[０-９]/g, d => String.fromCharCode(d.charCodeAt(0) - 0xFEE0)).replace(/[‐‑‒–—―－]/g, "-");
+/* 한 칸에서 번호를 모두 찾는다. 번호 앞의 '모·부·어머니' 같은 말은 관계로 */
+function phonesIn(t){ t = normDigits(t); const out = []; let m, last = 0; RE_PHONE_G.lastIndex = 0;
+  while((m = RE_PHONE_G.exec(t))){ const d = m[0].replace(/\D/g, ""); if(d.length >= 9 && d.length <= 12) out.push({p: fmtPhone(m[0].replace(/^\+?82[\s\-.]*/, "0")), rel: ctRel(t.slice(last, m.index))}); last = m.index + m[0].length; }
+  return out; }
+function ctRel(t){ t = String(t||"").trim(); if(/어머니|엄마|^모$|\(모\)|모친|(^|[^가-힣])모\s*[:：)\]]?$/.test(t) && !/학부모/.test(t)) return "어머니"; if(/아버지|아빠|^부$|\(부\)|부친|(^|[^가-힣])부\s*[:：)\]]?$/.test(t)) return "아버지";
   if(/할머니|조모/.test(t)) return "할머니"; if(/할아버지|조부/.test(t)) return "할아버지"; return ""; }
 function contactsCard(){
   const L = sorted(), has = s => s.ct && Object.values(s.ct).some(Boolean), n = L.filter(has).length;
@@ -3928,7 +3969,7 @@ function ctDetect(table){
       else if(/^(이름|성명|학생명|학생이름|학생성명)$/.test(n)) m.name = c;
       else if(/주소|거주지/.test(n)) m.addr = c;
       else if(/관계/.test(n)){ (m.rels ||= []).push(c); }
-      else if(/연락처|전화|휴대|핸드폰|폰|HP|어머니|아버지|엄마|아빠|보호자|학부모|^모$|^부$/i.test(n)) ph.push({c, t:n}); });
+      else if(/연락처|전화|휴대|핸드폰|폰|HP|H\.P|tel|어머니|아버지|엄마|아빠|보호자|학부모|부모|^모$|^부$|^모\(|^부\(/i.test(n)) ph.push({c, t:n}); });
     if((m.no !== undefined || m.name !== undefined) && (ph.length || m.addr !== undefined)){ hi = i; map = m; map.ph = ph; break; }
   }
   if(!map){   // 제목 줄이 없을 때: 숫자 열 = 번호, 한글 2~4자 열 = 이름, 전화번호 모양 열 = 연락처
@@ -3936,20 +3977,22 @@ function ctDetect(table){
     map = {ph:[]}; for(let c = 0; c < W; c++){ const v = col(c).filter(Boolean); if(!v.length) continue;
       if(map.no === undefined && v.every(x => /^\d{1,2}$/.test(x))) map.no = c;
       else if(map.name === undefined && v.filter(x => /^[가-힣]{2,4}$/.test(x)).length >= v.length * .7) map.name = c;
-      else if(v.filter(x => RE_PHONE.test(x)).length >= v.length * .6) map.ph.push({c, t:""});
+      else if(v.filter(x => phonesIn(x).length).length >= v.length * .6) map.ph.push({c, t:""});
       else if(map.addr === undefined && v.filter(x => /(시|군|구|동|로|길)\s*\d|아파트|\d+동\s*\d+호/.test(x)).length >= v.length * .5) map.addr = c; }
     if(map.no === undefined && map.name === undefined) return null;
   }
   // 연락처 열 나누기: '학생'이 들어간 열 = 학생, 나머지는 차례로 보호자1·2
-  const stuPh = map.ph.find(x => /학생|본인|자녀/.test(x.t) && !/학부모|보호자/.test(x.t)), par = map.ph.filter(x => x !== stuPh).slice(0, 2);
+  const stuPh = map.ph.find(x => /학생|본인|자녀/.test(x.t) && !/학부모|보호자/.test(x.t)), par = map.ph.filter(x => x !== stuPh);
   const out = [], miss = [];
   rows.slice(hi + 1).forEach(r => {
     const no = map.no !== undefined ? Number(String(r[map.no]).replace(/[^\d]/g,"")) : 0, nm = map.name !== undefined ? r[map.name].replace(/\s+/g,"") : "";
     if(!no && !nm) return;
     const s = S.students.find(x => nm && x.name.replace(/\s+/g,"") === nm && (!no || x.no === no)) || S.students.find(x => no && x.no === no && (!nm || x.name.replace(/\s+/g,"") === nm)) || (nm ? S.students.find(x => x.name.replace(/\s+/g,"") === nm) : null) || (!nm && no ? S.students.find(x => x.no === no) : null);
     const ct = {};
-    par.forEach((x, i) => { const v = r[x.c] || ""; const k = i ? "2" : "1"; ct["p"+k] = fmtPhone((v.match(RE_PHONE) || [v])[0]); if(ct["p"+k]) ct["r"+k] = ctRel(x.t) || ctRel(v) || (map.rels && r[map.rels[i]] ? r[map.rels[i]] : ""); });
-    if(stuPh) ct.sp = fmtPhone((String(r[stuPh.c]||"").match(RE_PHONE) || [r[stuPh.c]||""])[0]);
+    // 보호자 번호: 열마다(한 칸에 두 개가 있어도) 차례로 보호자1·2에
+    const found = []; par.forEach((x, i) => { const L = phonesIn(r[x.c]); L.forEach(f => found.push({p:f.p, rel: f.rel || ctRel(x.t) || (map.rels && r[map.rels[i]] ? r[map.rels[i]] : "")})); });
+    found.slice(0, 2).forEach((f, i) => { ct["p"+(i+1)] = f.p; if(f.rel) ct["r"+(i+1)] = f.rel; });
+    if(stuPh){ const L = phonesIn(r[stuPh.c]); if(L.length) ct.sp = L[0].p; }
     if(map.addr !== undefined) ct.addr = (r[map.addr]||"").replace(/\s+/g," ").trim();
     Object.keys(ct).forEach(k => { if(!ct[k]) delete ct[k]; });
     if(!Object.keys(ct).length) return;
