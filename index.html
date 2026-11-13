@@ -288,6 +288,7 @@ label.f .combo select{flex:1}
 .todo-k.sub{background:var(--warn-soft);color:var(--warn)}
 .todo.late .todo-t{color:var(--bad)}
 .todo-late{font-size:11px;font-weight:600;color:var(--bad);margin-left:4px}
+.err-toast{background:#8E2A2A!important;max-width:min(90vw,640px)}
 .toast-undo{margin-left:10px;background:none;border:0;color:#9fd3ff;font-weight:700;cursor:pointer;font:inherit;font-weight:700}
 .tt-modebar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 16px;border-radius:12px;margin-bottom:16px;border:1px solid var(--line);background:var(--surface)}
 .tt-modebar .small{color:var(--muted);margin-top:2px}
@@ -591,7 +592,7 @@ let liveS = null;   // 지난 학년도 보관 기록을 보는 동안 지금 �
 const VIEWS = {}, AFTER = {}, A = {}, CH = {}, EN = {}, IN = {};
 /* ───────── 저장 ───────── */
 const KEY = "hopyeong-classbook-v1";
-const APP_VER = "2026.11.13-9";
+const APP_VER = "2026.11.13-11";
 const LOGO_SVG = `<svg class="brand-logo" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" fill="#1F6E8C"/><g transform="translate(256 258) scale(1.13) translate(-256 -258)"><rect x="140" y="112" width="232" height="292" rx="30" fill="#FFFFFF"/><rect x="140" y="112" width="44" height="292" rx="22" fill="#D7E9F0"/><rect x="162" y="112" width="22" height="292" fill="#D7E9F0"/><path d="M318 112 H352 V214 L335 198 L318 214 Z" fill="#F2B84B"/><path d="M212 196 L236 220 L284 168" fill="none" stroke="#1F6E8C" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/><rect x="212" y="262" width="124" height="16" rx="8" fill="#9CC5D4"/><rect x="212" y="306" width="96" height="16" rx="8" fill="#9CC5D4"/><rect x="212" y="350" width="112" height="16" rx="8" fill="#C9DFE8"/></g></svg>`;
 let storageOK = true;
 /* 학급 여러 개: 학급마다 따로 저장한다. 처음 학급(c1)은 예전 저장 위치를 그대로 쓴다 */
@@ -660,13 +661,14 @@ const QUICK_TEXTS = {
   "칭찬":["발표를 잘함","친구를 도와줌","맡은 역할을 성실히 함","정리정돈을 잘함","인사를 잘함","바른 자세로 수업에 참여함","모둠 활동을 잘 이끎","양보와 배려를 잘함","질문을 적극적으로 함","스스로 문제를 해결함","책을 열심히 읽음","급식을 골고루 먹음",
          "수업에 집중을 잘함","과제를 성실히 해 옴","필기를 꼼꼼히 함","독서록을 성실히 씀","바른 말 사용","수업 시작 전 착석","안전 수칙을 잘 지킴","크롬북을 바르게 사용함","급식 예절을 지킴","친구를 배려함","협동을 잘함","친구에게 먼저 사과함","혼자 있는 친구에게 다가감","놀이 규칙을 잘 지킴"],
   "학습":["수업 중 딴짓","수업 중 잡담","준비물 미지참","교과서 미지참","과제 미제출","학습지 미완성","독서록 미제출","활동에 참여하지 않음","수업 중 엎드려 있음","크롬북을 수업 외 용도로 사용"],
-  "생활":["지각","복도에서 뜀","실내화 미착용","정리정돈 미흡","바르지 않은 말 사용","종이 친 뒤 늦게 착석","위험한 장난","물건을 함부로 다룸","급식을 많이 남김","휴대폰 사용"],
-  "교우":["친구와 갈등","친구를 놀림","친구에게 거친 행동","친구에게 욕설","친구 물건을 허락 없이 사용","놀이에서 친구를 끼워 주지 않음"],
+  "생활":["지각","복도에서 뜀","실내화 미착용","정리정돈 미흡","바르지 않은 말 사용","종이 친 뒤 늦게 착석","위험한 장난","물건을 함부로 다룸","급식을 많이 남김","휴대폰 사용","거짓말","잘못 숨김","잘못을 인정하지 않음","약속을 지키지 않음"],
+  "교우":["친구와 갈등","친구를 놀림","친구에게 거친 행동","친구에게 욕설","친구 물건을 허락 없이 사용","놀이에서 친구를 끼워 주지 않음","승부욕 과다","친구 비난","반칙 사용","결과에 승복하지 않음","친구 탓을 함","친구 험담"],
   "상담":["상담이 필요해 보임(관찰)","표정이 어두움(관찰)","보호자 연락 필요"],
   "기타":["가정통신문 회신 미제출","분실물 발생"]
 };
 /* 예전 기본 문구 중 칭찬 탭으로 옮길 것, 지울 것 */
 const QUICK_MOVE_PRAISE = ["수업에 집중을 잘함","과제를 성실히 해 옴","필기를 꼼꼼히 함","모르는 것을 질문함","독서록을 성실히 씀","바른 말 사용","수업 시작 전 착석","쉬는 시간 안전 수칙 지킴","크롬북을 바르게 사용함","급식 예절을 지킴","친구를 배려함","협동을 잘함","친구에게 먼저 사과함","혼자 있는 친구에게 다가감","놀이 규칙을 잘 지킴"];
+const QUICK_ADD_V4 = ["거짓말","잘못 숨김","잘못을 인정하지 않음","약속을 지키지 않음","승부욕 과다","친구 비난","반칙 사용","결과에 승복하지 않음","친구 탓을 함","친구 험담"];
 const QUICK_DROP = ["건의 사항을 전함","보건실 다녀옴"];
 const DEFAULT_QUICK = Object.entries(QUICK_TEXTS).flatMap(([cat,l])=>l.map(text=>({id:uid(), cat, text})));
 function blank(){
@@ -677,7 +679,7 @@ function blank(){
     assessments:[], budgets:[], seats:{rows:4, cols:6, pair:true, gapC:2, gapR:0, layout:"pair", off:[], map:[], locked:[], gfix:{}},
     jobs:{ quarter:"", list:[], draft:null, history:[] }, jobMode:"",
     roles:{ list:[], assign:{}, checks:{}, period:"", history:[] },
-    tasks:[], meetings:[], submits:[], counsels:[], quickTags:DEFAULT_QUICK.map(x=>({...x, id:uid()})), quickV:3, timetable:ttBlank(), cal:calDefault(), evalPlans:[] };
+    tasks:[], meetings:[], submits:[], counsels:[], quickTags:DEFAULT_QUICK.map(x=>({...x, id:uid()})), quickV:4, timetable:ttBlank(), cal:calDefault(), evalPlans:[] };
 }
 function sampleData(){
   const s = blank(); s.isSample = true;
@@ -795,6 +797,7 @@ if((S.quickV||1) < 3){
   DEFAULT_QUICK.forEach(x=>{ if(!seen.has(x.cat+"|"+x.text)){ S.quickTags.push({...x, id:uid()}); seen.add(x.cat+"|"+x.text); } });
   S.quickV = 3;
 }
+if((S.quickV||1) < 4){ const have = new Set(S.quickTags.map(x=>x.cat+"|"+x.text)); DEFAULT_QUICK.filter(x=>QUICK_ADD_V4.includes(x.text)).forEach(x=>{ if(!have.has(x.cat+"|"+x.text)) S.quickTags.push({...x, id:uid()}); }); S.quickV = 4; }
 ["tasks","counsel","timetable","summary","calendar","evalplan"].forEach(k => { if(S.menus && S.menus[k]===undefined) S.menus[k] = true; });
 if(S.jobMode===undefined) S.jobMode = "";
 }
@@ -962,7 +965,7 @@ function render(){
   document.querySelector(".app").classList.remove("no-side");
   const r = route();
   renderSide(r);
-  const v = VIEWS[r]();
+  let v; try{ v = VIEWS[r](); }catch(err){ console.error(err); v = `<div class="card"><h2>이 화면을 그리지 못했어요</h2><p class="small">${esc(err && err.message || String(err))}</p><p class="small muted">기록은 그대로 저장돼 있어요. 이 문구를 알려 주시면 고칠게요. 다른 메뉴는 그대로 쓸 수 있어요.</p></div>`; }
   $("#main").innerHTML = `<div class="wrap">${archiveBanner()}${syncBanner()}${liveS?"":sampleBanner()}${v}</div>`;
   AFTER[r] && AFTER[r]();
   document.title = `${TITLE[r]} · ${clsName()} 학급일지`;
@@ -3993,7 +3996,13 @@ if(SY.on){ SY.state = SY.dirty ? "pending" : "ok"; setTimeout(()=>syncCycle("loa
 if("serviceWorker" in navigator && !window.claude && location.protocol==="https:"){ navigator.serviceWorker.register("sw.js").catch(()=>{}); }
 
 /* ───────── 이벤트 연결 ───────── */
-document.addEventListener("click", e => { const t = e.target.closest("[data-act]"); if(t && !t.disabled){ const f = A[t.dataset.act]; if(f){ e.preventDefault(); f(t, e); } }
+/* 버튼을 눌렀는데 오류가 나면 조용히 멈추지 않고 알려 준다(선생님이 문구를 알려 주면 고치기 쉬움) */
+function showErr(where, err){ const m = (err && (err.message || err.reason?.message || String(err))) || "알 수 없는 오류"; console.error(where, err);
+  document.querySelectorAll(".toast").forEach(x=>x.remove()); const t = document.createElement("div"); t.className = "toast err-toast";
+  t.textContent = `문제가 생겼어요 (${where}): ${m}`; document.body.appendChild(t); setTimeout(()=>t.remove(), 9000); }
+window.addEventListener("error", e => showErr("화면", e.error || e.message));
+window.addEventListener("unhandledrejection", e => { const m = String(e.reason && e.reason.message || e.reason || ""); if(/tool_error|server_not|not_granted|popup|auth/i.test(m)) return; showErr("작업", e.reason); });
+document.addEventListener("click", e => { const t = e.target.closest("[data-act]"); if(t && !t.disabled){ const f = A[t.dataset.act]; if(f){ e.preventDefault(); try{ const r = f(t, e); if(r && r.catch) r.catch(err => showErr(t.dataset.act, err)); }catch(err){ showErr(t.dataset.act, err); } } }
   if(!e.target.closest("#side") && !e.target.closest(".menu-btn")) $("#side").classList.remove("open"); });
 document.addEventListener("keydown", e => {
   if(e.key==="Enter" && !e.isComposing){ const t = e.target.closest("[data-enter]"); if(t){ e.preventDefault(); EN[t.dataset.enter](t); return; } }
