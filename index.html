@@ -575,7 +575,7 @@ let liveS = null;   // 지난 학년도 보관 기록을 보는 동안 지금 �
 const VIEWS = {}, AFTER = {}, A = {}, CH = {}, EN = {}, IN = {};
 /* ───────── 저장 ───────── */
 const KEY = "hopyeong-classbook-v1";
-const APP_VER = "2026.11.13-2";
+const APP_VER = "2026.11.13-3";
 let storageOK = true;
 /* 학급 여러 개: 학급마다 따로 저장한다. 처음 학급(c1)은 예전 저장 위치를 그대로 쓴다 */
 const REG_KEY = KEY + "-classes";
@@ -1319,8 +1319,19 @@ function attMonthRows(y,m){
   Object.entries(S.attendance).filter(([d])=>d.startsWith(pre)).forEach(([d,obj]) => Object.entries(obj).forEach(([sid,r]) => {
     const o = rows[sid] ||= {체험학습:0, 질병결석:0, 인정결석:0, 미인정결석:0, 기타결석:0, 지각:0, 조퇴:0, 결과:0, dates:[]};
     if(r.kind==="결석") (r.reason==="체험학습" ? o.체험학습++ : o[r.reason+"결석"]++); else o[r.kind]++;
-    o.dates.push(`${Number(d.slice(8))}일 ${attLabel(r)}${r.note?`(${r.note})`:""}`);
+    (o._ent ||= []).push({d, r});
   }));
+  // 등교일 기준으로 이어진 같은 결석(같은 사유·같은 메모)은 '17일~23일 … 4일'처럼 한 줄로 묶는다
+  Object.values(rows).forEach(o => {
+    const L = (o._ent || []).sort((a,b)=>a.d.localeCompare(b.d)); delete o._ent;
+    for(let i = 0; i < L.length; i++){
+      const a = L[i]; let j = i;
+      if(a.r.kind==="결석") while(j+1 < L.length){ const b = L[j+1]; if(b.r.kind==="결석" && b.r.reason===a.r.reason && (b.r.note||"")===(a.r.note||"") && schoolStep(L[j].d, 1)===b.d) j++; else break; }
+      const day = x => `${Number(x.slice(8))}일`, note = a.r.note ? `(${a.r.note})` : "";
+      o.dates.push(j > i ? `${day(a.d)}~${day(L[j].d)} ${attLabel(a.r)}${note} ${j-i+1}일` : `${day(a.d)} ${attLabel(a.r)}${note}`);
+      i = j;
+    }
+  });
   return rows;
 }
 const ATT_COLS = ["체험학습","질병결석","인정결석","미인정결석","기타결석","지각","조퇴","결과"];
