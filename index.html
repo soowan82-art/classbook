@@ -575,7 +575,7 @@ let liveS = null;   // 지난 학년도 보관 기록을 보는 동안 지금 �
 const VIEWS = {}, AFTER = {}, A = {}, CH = {}, EN = {}, IN = {};
 /* ───────── 저장 ───────── */
 const KEY = "hopyeong-classbook-v1";
-const APP_VER = "2026.11.13-4";
+const APP_VER = "2026.11.13-5";
 let storageOK = true;
 /* 학급 여러 개: 학급마다 따로 저장한다. 처음 학급(c1)은 예전 저장 위치를 그대로 쓴다 */
 const REG_KEY = KEY + "-classes";
@@ -1339,7 +1339,7 @@ function attRangeRows(from, to){
 const ATT_COLS = ["체험학습","질병결석","인정결석","미인정결석","기타결석","지각","조퇴","결과"];
 function attMonthTable(y,m){ return attSumTable(attMonthRows(y,m), `${y}년 ${m}월`, "attExport", "이번 달"); }
 /* 기간 종합: 시작일~끝일을 골라 그 기간 출결을 모아 본다 */
-function attRangeDefault(){ const c = CAL(), t = today(); return t <= c.t1[1] ? [termRange("1")[0], t] : [termRange("2")[0], t]; }
+function attRangeDefault(){ const c = CAL(), t = today(); return t < c.t2[0] ? [termRange("1")[0], t] : [termRange("2")[0], t]; }
 function attRangeTable(){
   if(!ui.attFrom || !ui.attTo){ [ui.attFrom, ui.attTo] = attRangeDefault(); }
   let from = ui.attFrom, to = ui.attTo; if(from > to) [from, to] = [to, from];
@@ -2582,7 +2582,7 @@ function epDetect(table, ctx){
     last = {subj, unit, term};
     const when = parseWhen(get("when"), Y);
     let t = /2/.test(term) ? "2" : /1/.test(term) ? "1" : "";
-    if(!t){ const d = when.date || (when.month ? when.month + "-15" : ""); t = d ? (d <= CAL().t1[1] && d >= `${Y}-03-01` ? "1" : "2") : ui.epTerm; }
+    if(!t){ const d = when.date || (when.month ? when.month + "-15" : ""); t = d ? (d < CAL().t2[0] && d >= `${Y}-03-01` ? "1" : "2") : ui.epTerm; }
     plans.push({id:uid(), term:t, subj:subj.replace(/\s+/g," "), unit, item:item.replace(/\s*\n\s*/g," "), std:(get("std").match(new RegExp(RE_STD.source, "g")) || [get("std")]).map(x => x.replace(/\s+/g, "")).join(" ").trim(), method:get("method").replace(/\s*\n\s*/g,", "), date:when.date || "", month:when.month || "", whenRaw:get("when")});
   });
   const header = hIdx >= 0 ? rows[hIdx].map((x, c) => two && rows[hIdx+1] ? [x, rows[hIdx+1][c]].filter(Boolean).filter((v,k,arr)=>arr.indexOf(v)===k).join(" ") : x) : null;
@@ -3070,12 +3070,12 @@ A.qtUndo = () => { const id = ui.qtLast.pop(); if(!id) return; const r = S.recor
    학생 기록 + 상담 기록 + 출결·제출·성적·역할을 한 학생 기준으로 모아 보고, 학기별 종합의견을 쓴다. */
 function termRange(term){
   const c = CAL(), Y = c.year;
-  if(term==="1") return [`${Y}-03-01`, c.t1[1]];            // 1학기: 3월 1일 ~ 1학기 끝(여름방학식)
-  if(term==="2") return [ymd(addDays(parse(c.t1[1]),1)), `${Y+1}-02-28`];   // 2학기: 그다음 날 ~ 학년도 끝
-  return [`${Y}-03-01`, `${Y+1}-02-28`];
+  if(term==="1") return [`${Y}-03-01`, ymd(addDays(parse(c.t2[0]),-1))];   // 1학기: 3월 1일 ~ 2학기 개학식 전날(여름방학 포함)
+  if(term==="2") return [c.t2[0], yearEnd(Y)];                             // 2학기: 개학식 ~ 학년도 끝(2월 말일)
+  return [`${Y}-03-01`, yearEnd(Y)];
 }
 const termName = t => t==="1" ? "1학기" : t==="2" ? "2학기" : "올해 전체";
-function defaultTerm(){ return today() <= CAL().t1[1] ? "1" : "2"; }
+function defaultTerm(){ return today() < CAL().t2[0] ? "1" : "2"; }
 const inRange = (d, [a,b]) => d >= a && d <= b;
 function studentDigest(sid, term){
   const R = termRange(term);
