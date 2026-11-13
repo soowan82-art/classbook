@@ -591,7 +591,7 @@ let liveS = null;   // 지난 학년도 보관 기록을 보는 동안 지금 �
 const VIEWS = {}, AFTER = {}, A = {}, CH = {}, EN = {}, IN = {};
 /* ───────── 저장 ───────── */
 const KEY = "hopyeong-classbook-v1";
-const APP_VER = "2026.11.13-8";
+const APP_VER = "2026.11.13-9";
 const LOGO_SVG = `<svg class="brand-logo" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" fill="#1F6E8C"/><g transform="translate(256 258) scale(1.13) translate(-256 -258)"><rect x="140" y="112" width="232" height="292" rx="30" fill="#FFFFFF"/><rect x="140" y="112" width="44" height="292" rx="22" fill="#D7E9F0"/><rect x="162" y="112" width="22" height="292" fill="#D7E9F0"/><path d="M318 112 H352 V214 L335 198 L318 214 Z" fill="#F2B84B"/><path d="M212 196 L236 220 L284 168" fill="none" stroke="#1F6E8C" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/><rect x="212" y="262" width="124" height="16" rx="8" fill="#9CC5D4"/><rect x="212" y="306" width="96" height="16" rx="8" fill="#9CC5D4"/><rect x="212" y="350" width="112" height="16" rx="8" fill="#C9DFE8"/></g></svg>`;
 let storageOK = true;
 /* 학급 여러 개: 학급마다 따로 저장한다. 처음 학급(c1)은 예전 저장 위치를 그대로 쓴다 */
@@ -972,8 +972,8 @@ function render(){
 
 /* ───── 오늘 화면 '빠른 입력': 할 일·회의·제출·행사·상담·메모를 바로 넣는다 ───── */
 const QK = [["task","할 일"],["meet","회의"],["sub","제출"],["event","행사"],["counsel","상담"],["memo","메모"]];
-function todayQuickCard(){
-  const k = ui.qk || "task", t = today(), st = sorted();
+function todayQuickCard(defDate, title){
+  const k = ui.qk || "task", t = defDate || today(), st = sorted();
   const f = {
     task: `<input type="text" id="qkTitle" placeholder="할 일 (예: 학부모 안내장 만들기)" style="flex:2;min-width:200px" data-enter="qkSave">
       <label class="f qk-f">마감<input type="date" id="qkDate" value="${t}"></label>
@@ -999,7 +999,7 @@ function todayQuickCard(){
     memo: `<input type="text" id="qkTitle" placeholder="메모 제목 (선택)" style="flex:1;min-width:180px">
       <textarea id="qkBody" rows="2" placeholder="메모 내용" style="flex-basis:100%"></textarea>`
   }[k];
-  return `<div class="card qk-card"><div class="spread" style="margin-bottom:10px"><h2>빠른 입력</h2><div class="seg">${QK.map(([v,l])=>`<button class="${k===v?"on":""}" data-act="qkKind" data-v="${v}">${l}</button>`).join("")}</div></div>
+  return `<div class="card qk-card"><div class="spread" style="margin-bottom:10px"><h2>${title || "빠른 입력"}</h2><div class="seg">${QK.map(([v,l])=>`<button class="${k===v?"on":""}" data-act="qkKind" data-v="${v}">${l}</button>`).join("")}</div></div>
     <div class="row qk-row">${f}<button class="btn pri" data-act="qkSave">넣기</button></div></div>`;
 }
 A.qkKind = el => { ui.qk = el.dataset.v; render(); ($("#qkTitle") || $("#qkBody"))?.focus(); };
@@ -1044,13 +1044,18 @@ VIEWS.today = () => {
   </div>
   <div class="grid2">${tasksTodayCard()}${counselTodayCard()}</div>
   <div class="grid2">
-    <div class="card"><div class="spread"><h2>제출 현황</h2><a class="btn sm" href="#submit">제출 체크</a></div>
-      ${asg.length ? asg.map(a => { const n = asgDone(a), tot = asgTargets(a).length||1; const miss = asgMiss(a);
-        return `<div style="padding:8px 0;border-bottom:1px solid var(--line)"><div class="spread"><span style="font-weight:500">${esc(a.title)}</span><span class="small muted num">${n}/${asgTargets(a).length} · ${md(a.due)}</span></div><div class="bar ${n===tot?"ok":""}" style="margin:6px 0"><i style="width:${n/tot*100}%"></i></div>${miss.length?`<div class="small muted">미제출: ${miss.slice(0,8).map(s=>esc(s.name)).join(", ")}${miss.length>8?` 외 ${miss.length-8}명`:""}</div>`:""}</div>`; }).join("") : `<div class="empty">최근 과제가 없어요</div>`}
-    </div>
+    ${todaySubmitCard()}
     ${todayJobsCard()}
     </div>`;
 };
+function todaySubmitCard(){
+  const d = new Date();
+  const asg = S.assignments.filter(a => a.due >= ymd(addDays(d,-7))).sort((a,b)=>a.due.localeCompare(b.due));
+  return `<div class="card"><div class="spread"><h2>제출 현황</h2><a class="btn sm" href="#submit">제출 체크</a></div>
+      ${asg.length ? asg.map(a => { const n = asgDone(a), tot = asgTargets(a).length||1; const miss = asgMiss(a);
+        return `<div style="padding:8px 0;border-bottom:1px solid var(--line)"><div class="spread"><span style="font-weight:500">${esc(a.title)}</span><span class="small muted num">${n}/${asgTargets(a).length} · ${md(a.due)}</span></div><div class="bar ${n===tot?"ok":""}" style="margin:6px 0"><i style="width:${n/tot*100}%"></i></div>${miss.length?`<div class="small muted">미제출: ${miss.slice(0,8).map(s=>esc(s.name)).join(", ")}${miss.length>8?` 외 ${miss.length-8}명`:""}</div>`:""}</div>`; }).join("") : `<div class="empty">최근 과제가 없어요</div>`}
+    </div>`;
+}
 function todayJobsCard(){
   if(S.jobMode==="role"){ const R = rolesOf(), chk = R.checks[today()]||{}, name = id => R.list.find(r=>r.id===id)?.name;
     const w = sorted().filter(s=>name(R.assign[s.id])), left = w.filter(s=>!chk[s.id]);
@@ -1163,20 +1168,22 @@ VIEWS.diary = () => {
   const mode = ui.diaryMode, cur = parse(ui.diaryDate), t = today();
   const seg = `<div class="seg"><button class="${mode==="day"?"on":""}" data-act="diaryMode" data-v="day">일</button><button class="${mode==="week"?"on":""}" data-act="diaryMode" data-v="week">주</button><button class="${mode==="month"?"on":""}" data-act="diaryMode" data-v="month">월</button></div>`;
   const unit = {day:"날", week:"주", month:"달"}[mode];
-  const nav = `<button class="btn" data-act="diaryMove" data-n="-1">이전 ${unit}</button><button class="btn" data-act="diaryMove" data-n="0">${mode==="day"?"오늘":"이번 "+unit}</button><button class="btn" data-act="diaryMove" data-n="1">다음 ${unit}</button>`;
+  const picker = mode==="month" ? `<input type="month" value="${ui.diaryDate.slice(0,7)}" data-ch="diaryPickM" aria-label="달 고르기" title="달 고르기">`
+    : `<input type="date" value="${ui.diaryDate}" data-ch="diaryPick" aria-label="${mode==="week"?"날짜를 고르면 그 주로":"날짜 고르기"}" title="${mode==="week"?"날짜를 고르면 그 주로 가요":"날짜 고르기"}">`;
+  const nav = picker + `<button class="btn" data-act="diaryMove" data-n="-1">이전 ${unit}</button><button class="btn" data-act="diaryMove" data-n="0">${mode==="day"?"오늘":"이번 "+unit}</button><button class="btn" data-act="diaryMove" data-n="1">다음 ${unit}</button>`;
   let body = "", sub = "";
   if(mode === "day"){
     const d = ui.diaryDate, c = todoCount([d]);
     sub = `${cur.getFullYear()}년 ${md(d)}${d===t?" · 오늘":""} · 할 일 ${c[0]}/${c[1]} 완료`;
     const tg = diaryTags(d, true);
-    body = `<div class="grid2" style="grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);align-items:start">
+    body = todayQuickCard(d, d===t ? "빠른 입력 · 오늘" : `빠른 입력 · ${md(d)}`) + `<div class="grid2" style="grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);align-items:start">
       <div style="display:flex;flex-direction:column;gap:16px">${ttDayCard(d, true)}<div class="card"><h2>할 일</h2>
         <ul class="todos" style="padding:0">${dayTodos(d, d===t).map(x=>todoLi(d,x)).join("") || `<li class="empty">이날 마감인 할 일이 없어요</li>`}</ul>
         <input type="text" class="add" style="border:1px solid var(--line);border-radius:8px;margin-top:8px" placeholder="할 일 추가 후 Enter · 업무 관리에도 들어가요" data-enter="addTodo" data-date="${d}" id="add-${d}"></div></div>
       <div style="display:flex;flex-direction:column;gap:16px">
         <div class="card"><h2>출결 · 행사</h2><div class="tags" style="padding:0">${tg || `<div class="empty">출결 특이사항과 행사가 없어요</div>`}</div></div>
         <div class="card"><div class="spread"><h2>이날 메모</h2><span class="small muted" id="dmSaved"></span></div><textarea rows="6" data-in="dayMemo" data-date="${d}" placeholder="수업 메모, 전달 사항 등">${esc((S.dayMemo||{})[d]||"")}</textarea></div>
-      </div></div>`;
+      </div></div>` + (d===t ? `${evalTodayCard()}<div class="grid2">${tasksTodayCard()}${counselTodayCard()}</div><div class="grid2">${todaySubmitCard()}${todayJobsCard()}</div>` : "");
   } else if(mode === "week"){
     const mon = mondayOf(cur), wk = ymd(mon);
     const days = [0,1,2,3,4].map(i => ymd(addDays(mon,i)));
@@ -1185,7 +1192,7 @@ VIEWS.diary = () => {
     const head = (d, cls) => { const dt = parse(d); return `<button class="dh dh-btn" data-act="diaryOpenDay" data-d="${d}" title="이날 크게 보기"><b class="${cls}">${WD[dt.getDay()]}</b><span class="num muted">${dt.getMonth()+1}/${dt.getDate()}</span></button>`; };
     const dayCol = d => `<section class="day ${d===t?"today":""}">${head(d, HOLI[d]?"holi":"")}<div class="tags">${HOLI[d]?"":ttMini(d)}${diaryTags(d)}</div><ul class="todos">${dayTodos(d, d===t).map(x=>todoLi(d,x)).join("")}</ul><input type="text" class="add" placeholder="+ 할 일 추가" data-enter="addTodo" data-date="${d}" id="add-${d}" aria-label="${md(d)} 할 일 추가"></section>`;
     const half = (d, cls) => `<div class="half">${head(d,cls)}<div class="tags">${diaryTags(d)}</div><ul class="todos">${dayTodos(d, d===t).map(x=>todoLi(d,x)).join("")}</ul><input type="text" class="add" placeholder="+ 할 일 추가" data-enter="addTodo" data-date="${d}" id="add-${d}"></div>`;
-    body = `<div class="week">${days.map(dayCol).join("")}<section class="day wkend">${half(sat,"sat")}${half(sun,"sun")}</section></div>
+    body = todayQuickCard(days.concat([sat,sun]).includes(t) ? t : ui.diaryDate, "빠른 입력") + `<div class="week">${days.map(dayCol).join("")}<section class="day wkend">${half(sat,"sat")}${half(sun,"sun")}</section></div>
     <div class="card"><div class="spread"><h2>이번 주 메모 · 목표</h2><span class="small muted" id="wmSaved"></span></div>
       <textarea rows="4" data-in="weekMemo" data-week="${wk}" placeholder="이번 주에 기억할 내용이나 목표">${esc(S.weekMemo[wk]||"")}</textarea></div>`;
   } else {
@@ -1194,7 +1201,7 @@ VIEWS.diary = () => {
     const monthDays = cells.filter(d=>d.getMonth()===m).map(ymd), c = todoCount(monthDays);
     const evN = S.events.filter(e=>e.date.startsWith(`${y}-${pad(m+1)}`)).length;
     sub = `${y}년 ${m+1}월 · 할 일 ${c[0]}/${c[1]} 완료 · 행사 ${evN}건`;
-    body = `<div class="card"><div class="cal">${WD.map((w,i)=>`<div class="wd ${i===0?"sun":i===6?"sat":""}">${w}</div>`).join("")}${cells.map(dt => { const k = ymd(dt), todos = [], evs = S.events.filter(e=>e.date===k), att = Object.entries(S.attendance[k]||{});
+    body = todayQuickCard(t.slice(0,7)===`${y}-${pad(m+1)}` ? t : ui.diaryDate, "빠른 입력") + `<div class="card"><div class="cal">${WD.map((w,i)=>`<div class="wd ${i===0?"sun":i===6?"sat":""}">${w}</div>`).join("")}${cells.map(dt => { const k = ymd(dt), todos = [], evs = S.events.filter(e=>e.date===k), att = Object.entries(S.attendance[k]||{});
       return `<button class="cell mcell ${dt.getMonth()!==m?"out":""} ${k===t?"isToday":""}" data-act="diaryOpenDay" data-d="${k}" aria-label="${md(k)} 보기">
         <span class="dn num ${dt.getDay()===0||HOLI[k]?"sun":dt.getDay()===6?"sat":""}">${dt.getDate()}</span>
         ${monthLines(k, evs, att, todos)}</button>`; }).join("")}</div>
@@ -1217,6 +1224,8 @@ A.diaryMove = el => { const n = Number(el.dataset.n); if(n===0){ ui.diaryDate = 
   else ui.diaryDate = ymd(new Date(d.getFullYear(), d.getMonth()+n, 1));
   render(); };
 IN.weekMemo = el => { S.weekMemo[el.dataset.week] = el.value; persist(); const s = $("#wmSaved"); if(s) s.textContent = "저장됨"; };
+CH.diaryPick = el => { if(el.value){ ui.diaryDate = el.value; render(); } };
+CH.diaryPickM = el => { if(el.value){ ui.diaryDate = el.value + "-01"; render(); } };
 IN.dayMemo = el => { (S.dayMemo ||= {})[el.dataset.date] = el.value; persist(); const s = $("#dmSaved"); if(s) s.textContent = "저장됨"; };
 
 /* ───────── 메모장 ───────── */
