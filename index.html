@@ -641,7 +641,7 @@ function lookCard(){
 }
 A.lookAccent = el => { LOOK.accent = el.dataset.v; saveLook(); render(); };
 A.lookMode = el => { LOOK.mode = el.dataset.v; saveLook(); render(); };
-const APP_VER = "2026.11.13-25";
+const APP_VER = "2026.11.13-26";
 const LOGO_SVG = `<svg class="brand-logo" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" fill="#1F6E8C"/><g transform="translate(256 258) scale(1.13) translate(-256 -258)"><rect x="140" y="112" width="232" height="292" rx="30" fill="#FFFFFF"/><rect x="140" y="112" width="44" height="292" rx="22" fill="#D7E9F0"/><rect x="162" y="112" width="22" height="292" fill="#D7E9F0"/><path d="M318 112 H352 V214 L335 198 L318 214 Z" fill="#F2B84B"/><path d="M212 196 L236 220 L284 168" fill="none" stroke="#1F6E8C" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/><rect x="212" y="262" width="124" height="16" rx="8" fill="#9CC5D4"/><rect x="212" y="306" width="96" height="16" rx="8" fill="#9CC5D4"/><rect x="212" y="350" width="112" height="16" rx="8" fill="#C9DFE8"/></g></svg>`;
 let storageOK = true;
 /* 학급 여러 개: 학급마다 따로 저장한다. 처음 학급(c1)은 예전 저장 위치를 그대로 쓴다 */
@@ -1050,6 +1050,7 @@ function todayQuickCard(defDate, title){
       <label class="f qk-f">다음 상담<input type="date" id="qkNext"></label>
       <textarea id="qkBody" rows="2" placeholder="상담 내용" style="flex-basis:100%"></textarea>` : `<div class="small muted">학생을 먼저 등록해 주세요.</div>`,
     memo: `<input type="text" id="qkTitle" placeholder="메모 제목 (선택)" style="flex:1;min-width:180px">
+      <label class="f qk-f">날짜<input type="date" id="qkDate" value="${t}"></label>
       <textarea id="qkBody" rows="2" placeholder="메모 내용" style="flex-basis:100%"></textarea>`
   }[k];
   return `<div class="card qk-card"><div class="spread" style="margin-bottom:10px"><h2>${title || "빠른 입력"}</h2><div class="seg">${QK.map(([v,l])=>`<button class="${k===v?"on":""}" data-act="qkKind" data-v="${v}">${l}</button>`).join("")}</div></div>
@@ -1065,7 +1066,7 @@ A.qkSave = () => {
   else if(k==="event"){ if(!title) return $("#qkTitle").focus(); const type = v("qkType"); S.events.push({id:uid(), date, time:v("qkTime"), title, type, host:"", place:"우리 교실", note:"", checklist:defaultChecklist(type)}); msg = "행사를 넣었어요"; go = "학급 행사"; }
   else if(k==="counsel"){ const body = v("qkBody"); if(!body){ toast("상담 내용을 적어 주세요"); return $("#qkBody").focus(); }
     (S.counsels ||= []).push({...csBlank(v("qkSid")), date, who:v("qkWho"), how:v("qkHow"), topic:v("qkTopic"), content:body, next:v("qkNext")}); msg = `${sname(v("qkSid"))} 상담을 기록했어요`; go = "상담 기록"; }
-  else if(k==="memo"){ const body = $("#qkBody").value; if(!title && !body.trim()) return $("#qkBody").focus(); S.memos.push({id:uid(), title: title || body.trim().split("\n")[0].slice(0,30), body, pinned:false, updated:Date.now()}); msg = "메모를 넣었어요"; go = "메모장"; }
+  else if(k==="memo"){ const body = $("#qkBody").value; if(!title && !body.trim()) return $("#qkBody").focus(); S.memos.push({id:uid(), title: title || body.trim().split("\n")[0].slice(0,30), body, date, pinned:false, updated:Date.now()}); msg = "메모를 넣었어요"; go = "메모장"; }
   commit(); toast(`${msg} · ${go}에서 자세히 볼 수 있어요`);
   setTimeout(() => ($("#qkTitle") || $("#qkBody"))?.focus(), 0);
 };
@@ -1165,6 +1166,7 @@ function monthLines(k, evs, att, todos){
   (S.counsels||[]).filter(c=>c.date===k).forEach(c=>L.push(`<span class="mline mcs">상담 ${esc(sname(c.sid))}</span>`));
   (S.counsels||[]).filter(c=>c.next===k && !c.nextDone).forEach(c=>L.push(`<span class="mline mcs">상담 예정 ${esc(sname(c.sid))}</span>`));
   S.assessments.filter(a=>a.date===k).forEach(a=>L.push(`<span class="mline mgr">평가 ${esc(a.subject)} ${esc(a.title)}</span>`));
+  (S.memos||[]).filter(m=>m.date===k).forEach(m=>L.push(`<span class="mline muted">메모 ${esc(m.title||"")}</span>`));
   if(att.length) L.push(`<span class="mline muted"><i class="dot c-${att[0][1].reason}"></i> 출결 ${att.map(([sid])=>esc(sname(sid))).slice(0,2).join(", ")}${att.length>2?` 외 ${att.length-2}`:""}</span>`);
   const rn = S.records.filter(r=>r.date===k).length; if(rn) L.push(`<span class="mline muted">학생 기록 ${rn}건</span>`);
   const ex = S.budgets.flatMap(b=>b.expenses.filter(e=>e.date===k)); if(ex.length) L.push(`<span class="mline muted">지출 ${won(ex.reduce((a,e)=>a+Number(e.amount||0),0))}</span>`);
@@ -1172,7 +1174,7 @@ function monthLines(k, evs, att, todos){
   if(tc) L.push(`<span class="mline muted">시간표 변경 ${tc}교시</span>`);
   if(tm || ((S.dayMemo||{})[k]||"").trim()) L.push(`<span class="mline muted">메모 ${(S.dayMemo||{})[k]?esc(S.dayMemo[k].split("\n")[0].slice(0,20)):`교시 메모 ${tm}개`}</span>`);
   todos.forEach(x=>L.push(`<span class="mline ${x.done?"mdone":""}">${x.done?"✓":"·"} ${esc(x.text)}</span>`));
-  const lim = 6;
+  const lim = 9;
   return L.slice(0,lim).join("") + (L.length>lim ? `<span class="mline more">+${L.length-lim}개 더</span>` : "");
 }
 /* 주·일 보기 태그에 더하는 것들: 과제 마감, 평가, 지출, 이날 메모 */
@@ -1213,6 +1215,7 @@ function diaryTags(d, full){
     (S.meetings||[]).filter(m=>m.date===d).sort((a,b)=>(a.time||"").localeCompare(b.time||"")).map(m=>`<button class="dtag meet-tag" data-act="goMeet"><span class="dtag-k">회의</span><span class="dtag-b"><b>${m.time?esc(m.time)+" ":""}${esc(m.title)}</b>${m.place?` <span class="small muted">${esc(m.place)}</span>`:""}</span></button>`).join("") +
     (S.counsels||[]).filter(c=>c.date===d).map(c=>`<button class="dtag cs-tag" data-act="goCounsel" data-s="${c.sid}"><span class="dtag-k">상담</span><span class="dtag-b"><b>${c.time?esc(c.time)+" ":""}${esc(sname(c.sid))}</b><span class="small muted">${esc(c.who)} · ${esc(c.how)} · ${esc(c.topic)}</span></span></button>`).join("") +
     (S.counsels||[]).filter(c=>c.next===d && !c.nextDone).map(c=>`<button class="dtag cs-tag" data-act="goCounsel"><span class="dtag-k">상담</span><span class="dtag-b">${esc(sname(c.sid))} 상담 예정</span></button>`).join("") +
+    (S.memos||[]).filter(m=>m.date===d).map(m=>{ const b = (m.body||"").trim(), one = b.split("\n")[0]; return `<button class="dtag memo-tag" data-act="goMemo" data-id="${m.id}" title="메모장에서 열기"><span class="dtag-k">메모</span><span class="dtag-b"><b>${esc(m.title||"제목 없음")}</b>${b && one !== m.title ? `<span class="small muted">${esc(full ? b : (one.length>40?one.slice(0,40)+"…":one))}</span>` : ""}</span></button>`; }).join("") +
     recTag(d, full) + extraTags(d, full) +
     (att.length ? `<button class="dtag att-tag" data-act="goAtt" data-d="${d}" title="출석 체크로 이동"><span class="dtag-k">출결</span><span class="dtag-b">${att.map(([sid,r])=>`<span class="dtag-row"><span class="nm"><i class="dot c-${r.reason}"></i>${esc(sname(sid))}</span> <span class="muted">${attLabel(r)}${r.note?" · "+esc(r.note):""}</span></span>`).join("")}</span></button>` : "");
 }
@@ -1234,7 +1237,7 @@ VIEWS.diary = () => {
         <ul class="todos" style="padding:0">${dayTodos(d, d===t).map(x=>todoLi(d,x)).join("") || `<li class="empty">이날 마감인 할 일이 없어요</li>`}</ul>
         <input type="text" class="add" style="border:1px solid var(--line);border-radius:8px;margin-top:8px" placeholder="할 일 추가 후 Enter · 업무 관리에도 들어가요" data-enter="addTodo" data-date="${d}" id="add-${d}"></div></div>
       <div style="display:flex;flex-direction:column;gap:16px">
-        <div class="card"><h2>출결 · 행사</h2><div class="tags" style="padding:0">${tg || `<div class="empty">출결 특이사항과 행사가 없어요</div>`}</div></div>
+        <div class="card"><h2>일정 · 기록</h2><div class="tags" style="padding:0">${tg || `<div class="empty">이날 일정과 기록이 없어요</div>`}</div></div>
         <div class="card"><div class="spread"><h2>이날 메모</h2><span class="small muted" id="dmSaved"></span></div><textarea rows="6" data-in="dayMemo" data-date="${d}" placeholder="수업 메모, 전달 사항 등">${esc((S.dayMemo||{})[d]||"")}</textarea></div>
       </div></div>` + (d===t ? `${evalTodayCard()}<div class="grid2">${tasksTodayCard()}${counselTodayCard()}</div><div class="grid2">${todaySubmitCard()}${todayJobsCard()}</div>` : "");
   } else if(mode === "week"){
@@ -1264,6 +1267,7 @@ VIEWS.diary = () => {
 };
 function weekOfMonth(mon){ const thu = addDays(mon,3); return Math.ceil(thu.getDate()/7); }
 A.goEvent = () => { location.hash = "events"; };
+A.goMemo = el => { ui.memoSel = el.dataset.id; ui.memoQ = ""; location.hash = "memo"; };
 A.goTasks = () => { location.hash = "tasks"; };
 A.goRecords = () => { ui.recSel = "all"; ui.recCat = "전체"; location.hash = "records"; };
 A.goCounsel = el => { if(el && el.dataset.s) ui.csSel = el.dataset.s; location.hash = "counsel"; };
@@ -1290,9 +1294,10 @@ VIEWS.memo = () => {
   return header("메모장", `${S.memos.length}개의 메모`, `<button class="btn pri" data-act="newMemo">새 메모</button>`) + `
   <div class="split">
     <div class="card" style="padding:12px"><input type="search" placeholder="메모 검색" value="${esc(ui.memoQ)}" data-in="memoQ" id="memoQ" style="width:100%;margin-bottom:8px">
-      <div class="list">${list.map(x=>`<div class="li ${x.id===ui.memoSel?"on":""}" data-act="selMemo" data-id="${x.id}"><div style="min-width:0"><div class="t1" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${x.pinned?`<span class="pill acc" style="margin-right:4px">고정</span>`:""}${esc(x.title||"제목 없음")}</div><div class="small muted">${new Date(x.updated).toLocaleDateString("ko-KR")}</div></div></div>`).join("") || `<div class="empty">메모가 없어요</div>`}</div></div>
+      <div class="list">${list.map(x=>`<div class="li ${x.id===ui.memoSel?"on":""}" data-act="selMemo" data-id="${x.id}"><div style="min-width:0"><div class="t1" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${x.pinned?`<span class="pill acc" style="margin-right:4px">고정</span>`:""}${esc(x.title||"제목 없음")}</div><div class="small muted">${x.date ? `📅 ${md(x.date)} · ` : ""}${new Date(x.updated).toLocaleDateString("ko-KR")}</div></div></div>`).join("") || `<div class="empty">메모가 없어요</div>`}</div></div>
     <div class="card">${m ? `
       <div class="row" style="margin-bottom:10px"><input type="text" value="${esc(m.title)}" data-in="memoTitle" id="memoTitle" placeholder="제목" style="flex:1;font-family:var(--font-display);font-size:17px;font-weight:600">
+      <input type="date" value="${m.date||""}" data-ch="memoDate" title="날짜를 정하면 다이어리 그날에 보여요" aria-label="다이어리에 보일 날짜" style="width:140px">
       <button class="btn sm" data-act="pinMemo">${m.pinned?"고정 해제":"위에 고정"}</button><button class="btn sm danger" data-act="delMemo">삭제</button></div>
       <textarea rows="18" data-in="memoBody" id="memoBody" placeholder="내용">${esc(m.body)}</textarea>
       <div class="small muted" id="memoSaved" style="margin-top:6px">입력하면 바로 저장돼요</div>` : `<div class="empty">왼쪽에서 메모를 고르거나 새 메모를 만드세요</div>`}</div>
@@ -1300,6 +1305,7 @@ VIEWS.memo = () => {
 };
 A.newMemo = () => { const m = {id:uid(), title:"", body:"", pinned:false, updated:Date.now()}; S.memos.push(m); ui.memoSel = m.id; ui.memoQ=""; commit(); $("#memoTitle")?.focus(); };
 A.selMemo = el => { ui.memoSel = el.dataset.id; render(); };
+CH.memoDate = el => { const m = S.memos.find(x=>x.id===ui.memoSel); if(el.value) m.date = el.value; else delete m.date; m.updated = Date.now(); commit(); toast(el.value ? `${md(el.value)} 다이어리에 보여요` : "다이어리에서 뺐어요"); };
 A.pinMemo = () => { const m = S.memos.find(x=>x.id===ui.memoSel); m.pinned = !m.pinned; commit(); };
 A.delMemo = async () => { if(await ask("이 메모를 삭제할까요?","삭제",true)){ S.memos = S.memos.filter(x=>x.id!==ui.memoSel); ui.memoSel=null; commit(); } };
 IN.memoTitle = el => { const m = S.memos.find(x=>x.id===ui.memoSel); m.title = el.value; m.updated = Date.now(); persist(); const li = document.querySelector(`.li.on .t1`); if(li) li.lastChild.textContent = el.value || "제목 없음"; };
