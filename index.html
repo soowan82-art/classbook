@@ -190,13 +190,20 @@ table.t{width:100%;border-collapse:collapse;font-size:13.5px}
 .tt-badge{position:absolute;top:2px;right:4px;font-size:10px;color:var(--warn);font-weight:600}
 .tt-badge.static{position:static}
 .look-sw{display:inline-flex;align-items:center;gap:6px;padding:6px 12px 6px 8px;border:1.5px solid var(--line);border-radius:999px;background:var(--surface);cursor:pointer;font-size:13.5px}.look-sw i{width:18px;height:18px;border-radius:50%;background:var(--c);box-shadow:0 0 0 3px var(--cs)}.look-sw.on{border-color:var(--c);font-weight:600}
-.ct-t td{vertical-align:middle;padding:5px 6px}.ct-t .ct-r1 td{border-bottom:none;padding-bottom:2px}.ct-t .ct-r2 td{padding-top:2px}.ct-addr{display:flex;align-items:center;gap:8px}.ct-addr .ct-in{flex:1}.ct-pair{display:flex;gap:4px}.ct-in{padding:5px 7px;font-size:13px;min-width:0}
+.ct-t td{vertical-align:middle;padding:5px 6px}.ct-t .ct-r1 td{border-bottom:none;padding-bottom:2px}.ct-t .ct-r2 td{padding-top:2px}.ct-addr{display:flex;align-items:center;gap:8px}.ct-addr .ct-in{flex:1}.ct-pair{display:flex;gap:4px}.ct-name{white-space:nowrap;font-weight:500}.ct-in{padding:5px 7px;font-size:13px;min-width:0}
 .g-bulk{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;margin:12px 0 8px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--bg-soft,#f7f7f5)}
 .g-bulk.on{justify-content:space-between;border-color:var(--accent);background:var(--accent-soft);position:sticky;top:0;z-index:2}
 .g-picking .g-row{cursor:pointer}.g-picking .g-row.on td{background:var(--accent-soft)}
 .ep-done{display:inline-flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;color:var(--muted)}.ep-done.on{color:var(--ok);font-weight:600}.ep-dd{width:128px;margin-left:6px;padding:3px 6px;font-size:12.5px}
 .tt-memo{font-size:11px;color:var(--muted);max-width:100%;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;white-space:normal;line-height:1.3;text-align:left}
-.wg-t td{vertical-align:top;min-width:130px;padding:6px}.wg-c{display:flex;gap:4px;align-items:center;flex-wrap:wrap;margin-bottom:3px}.wg-t .pill{font-size:10.5px;padding:1px 6px}
+.wg-t td{vertical-align:top;min-width:130px;padding:6px}
+.ttl{display:flex;flex-direction:column;gap:14px}.ttl-day{border:1px solid var(--line);border-radius:12px;padding:8px 10px}.ttl-day.on{border-color:var(--accent)}.ttl-h{margin-bottom:4px}
+.ttl-row{display:grid;grid-template-columns:62px auto 1fr;align-items:start;gap:4px 8px;width:100%;text-align:left;background:none;border:0;border-top:1px solid var(--line);padding:8px 2px;font:inherit;cursor:pointer;color:inherit}
+.ttl-row:first-of-type{border-top:0}.ttl-row.changed .subj{outline:1.5px dashed var(--warn)}.ttl-p{display:flex;flex-direction:column;font-size:13px;font-weight:600;line-height:1.3}.ttl-p .muted{font-weight:400;font-size:11.5px}
+.ttl-memo{grid-column:3;font-size:13px;color:var(--ink);white-space:normal;word-break:keep-all;overflow-wrap:anywhere;line-height:1.45}.ttl-s{display:flex;flex-direction:column;align-items:flex-start;gap:2px}
+@media (max-width:760px){.wg-t{min-width:0!important;border-spacing:0}.wg-t thead{display:none}.wg-t,.wg-t tbody,.wg-t tr,.wg-t td,.wg-t th{display:block;width:auto!important}
+  .wg-t tr{border-top:1px solid var(--line);padding:6px 0}.wg-t th.tt-p{padding:4px 0}.wg-t td{min-width:0;padding:4px 0 6px 10px}.wg-t td:empty{display:none}
+  .wg-t td::before{content:attr(data-day);display:block;font-size:11.5px;color:var(--muted)}}.wg-c{display:flex;gap:4px;align-items:center;flex-wrap:wrap;margin-bottom:3px}.wg-t .pill{font-size:10.5px;padding:1px 6px}
 th.tt-today,td.tt-today .tt-cell{border-color:var(--accent)}
 th.tt-today{color:var(--accent)}
 .tt-day{display:flex;flex-direction:column;gap:6px}
@@ -632,7 +639,7 @@ function lookCard(){
 }
 A.lookAccent = el => { LOOK.accent = el.dataset.v; saveLook(); render(); };
 A.lookMode = el => { LOOK.mode = el.dataset.v; saveLook(); render(); };
-const APP_VER = "2026.11.13-21";
+const APP_VER = "2026.11.13-24";
 const LOGO_SVG = `<svg class="brand-logo" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" fill="#1F6E8C"/><g transform="translate(256 258) scale(1.13) translate(-256 -258)"><rect x="140" y="112" width="232" height="292" rx="30" fill="#FFFFFF"/><rect x="140" y="112" width="44" height="292" rx="22" fill="#D7E9F0"/><rect x="162" y="112" width="22" height="292" fill="#D7E9F0"/><path d="M318 112 H352 V214 L335 198 L318 214 Z" fill="#F2B84B"/><path d="M212 196 L236 220 L284 168" fill="none" stroke="#1F6E8C" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/><rect x="212" y="262" width="124" height="16" rx="8" fill="#9CC5D4"/><rect x="212" y="306" width="96" height="16" rx="8" fill="#9CC5D4"/><rect x="212" y="350" width="112" height="16" rx="8" fill="#C9DFE8"/></g></svg>`;
 let storageOK = true;
 /* 학급 여러 개: 학급마다 따로 저장한다. 처음 학급(c1)은 예전 저장 위치를 그대로 쓴다 */
@@ -2011,10 +2018,20 @@ VIEWS.timetable = () => {
   return header("시간표", mode==="base" ? "요일별 기본 시간표" : `${md(days[0])} ~ ${md(days[4])}${days.includes(t) ? " · 이번 주" : ""}`,
     `<div class="seg big-seg"><button class="${mode==="week"?"on":""}" data-act="ttMode" data-v="week">날짜별</button><button class="${mode==="base"?"on":""}" data-act="ttMode" data-v="base">기본 시간표 (매주)</button></div>` +
     (mode==="week" ? `<button class="btn" data-act="ttWk" data-n="-7">이전 주</button><button class="btn" data-act="ttWk" data-n="0">이번 주</button><button class="btn" data-act="ttWk" data-n="7">다음 주</button>` : "")) +
-  modeBar + (mode==="base" && !draft ? "" : pal) + `<div class="card ${mode==="base"?"tt-basecard":""} ${draft?"tt-drafting":""}"><div class="scroll"><table class="tt-table"><thead><tr><th></th>${head}</tr></thead><tbody>${rows}</tbody></table></div>
+  modeBar + (mode==="base" && !draft ? "" : pal) + `<div class="card ${mode==="base"?"tt-basecard":""} ${draft?"tt-drafting":""}">${mode==="week" && isNarrow() ? ttWeekList(days) : `<div class="scroll"><table class="tt-table"><thead><tr><th></th>${head}</tr></thead><tbody>${rows}</tbody></table></div>`}
     ${mode==="base" && ttHasAny() ? ttHoursSummary() : ""}
     ${mode==="base" && !ttHasAny() ? `<div class="small muted" style="margin-top:10px">${draft?"위에서 과목을 고르고 칸을 차례로 누르면 금방 채워져요. 다 채우면 저장을 눌러 주세요.":"'기본 시간표 고치기'를 누르고 과목을 칠한 뒤 저장하세요."}</div>` : ""}</div>`;
 };
+/* 좁은 화면(휴대폰): 요일별로 세로로 늘어놓고 메모는 줄바꿈해서 다 보이게 */
+const isNarrow = () => window.innerWidth < 760;
+function ttWeekList(days){
+  const tt = TT(), t = today();
+  return `<div class="ttl">${days.map(d => { const dt = parse(d), L = ttDay(d), ch = Object.keys(tt.over[d]||{}).length;
+    return `<div class="ttl-day ${d===t?"on":""}"><div class="spread ttl-h"><b>${WD[dt.getDay()]}요일 <span class="muted num">${dt.getMonth()+1}/${dt.getDate()}</span>${d===t?` <span class="pill acc">오늘</span>`:""}</b>${ch?`<button class="btn sm ghost" data-act="ttResetDay" data-d="${d}">기본으로</button>`:""}</div>
+      ${!L.length ? `<div class="small" style="color:var(--bad);padding:6px 2px">${esc(offName(d) || "쉬는 날")}</div>` :
+        L.map((r, i) => `<button class="ttl-row ${r.changed?"changed":""}" data-act="ttCell" data-d="${d}" data-i="${i}"><span class="ttl-p">${i+1}교시${tt.times[i]?`<span class="muted num">${tt.times[i]}</span>`:""}</span><span class="ttl-s">${subjChip(r.subj,"sm")}${r.changed?`<span class="tt-badge" style="position:static">변경</span>`:""}</span><span class="ttl-memo">${esc(r.memo)}</span></button>`).join("")}</div>`; }).join("")}</div>`;
+}
+let narrowWas = isNarrow(); window.addEventListener("resize", () => { const n = isNarrow(); if(n !== narrowWas){ narrowWas = n; if(location.hash.includes("timetable")) render(); } });
 function ttHoursSummary(){
   const tt = TT(), m = {};
   [1,2,3,4,5].forEach(w => (tt.base[w]||[]).slice(0, tt.periods).forEach(v => { if(!v) return; const n = cellName(v); (m[n] ||= {h:0, sp:0}); isSp(v) ? m[n].sp++ : m[n].h++; }));
@@ -2244,10 +2261,10 @@ function wgCard(){
     const maxP = Math.max(tt.periods, ...Object.values(w.cells).flatMap(x => Object.keys(x).map(Number)));
     const rows = Array.from({length:maxP}, (_, i) => `<tr><th class="tt-p"><b>${i+1}교시</b></th>${days.map((d, k) => {
       const c = (w.cells[k+1] || {})[i+1]; if(!c) return `<td></td>`;
-      const r = ttDay(d)[i]; if(!r) return `<td class="tt-off"><div class="small muted">${i >= tt.periods ? "교시 없음" : esc(offName(d) || "쉬는 날")} · 안 넣음</div><div class="small">${esc(c.text)}</div></td>`;
+      const r = ttDay(d)[i]; if(!r) return `<td class="tt-off" data-day="${md(d)}"><div class="small muted">${i >= tt.periods ? "교시 없음" : esc(offName(d) || "쉬는 날")} · 안 넣음</div><div class="small">${esc(c.text)}</div></td>`;
       const diff = c.subj && !wgSame(c.subj, r.subj), old = (r.memo || "").trim(), keepOld = W.keep && old;
       if(c.text && !keepOld) nMemo++; if(diff && W.subj) nSubj++; if(c.text && old && old !== c.text && !W.keep) nOld++;
-      return `<td><div class="wg-c">${subjChip(diff && W.subj ? c.subj : r.subj, "sm")}${diff ? `<span class="pill warn" title="시간표에는 ${esc(cellLabel(r.subj)||"비어 있음")}">${W.subj ? `원래 ${esc(cellName(r.subj)||"빈칸")}` : `파일엔 ${esc(c.subj)}`}</span>` : ""}</div>
+      return `<td data-day="${md(d)}"><div class="wg-c">${subjChip(diff && W.subj ? c.subj : r.subj, "sm")}${diff ? `<span class="pill warn" title="시간표에는 ${esc(cellLabel(r.subj)||"비어 있음")}">${W.subj ? `원래 ${esc(cellName(r.subj)||"빈칸")}` : `파일엔 ${esc(c.subj)}`}</span>` : ""}</div>
         <div class="small ${keepOld?"muted":""}">${keepOld ? `(지금 메모 그대로) ${esc(old)}` : esc(c.text) || `<span class="muted">내용 없음</span>`}</div>${old && !W.keep && c.text && old !== c.text ? `<div class="small muted" style="text-decoration:line-through">${esc(old)}</div>` : ""}</td>`; }).join("")}</tr>`).join("");
     return `<div class="wg-week"><div class="row" style="gap:8px;margin:12px 0 6px"><b>${md(days[0])} ~ ${md(days[4])}</b><input type="date" value="${w.mon}" data-ch="wgWeek" data-w="${wi}" aria-label="넣을 주 바꾸기" title="다른 주에 넣으려면 날짜를 고르세요">
       ${w.dated ? `<span class="small muted">파일의 날짜로 맞췄어요</span>` : `<span class="pill warn">파일에 날짜가 없어 이 주로 넣어요 · 맞는지 확인</span>`}${W.weeks.length > 1 ? `<button class="x" data-act="wgDropWeek" data-w="${wi}" aria-label="이 주 빼기">×</button>` : ""}</div>
@@ -3918,7 +3935,10 @@ VIEWS.students = () => { const tab = ui.stuTab || "list", tabs = `<div class="se
     ${sorted().map(s=>`<tr><td><input type="number" class="scoreIn" style="width:64px" value="${s.no}" data-ch="stuNo" data-id="${s.id}" aria-label="번호"></td><td><input type="text" value="${esc(s.name)}" data-ch="stuName" data-id="${s.id}" aria-label="이름"></td><td><div class="seg"><button class="${s.gender==="남"?"on":""}" data-act="stuGender" data-id="${s.id}" data-g="남">남</button><button class="${s.gender==="여"?"on":""}" data-act="stuGender" data-id="${s.id}" data-g="여">여</button></div></td><td class="r small muted num">${S.records.filter(r=>r.sid===s.id).length}건</td><td class="r"><button class="x" data-act="delStu" data-id="${s.id}" aria-label="${esc(s.name)} 삭제">×</button></td></tr>`).join("")}
     </tbody></table></div>` : `<div class="empty">아직 학생이 없어요. 위에서 등록해 주세요.</div>`}</div>`; };
 /* ───── 학생 연락처·주소 ───── */
-const CT_COLS = [["r1","보호자1 관계"],["p1","보호자1 연락처"],["r2","보호자2 관계"],["p2","보호자2 연락처"],["sp","학생 연락처"],["addr","주소"]];
+const CT_COLS = [["r1","보호자1 관계"],["p1","보호자1 연락처"],["r2","보호자2 관계"],["p2","보호자2 연락처"],["sp","학생 연락처"],["addr","주소"],["memo","메모"]];
+/* 화면에 보일 칸 (주소는 늘 보임) */
+const CT_SHOW = [["p1","보호자1"],["p2","보호자2"],["sp","학생"],["memo","메모"]];
+const ctShow = () => Object.assign({p1:true, p2:false, sp:true, memo:true}, S.ctShow || {});
 function fmtPhone(v){ let d = String(v||"").replace(/[^\d]/g,""); if(!d) return String(v||"").trim();
   if(/^1[016789]\d{8}$/.test(d)) d = "0" + d;   // 엑셀에서 숫자로 저장돼 앞의 0이 빠진 번호
   const x = d;
@@ -3938,26 +3958,28 @@ function phonesIn(t){ t = normDigits(t); const out = []; let m, last = 0; RE_PHO
 function ctRel(t){ t = String(t||"").trim(); if(/어머니|엄마|^모$|\(모\)|모친|(^|[^가-힣])모\s*[:：)\]]?$/.test(t) && !/학부모/.test(t)) return "어머니"; if(/아버지|아빠|^부$|\(부\)|부친|(^|[^가-힣])부\s*[:：)\]]?$/.test(t)) return "아버지";
   if(/할머니|조모/.test(t)) return "할머니"; if(/할아버지|조부/.test(t)) return "할아버지"; return ""; }
 function contactsCard(){
+  const V = ctShow(), nc = 1 + ["p1","p2","sp"].filter(k => V[k]).length;
   const L = sorted(), has = s => s.ct && Object.values(s.ct).some(Boolean), n = L.filter(has).length;
   return `<div class="banner" style="margin-bottom:12px"><div class="small">연락처·주소는 <b>이 기기와 선생님 구글 드라이브(동기화를 켰다면)</b>에만 저장돼요. 학교 개인정보 보호 지침을 확인하고 써 주세요. 학생 화면(자리 뽑기 등)에는 나오지 않아요.</div></div>
   <div class="grid2" style="align-items:start">
     <div class="card ep-drop" data-drop="ct"><h2>엑셀 파일로 한 번에 넣기</h2>
       <div class="small muted" style="margin-bottom:10px">'번호·이름'과 '어머니 연락처·아버지 연락처·학생 연락처·주소' 같은 열을 보고 알아서 맞춰요. 열 순서는 상관없어요. 우리 반 명단이 들어간 양식을 받아 채워 올려도 돼요.</div>
       <div class="row" style="gap:8px"><button class="btn" data-act="ctTpl">명단 넣은 양식 받기</button><button class="btn pri" data-act="ctFileOpen">파일 올리기</button><span class="small muted">엑셀 · CSV · 한글(.hwpx) · 이 칸에 끌어다 놓아도 돼요</span></div></div>
-    <div class="card"><h2>붙여 넣기</h2><textarea id="ctPaste" rows="4" placeholder="엑셀 표를 제목 줄까지 복사해 붙여 넣으세요&#10;번호	이름	어머니	아버지	학생	주소"></textarea>
+    <div class="card"><h2>붙여 넣기</h2><textarea id="ctPaste" rows="4" placeholder="엑셀 표를 제목 줄까지 복사해 붙여 넣으세요&#10;번호	이름	어머니	아버지	학생	주소	메모"></textarea>
       <div class="row" style="justify-content:flex-end;margin-top:8px"><button class="btn" data-act="ctPasteGo">넣기</button></div></div>
   </div>
   ${ui.ctImp ? ctImportCard() : ""}
-  <div class="card"><div class="spread"><h2>연락처·주소 <span class="small muted">${n}/${L.length}명 입력</span></h2><button class="btn sm" data-act="ctExport">내보내기</button></div>
-    <div class="scroll"><table class="t ct-t"><thead><tr><th style="width:44px">번호</th><th style="width:80px">이름</th><th>보호자 1</th><th>보호자 2</th><th style="width:150px">학생 연락처</th></tr></thead><tbody>
+  <div class="card"><div class="spread"><h2>연락처·주소 <span class="small muted">${n}/${L.length}명 입력</span></h2><div class="row" style="gap:6px 12px"><span class="small muted">보일 칸</span>${CT_SHOW.map(([k,l])=>`<label class="row small" style="gap:4px"><input type="checkbox" ${V[k]?"checked":""} data-ch="ctShow" data-k="${k}">${l}</label>`).join("")}<button class="btn sm" data-act="ctExport">내보내기</button></div></div>
+    <div class="scroll"><table class="t ct-t"><thead><tr><th style="width:44px">번호</th><th style="width:1%">이름</th>${V.p1?`<th style="width:210px">보호자 1</th>`:""}${V.p2?`<th style="width:210px">보호자 2</th>`:""}${V.sp?`<th style="width:150px">학생 연락처</th>`:""}${V.memo?`<th>메모</th>`:`<th></th>`}</tr></thead><tbody>
     ${L.map(s => { const c = s.ct || {}, inp = (k, ph, w, cls="") => `<input type="${/^p|sp/.test(k)?"tel":"text"}" class="ct-in ${cls}" value="${esc(c[k]||"")}" placeholder="${ph}" data-ch="ctSet" data-id="${s.id}" data-k="${k}" style="width:${w}" aria-label="${esc(s.name)} ${ph}">`;
-      return `<tr class="ct-r1"><td class="num" rowspan="2">${s.no}</td><td rowspan="2">${esc(s.name)}</td>
-        <td><div class="ct-pair">${inp("r1","관계","64px")}${inp("p1","연락처","124px","num")}</div></td>
-        <td><div class="ct-pair">${inp("r2","관계","64px")}${inp("p2","연락처","124px","num")}</div></td>
-        <td>${inp("sp","연락처","124px","num")}</td></tr>
-        <tr class="ct-r2"><td colspan="3"><div class="ct-addr"><span class="small muted">주소</span>${inp("addr","주소","100%")}</div></td></tr>`; }).join("")}
+      return `<tr class="ct-r1"><td class="num" rowspan="2">${s.no}</td><td rowspan="2" class="ct-name">${esc(s.name)}</td>
+        ${V.p1?`<td><div class="ct-pair">${inp("r1","관계","64px")}${inp("p1","연락처","124px","num")}</div></td>`:""}
+        ${V.p2?`<td><div class="ct-pair">${inp("r2","관계","64px")}${inp("p2","연락처","124px","num")}</div></td>`:""}
+        ${V.sp?`<td>${inp("sp","연락처","124px","num")}</td>`:""}<td>${V.memo?inp("memo","메모","100%"):""}</td></tr>
+        <tr class="ct-r2"><td colspan="${nc}"><div class="ct-addr"><span class="small muted">주소</span>${inp("addr","주소","100%")}</div></td></tr>`; }).join("")}
     </tbody></table></div></div>`;
 }
+CH.ctShow = el => { S.ctShow = {...ctShow(), [el.dataset.k]: el.checked}; commit(); };
 CH.ctSet = el => { const s = stu(el.dataset.id), k = el.dataset.k; s.ct ||= {}; let v = el.value.trim(); if(/^(p1|p2|sp)$/.test(k)) v = fmtPhone(v); s.ct[k] = v; if(el.value !== v) el.value = v; persist(); };
 /* 표에서 열 찾기: 제목 줄이 있으면 이름으로, 없으면 내용(전화번호 모양)으로 */
 function ctDetect(table){
@@ -3969,9 +3991,10 @@ function ctDetect(table){
       if(/^(번호|번|no\.?|출석번호)$/i.test(n)) m.no = c;
       else if(/^(이름|성명|학생명|학생이름|학생성명)$/.test(n)) m.name = c;
       else if(/주소|거주지/.test(n)) m.addr = c;
+      else if(/메모|비고|특이|참고/.test(n)) m.memo = c;
       else if(/관계/.test(n)){ (m.rels ||= []).push(c); }
       else if(/연락처|전화|휴대|핸드폰|폰|HP|H\.P|tel|어머니|아버지|엄마|아빠|보호자|학부모|부모|^모$|^부$|^모\(|^부\(/i.test(n)) ph.push({c, t:n}); });
-    if((m.no !== undefined || m.name !== undefined) && (ph.length || m.addr !== undefined)){ hi = i; map = m; map.ph = ph; break; }
+    if((m.no !== undefined || m.name !== undefined) && (ph.length || m.addr !== undefined || m.memo !== undefined)){ hi = i; map = m; map.ph = ph; break; }
   }
   if(!map){   // 제목 줄이 없을 때: 숫자 열 = 번호, 한글 2~4자 열 = 이름, 전화번호 모양 열 = 연락처
     const body = rows, W = Math.max(...body.map(r => r.length)), col = c => body.map(r => r[c] || "");
@@ -3992,14 +4015,17 @@ function ctDetect(table){
     const ct = {};
     // 보호자 번호: 열마다(한 칸에 두 개가 있어도) 차례로 보호자1·2에
     const found = []; par.forEach((x, i) => { const L = phonesIn(r[x.c]); L.forEach(f => found.push({p:f.p, rel: f.rel || ctRel(x.t) || (map.rels && r[map.rels[i]] ? r[map.rels[i]] : "")})); });
+    // 차례로 보호자1·2, 그보다 많은 번호는 메모에
     found.slice(0, 2).forEach((f, i) => { ct["p"+(i+1)] = f.p; if(f.rel) ct["r"+(i+1)] = f.rel; });
+    const extra = found.slice(2).map(f => [f.rel, f.p].filter(Boolean).join(" "));
+    ct.memo = [map.memo !== undefined ? (r[map.memo]||"").trim() : "", ...extra].filter(Boolean).join(" / ");
     if(stuPh){ const L = phonesIn(r[stuPh.c]); if(L.length) ct.sp = L[0].p; }
     if(map.addr !== undefined) ct.addr = (r[map.addr]||"").replace(/\s+/g," ").trim();
     Object.keys(ct).forEach(k => { if(!ct[k]) delete ct[k]; });
     if(!Object.keys(ct).length) return;
     s ? out.push({sid:s.id, ct}) : miss.push(`${no||""} ${nm}`.trim());
   });
-  return {rows: out, miss, cols: {p1: par[0], p2: par[1], sp: stuPh, addr: map.addr}, header: hi >= 0 ? rows[hi] : null};
+  return {rows: out, miss, cols: {p1: par[0], p2: par[1], sp: stuPh, addr: map.addr, memo: map.memo}, header: hi >= 0 ? rows[hi] : null};
 }
 function ctFromTables(tables, src){
   let best = null; tables.forEach(t => { const r = ctDetect(t); if(r && (!best || r.rows.length > best.rows.length)) best = r; });
@@ -4009,10 +4035,10 @@ function ctFromTables(tables, src){
 function ctImportCard(){
   const I = ui.ctImp, H = I.header, nm = c => c === undefined || c === null ? `<span style="color:var(--muted)">없음</span>` : H ? `'${esc(H[typeof c==="object"?c.c:c])}'` : `${String.fromCharCode(65 + (typeof c==="object"?c.c:c))}열`;
   return `<div class="card"><div class="spread"><h2>미리 보기 <span class="small muted">${esc(I.src)} · ${I.rows.length}명</span></h2><button class="btn sm" data-act="ctImpClose">닫기</button></div>
-    <div class="row small" style="gap:6px 14px;margin-bottom:8px"><span><b>보호자1</b> ← ${nm(I.cols.p1)}</span><span><b>보호자2</b> ← ${nm(I.cols.p2)}</span><span><b>학생</b> ← ${nm(I.cols.sp)}</span><span><b>주소</b> ← ${nm(I.cols.addr)}</span></div>
+    <div class="row small" style="gap:6px 14px;margin-bottom:8px"><span><b>보호자1</b> ← ${nm(I.cols.p1)}</span><span><b>보호자2</b> ← ${nm(I.cols.p2)}</span><span><b>학생</b> ← ${nm(I.cols.sp)}</span><span><b>주소</b> ← ${nm(I.cols.addr)}</span><span><b>메모</b> ← ${nm(I.cols.memo)}</span><span class="muted">번호가 3개 이상이면 나머지는 메모에 넣어요</span></div>
     ${I.miss.length ? `<div class="small" style="color:var(--warn);margin-bottom:6px">명단에서 찾지 못해 뺀 줄 ${I.miss.length}개: ${esc(I.miss.slice(0,6).join(", "))}${I.miss.length>6?" …":""}</div>` : ""}
-    <div class="scroll" style="max-height:360px;overflow:auto"><table class="t"><thead><tr><th>번호</th><th>이름</th><th>보호자1</th><th>보호자2</th><th>학생</th><th>주소</th></tr></thead><tbody>
-      ${I.rows.map(({sid, ct}) => { const s = stu(sid); return `<tr><td class="num">${s.no}</td><td>${esc(s.name)}</td><td class="small">${esc([ct.r1, ct.p1].filter(Boolean).join(" "))}</td><td class="small">${esc([ct.r2, ct.p2].filter(Boolean).join(" "))}</td><td class="small num">${esc(ct.sp||"")}</td><td class="small">${esc(ct.addr||"")}</td></tr>`; }).join("")}</tbody></table></div>
+    <div class="scroll" style="max-height:360px;overflow:auto"><table class="t"><thead><tr><th>번호</th><th>이름</th><th>보호자1</th><th>보호자2</th><th>학생</th><th>주소</th><th>메모</th></tr></thead><tbody>
+      ${I.rows.map(({sid, ct}) => { const s = stu(sid); return `<tr><td class="num">${s.no}</td><td>${esc(s.name)}</td><td class="small" style="white-space:nowrap">${esc([ct.r1, ct.p1].filter(Boolean).join(" "))}</td><td class="small" style="white-space:nowrap">${esc([ct.r2, ct.p2].filter(Boolean).join(" "))}</td><td class="small num" style="white-space:nowrap">${esc(ct.sp||"")}</td><td class="small">${esc(ct.addr||"")}</td><td class="small">${esc(ct.memo||"")}</td></tr>`; }).join("")}</tbody></table></div>
     <div class="row" style="justify-content:space-between;margin-top:10px"><label class="row small" style="gap:6px"><input type="checkbox" ${I.keep?"checked":""} data-ch="ctKeep">이미 적어 둔 칸은 그대로 두기</label>
       <div class="row"><button class="btn" data-act="ctImpClose">취소</button><button class="btn pri" data-act="ctImpApply">${I.rows.length}명 넣기</button></div></div></div>`;
 }
