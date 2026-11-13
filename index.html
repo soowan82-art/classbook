@@ -192,6 +192,7 @@ table.t{width:100%;border-collapse:collapse;font-size:13.5px}
 .look-sw{display:inline-flex;align-items:center;gap:6px;padding:6px 12px 6px 8px;border:1.5px solid var(--line);border-radius:999px;background:var(--surface);cursor:pointer;font-size:13.5px}.look-sw i{width:18px;height:18px;border-radius:50%;background:var(--c);box-shadow:0 0 0 3px var(--cs)}.look-sw.on{border-color:var(--c);font-weight:600}
 .show-chip{display:inline-flex;align-items:center;gap:5px;padding:5px 11px 5px 8px;border:1px solid var(--line);border-radius:999px;font-size:13px;cursor:pointer;background:var(--surface);color:var(--muted)}.show-chip.on{border-color:var(--accent);background:var(--accent-soft);color:var(--ink)}
 .ct-t td{vertical-align:middle;padding:5px 6px}.ct-t .ct-r1 td{border-bottom:none;padding-bottom:2px}.ct-t .ct-r2 td{padding-top:2px}.ct-addr{display:flex;align-items:center;gap:8px}.ct-addr .ct-in{flex:1}.ct-pair{display:flex;gap:4px}.ct-name{white-space:nowrap;font-weight:500}.ct-in{padding:5px 7px;font-size:13px;min-width:0}
+.g-grp{font-size:12px;font-weight:700;color:var(--muted);padding:10px 4px 2px;display:flex;gap:6px;align-items:center}.g-grp .num{font-weight:500}
 .g-bulk{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;margin:12px 0 8px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--bg-soft,#f7f7f5)}
 .g-bulk.on{justify-content:space-between;border-color:var(--accent);background:var(--accent-soft);position:sticky;top:0;z-index:2}
 .g-picking .g-row{cursor:pointer}.g-picking .g-row.on td{background:var(--accent-soft)}
@@ -677,7 +678,7 @@ IN.calW = el => { const v = Number(el.value); LOOK.calw = v; try{ localStorage.s
 A.calWReset = () => { LOOK.calw = 0; saveLook(); render(); };
 A.lookAccent = el => { LOOK.accent = el.dataset.v; saveLook(); render(); };
 A.lookMode = el => { LOOK.mode = el.dataset.v; saveLook(); render(); };
-const APP_VER = "2026.11.13-30";
+const APP_VER = "2026.11.13-32";
 const LOGO_SVG = `<svg class="brand-logo" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" fill="#1F6E8C"/><g transform="translate(256 258) scale(1.13) translate(-256 -258)"><rect x="140" y="112" width="232" height="292" rx="30" fill="#FFFFFF"/><rect x="140" y="112" width="44" height="292" rx="22" fill="#D7E9F0"/><rect x="162" y="112" width="22" height="292" fill="#D7E9F0"/><path d="M318 112 H352 V214 L335 198 L318 214 Z" fill="#F2B84B"/><path d="M212 196 L236 220 L284 168" fill="none" stroke="#1F6E8C" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/><rect x="212" y="262" width="124" height="16" rx="8" fill="#9CC5D4"/><rect x="212" y="306" width="96" height="16" rx="8" fill="#9CC5D4"/><rect x="212" y="350" width="112" height="16" rx="8" fill="#C9DFE8"/></g></svg>`;
 let storageOK = true;
 /* 학급 여러 개: 학급마다 따로 저장한다. 처음 학급(c1)은 예전 저장 위치를 그대로 쓴다 */
@@ -1246,7 +1247,7 @@ function extraTags(d, full){
 A.goSubmit = el => { ui.submitMode = "asg"; ui.submitSel = el.dataset.id; location.hash = "submit"; };
 A.goCal = () => { location.hash = "calendar"; };
 A.goEval = () => { location.hash = "evalplan"; };
-A.goGrades = el => { ui.gradeSel = el.dataset.id; location.hash = "grades"; };
+A.goGrades = el => { ui.gradeSel = el.dataset.id; const a = S.assessments.find(x=>x.id===ui.gradeSel); if(a) ui.gTab = aKind(a); location.hash = "grades"; };
 A.goBudget = () => { location.hash = "budget"; };
 function recTag(d, full){
   const recs = S.records.filter(r=>r.date===d);
@@ -1702,10 +1703,22 @@ A.recExport = () => { const rows = [["날짜","번호","이름","분류","언제
   exportSheets(`${clsName()}_학생누가기록`, [["누가기록", rows]]); };
 
 /* ───────── 성적 ───────── */
+/* 평가 종류: 수행평가(등급) / 단원·형성평가(점수) */
+const aKind = a => a.kind || ((S.evalPlans||[]).some(p => p.assessId === a.id) ? "perf" : a.mode === "score" ? "test" : "perf");
+const TEST_TYPES = ["단원평가","형성평가"];
+function gSubjOrder(n){ const L = TT().subjects.map(x=>x.name).concat([...KNOWN_SUBJ]); const i = L.indexOf(n); return i < 0 ? 999 : i; }
+function gList(tab){
+  const L = S.assessments.filter(a => aKind(a) === tab), byDate = (a,b) => (b.date||"").localeCompare(a.date||"");
+  const groups = {};
+  L.forEach(a => { const k = ui.gGroup === "month" ? (a.date||"").slice(0,7) : (a.subject || "기타"); (groups[k] ||= []).push(a); });
+  const keys = Object.keys(groups).sort(ui.gGroup === "month" ? (a,b) => b.localeCompare(a) : (a,b) => gSubjOrder(a) - gSubjOrder(b) || a.localeCompare(b));
+  return keys.map(k => ({k, label: ui.gGroup === "month" ? (k ? `${k.slice(0,4)}년 ${Number(k.slice(5))}월` : "날짜 없음") : k, items: groups[k].sort(byDate)}));
+}
 VIEWS.grades = () => {
   if(!S.students.length) return header("성적 입력") + noStudents();
-  const list = S.assessments.slice().sort((a,b)=>b.date.localeCompare(a.date));
-  if(!ui.gradeSel || !S.assessments.find(a=>a.id===ui.gradeSel)) ui.gradeSel = list[0]?.id || null;
+  const tab = ui.gTab || "perf"; ui.gGroup ||= "subj";
+  const groups = gList(tab), list = groups.flatMap(g => g.items);
+  if(!ui.gradeSel || !list.find(a=>a.id===ui.gradeSel)) ui.gradeSel = list[0]?.id || null;
   const a = S.assessments.find(x=>x.id===ui.gradeSel);
   let summary = "";
   if(a){
@@ -1713,19 +1726,32 @@ VIEWS.grades = () => {
     else { const v = S.students.map(s=>a.scores[s.id]).filter(x=>x!==undefined&&x!==""); const avg = v.length ? (v.reduce((p,c)=>p+Number(c),0)/v.length).toFixed(1) : "-";
       summary = `<span class="pill">평균 <b class="num">${avg}</b>/${a.max}</span><span class="pill">최고 <b class="num">${v.length?Math.max(...v):"-"}</b></span><span class="pill">최저 <b class="num">${v.length?Math.min(...v):"-"}</b></span><span class="pill">입력 <b class="num">${v.length}/${S.students.length}</b></span>`; }
   }
-  return header("성적 입력", "평가별로 등급(매우 잘함·잘함·보통·노력 요함) 또는 점수를 입력해요.", `<button class="btn" data-act="gradeExport">전체 성적 내보내기</button>`) + `
-  <div class="split">
-    <div class="card" style="padding:12px;display:flex;flex-direction:column;gap:8px">
-      <div class="form" style="grid-template-columns:1fr 1fr">
-        <label class="f">과목<input type="text" id="gSub" placeholder="수학"></label>
-        <label class="f">방식<select id="gMode"><option value="level">등급</option><option value="score">점수</option></select></label>
+  const nP = S.assessments.filter(x=>aKind(x)==="perf").length, nT = S.assessments.length - nP;
+  const subjDL = `<datalist id="gSubList">${[...new Set(TT().subjects.map(x=>x.name).concat(["국어","수학","사회","과학","영어","도덕","음악","미술","체육","실과"]))].map(x=>`<option value="${esc(x)}">`).join("")}</datalist>`;
+  const form = tab === "perf" ? `<div class="form" style="grid-template-columns:1fr 1fr">
+        <label class="f">과목<input type="text" id="gSub" list="gSubList" placeholder="수학"></label>
+        <label class="f">날짜<input type="date" id="gDate" value="${today()}"></label>
         <label class="f" style="grid-column:1/-1">평가 내용<input type="text" id="gTitle" placeholder="꺾은선 그래프 그리기" data-enter="addGrade"></label>
-      </div>
+      </div><div class="small muted">등급: ${LEVELS.join(" · ")}</div>`
+    : `<div class="form" style="grid-template-columns:1fr 1fr">
+        <label class="f">과목<input type="text" id="gSub" list="gSubList" placeholder="수학"></label>
+        <label class="f">종류<select id="gType">${TEST_TYPES.map(x=>`<option>${x}</option>`).join("")}</select></label>
+        <label class="f" style="grid-column:1/-1">평가 내용<input type="text" id="gTitle" placeholder="3단원 곱셈" data-enter="addGrade"></label>
+        <label class="f">만점<input type="number" id="gMaxNew" min="1" value="100" data-enter="addGrade"></label>
+        <label class="f">날짜<input type="date" id="gDate" value="${today()}"></label>
+      </div>`;
+  return header("성적 입력", "수행평가는 등급으로, 단원평가·형성평가는 점수로 입력해요.", `<button class="btn" data-act="gradeExport">전체 성적 내보내기</button>`) + `
+  <div class="row" style="gap:10px;margin-bottom:14px;flex-wrap:wrap"><div class="seg big-seg"><button class="${tab==="perf"?"on":""}" data-act="gTab" data-v="perf">수행평가 <span class="num muted">${nP}</span></button><button class="${tab==="test"?"on":""}" data-act="gTab" data-v="test">단원·형성평가 <span class="num muted">${nT}</span></button></div>
+    <div class="seg"><button class="${ui.gGroup==="subj"?"on":""}" data-act="gGroup" data-v="subj">과목별</button><button class="${ui.gGroup==="month"?"on":""}" data-act="gGroup" data-v="month">월별</button></div></div>
+  <div class="split">
+    <div class="card" style="padding:12px;display:flex;flex-direction:column;gap:8px">${subjDL}
+      <h3 style="margin:2px 0">${tab==="perf"?"수행평가 추가":"단원·형성평가 추가"}</h3>
+      ${form}
       <button class="btn pri" data-act="addGrade">평가 추가</button>
-      <div class="list" style="margin-top:4px">${list.map(x=>`<div class="li ${x.id===ui.gradeSel?"on":""}" data-act="gradeSel" data-id="${x.id}"><div><div class="t1">${esc(x.title)}</div><div class="small muted">${esc(x.subject)} · ${x.mode==="level"?"등급":"점수 "+x.max+"점"}</div></div><span class="small muted num">${S.students.filter(s=>x.scores[s.id]!==undefined&&x.scores[s.id]!=="").length}/${S.students.length}</span></div>`).join("") || `<div class="empty">평가를 추가해 보세요</div>`}</div>
+      <div class="list" style="margin-top:4px">${groups.length ? groups.map(g=>`<div class="g-grp">${esc(g.label)} <span class="num">${g.items.length}</span></div>` + g.items.map(x=>`<div class="li ${x.id===ui.gradeSel?"on":""}" data-act="gradeSel" data-id="${x.id}"><div><div class="t1">${aKind(x)==="test"?`<span class="pill" style="font-size:11px;padding:0 6px">${esc(x.testType||"단원평가")}</span> `:""}${esc(x.title)}</div><div class="small muted">${ui.gGroup==="month"?esc(x.subject)+" · ":""}${x.date?md(x.date):""}${aKind(x)==="test"?` · ${x.max}점 만점`:""}</div></div><span class="small muted num">${S.students.filter(s=>x.scores[s.id]!==undefined&&x.scores[s.id]!=="").length}/${S.students.length}</span></div>`).join("")).join("") : `<div class="empty">${tab==="perf"?"수행평가":"단원·형성평가"}를 추가해 보세요</div>`}</div>
     </div>
     <div class="card">${a ? `<div class="spread"><div><h2>${esc(a.subject)} · ${esc(a.title)}</h2><div class="row" style="margin-top:6px">${summary}</div></div>
-      <div class="row">${a.mode==="score"?`<label class="f" style="flex-direction:row;align-items:center;gap:6px">만점<input type="number" class="scoreIn" style="width:76px" value="${a.max}" data-ch="gMax" min="1"></label>`:""}<input type="date" value="${a.date}" data-ch="gDate"><button class="btn sm danger" data-act="delGrade">평가 삭제</button></div></div>
+      <div class="row">${aKind(a)==="test"?`<select data-ch="gType" aria-label="평가 종류">${TEST_TYPES.map(x=>`<option ${(a.testType||"단원평가")===x?"selected":""}>${x}</option>`).join("")}</select>`:""}${a.mode==="score"?`<label class="f" style="flex-direction:row;align-items:center;gap:6px">만점<input type="number" class="scoreIn" style="width:76px" value="${a.max}" data-ch="gMax" min="1"></label>`:""}<input type="date" value="${a.date}" data-ch="gDate"><button class="btn sm danger" data-act="delGrade">평가 삭제</button></div></div>
       ${gBulkBar(a)}
       <div class="scroll"><table class="t ${ui.gBulk?"g-picking":""}"><thead><tr>${ui.gBulk?`<th style="width:34px"></th>`:""}<th>번호</th><th>이름</th><th>${a.mode==="level"?"등급":"점수"}</th></tr></thead><tbody>
       ${ui.gBulk ? sorted().map(s=>{ const on = ui.gBulk.sel.includes(s.id), v = a.scores[s.id];
@@ -1734,7 +1760,13 @@ VIEWS.grades = () => {
       </tbody></table></div>` : `<div class="empty">왼쪽에서 평가를 추가하거나 골라 주세요</div>`}</div>
   </div>`;
 };
-A.addGrade = () => { const t = $("#gTitle").value.trim(); if(!t){ $("#gTitle").focus(); return; } const a = {id:uid(), subject:$("#gSub").value.trim()||"기타", title:t, date:today(), mode:$("#gMode").value, levels:LEVELS.slice(), max:100, scores:{}}; S.assessments.push(a); ui.gradeSel = a.id; commit(); };
+A.addGrade = () => { const t = $("#gTitle").value.trim(); if(!t){ $("#gTitle").focus(); return; } const tab = ui.gTab || "perf";
+  const a = {id:uid(), subject:$("#gSub").value.trim()||"기타", title:t, date:$("#gDate")?.value || today(), kind:tab, mode: tab==="test" ? "score" : "level", levels:LEVELS.slice(), max:100, scores:{}};
+  if(tab === "test"){ const mx = Number($("#gMaxNew").value); if(!(mx > 0)){ toast("몇 점 만점인지 적어 주세요"); $("#gMaxNew").focus(); return; } a.max = mx; a.testType = $("#gType").value; }
+  S.assessments.push(a); ui.gradeSel = a.id; commit(); };
+A.gTab = el => { ui.gTab = el.dataset.v; ui.gBulk = null; ui.gradeSel = null; render(); };
+A.gGroup = el => { ui.gGroup = el.dataset.v; render(); };
+CH.gType = el => { const a = S.assessments.find(x=>x.id===ui.gradeSel); a.testType = el.value; commit(); };
 EN.addGrade = () => A.addGrade();
 A.gradeSel = el => { ui.gradeSel = el.dataset.id; ui.gBulk = null; render(); };
 /* 일괄 입력: 등급(또는 점수)을 먼저 고르고, 학생을 여러 명 골라 한 번에 넣는다 */
@@ -1762,9 +1794,10 @@ CH.gScore = el => { const a = S.assessments.find(x=>x.id===ui.gradeSel); if(el.v
 CH.gMax = el => { const a = S.assessments.find(x=>x.id===ui.gradeSel); a.max = Math.max(1, Number(el.value)||100); commit(); };
 CH.gDate = el => { const a = S.assessments.find(x=>x.id===ui.gradeSel); a.date = el.value||a.date; commit(); };
 A.delGrade = async () => { if(await ask("이 평가와 입력한 성적을 삭제할까요?","삭제",true)){ S.assessments = S.assessments.filter(x=>x.id!==ui.gradeSel); ui.gradeSel=null; commit(); } };
-A.gradeExport = () => { const as = S.assessments.slice().sort((a,b)=>a.subject.localeCompare(b.subject)||a.date.localeCompare(b.date));
-  const rows = [["번호","이름",...as.map(a=>`${a.subject}-${a.title}`)], ...sorted().map(s=>[s.no, s.name, ...as.map(a=>a.scores[s.id]??"")])];
-  exportSheets(`${clsName()}_성적`, [["성적", rows]]); };
+A.gradeExport = () => {
+  const sheet = (kind) => { const as = S.assessments.filter(a=>aKind(a)===kind).sort((a,b)=>gSubjOrder(a.subject)-gSubjOrder(b.subject)||a.subject.localeCompare(b.subject)||(a.date||"").localeCompare(b.date||""));
+    return [["번호","이름",...as.map(a=>`${a.subject}-${kind==="test"?`[${a.testType||"단원평가"}] `:""}${a.title}${kind==="test"?` (${a.max}점)`:""}`)], ...sorted().map(s=>[s.no, s.name, ...as.map(a=>a.scores[s.id]??"")])]; };
+  exportSheets(`${clsName()}_성적`, [["수행평가", sheet("perf")], ["단원·형성평가", sheet("test")]]); };
 
 /* ───────── 예산 ───────── */
 VIEWS.budget = () => {
@@ -3074,13 +3107,13 @@ A.epSave = () => {
 EN.epSave = () => A.epSave();
 A.epDel = async el => { if(await ask("이 평가 계획을 지울까요? 성적 입력에 들어간 점수는 그대로 남아요.","지우기",true)){ S.evalPlans = S.evalPlans.filter(p=>p.id!==el.dataset.id); commit(); } };
 A.epStart = el => { const p = S.evalPlans.find(x=>x.id===el.dataset.id);
-  const a = {id:uid(), subject:p.subj, title:planTitle(p), date: p.done || (p.date && p.date <= today() ? p.date : today()), mode:"level", levels:LEVELS.slice(), max:100, scores:{}};
-  S.assessments.push(a); p.assessId = a.id; ui.gradeSel = a.id; commit(); location.hash = "grades"; toast("성적 입력에 평가를 만들었어요. 바로 입력하세요"); };
+  const a = {id:uid(), subject:p.subj, title:planTitle(p), date: p.done || (p.date && p.date <= today() ? p.date : today()), kind:"perf", mode:"level", levels:LEVELS.slice(), max:100, scores:{}};
+  S.assessments.push(a); p.assessId = a.id; ui.gradeSel = a.id; ui.gTab = "perf"; commit(); location.hash = "grades"; toast("성적 입력에 평가를 만들었어요. 바로 입력하세요"); };
 CH.epDone = el => { const p = S.evalPlans.find(x=>x.id===el.dataset.id);
   if(el.checked){ p.done = p.date && p.date <= today() ? p.date : today(); const a = planAssess(p); if(a) a.date = p.done; toast(`'${p.item}' 실시함으로 표시했어요. 성적 입력에서 일괄로 넣을 수 있어요`); }
   else delete p.done; commit(); };
 CH.epDoneDate = el => { const p = S.evalPlans.find(x=>x.id===el.dataset.id); if(!el.value) return; p.done = el.value; const a = planAssess(p); if(a) a.date = p.done; commit(); };
-A.epOpen = el => { const p = S.evalPlans.find(x=>x.id===el.dataset.id); ui.gradeSel = p.assessId; location.hash = "grades"; };
+A.epOpen = el => { const p = S.evalPlans.find(x=>x.id===el.dataset.id); ui.gradeSel = p.assessId; const a = planAssess(p); ui.gTab = a ? aKind(a) : "perf"; location.hash = "grades"; };
 A.epPasteGo = () => { const t = $("#epPasteTx").value; if(!t.trim()){ toast("표를 붙여 넣어 주세요"); return; }
   const rows = t.replace(/\r/g,"").split("\n").map(l => l.split("\t").map(x => x.trim()));
   epFromTables([rows], "붙여넣은 표"); };
