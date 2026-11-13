@@ -642,7 +642,7 @@ function lookCard(){
 }
 A.lookAccent = el => { LOOK.accent = el.dataset.v; saveLook(); render(); };
 A.lookMode = el => { LOOK.mode = el.dataset.v; saveLook(); render(); };
-const APP_VER = "2026.11.13-27";
+const APP_VER = "2026.11.13-28";
 const LOGO_SVG = `<svg class="brand-logo" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" fill="#1F6E8C"/><g transform="translate(256 258) scale(1.13) translate(-256 -258)"><rect x="140" y="112" width="232" height="292" rx="30" fill="#FFFFFF"/><rect x="140" y="112" width="44" height="292" rx="22" fill="#D7E9F0"/><rect x="162" y="112" width="22" height="292" fill="#D7E9F0"/><path d="M318 112 H352 V214 L335 198 L318 214 Z" fill="#F2B84B"/><path d="M212 196 L236 220 L284 168" fill="none" stroke="#1F6E8C" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/><rect x="212" y="262" width="124" height="16" rx="8" fill="#9CC5D4"/><rect x="212" y="306" width="96" height="16" rx="8" fill="#9CC5D4"/><rect x="212" y="350" width="112" height="16" rx="8" fill="#C9DFE8"/></g></svg>`;
 let storageOK = true;
 /* 학급 여러 개: 학급마다 따로 저장한다. 처음 학급(c1)은 예전 저장 위치를 그대로 쓴다 */
@@ -1083,10 +1083,10 @@ VIEWS.today = () => {
   const on = x => shown("today", x);
   return header(`${d.getMonth()+1}월 ${d.getDate()}일 ${WD[d.getDay()]}요일`, (HOLI[t] ? `<span class="holi">${HOLI[t]}</span>` : `${esc(clsName())} 오늘의 학급`) + schoolEvents(t).map(x=>` <span class="pill acc">${esc(x.name)}</span>`).join(""), showBtn("today")) + showCfgCard("today") + (on("tt") ? ttDayCard(t, true) : "") + `
   ${on("quick") ? todayQuickCard() : ""}
-  ${on("stats") ? `<div class="grid3">
-    <div class="card stat"><span class="l">재적</span><span class="v num">${S.students.length}명</span><span class="small muted">남 ${S.students.filter(s=>s.gender==="남").length} · 여 ${S.students.filter(s=>s.gender==="여").length}</span></div>
-    <div class="card stat"><span class="l">오늘 출결 특이사항</span><span class="v num">${att.length}건</span><span class="small muted">${att.length ? att.map(([sid,r])=>`${esc(sname(sid))} ${attLabel(r)}`).join(", ") : "모두 출석"}</span></div>
-    <div class="card stat"><span class="l">${b ? esc(b.name)+" 잔액" : "예산"}</span><span class="v num">${b ? won(b.total - spent) : "-"}</span><span class="small muted">${b ? `총 ${won(b.total)} 중 ${Math.round(spent/b.total*100)}% 사용` : "예산 관리에서 만들 수 있어요"}</span></div>
+  ${["roll","attn","budget"].some(on) ? `<div class="grid3">
+    ${on("roll") ? `<div class="card stat"><span class="l">재적</span><span class="v num">${S.students.length}명</span><span class="small muted">남 ${S.students.filter(s=>s.gender==="남").length} · 여 ${S.students.filter(s=>s.gender==="여").length}</span></div>` : ""}
+    ${on("attn") ? `<div class="card stat"><span class="l">오늘 출결 특이사항</span><span class="v num">${att.length}건</span><span class="small muted">${att.length ? att.map(([sid,r])=>`${esc(sname(sid))} ${attLabel(r)}`).join(", ") : "모두 출석"}</span></div>` : ""}
+    ${on("budget") ? `<div class="card stat"><span class="l">${b ? esc(b.name)+" 잔액" : "예산"}</span><span class="v num">${b ? won(b.total - spent) : "-"}</span><span class="small muted">${b ? `총 ${won(b.total)} 중 ${Math.round(spent/b.total*100)}% 사용` : "예산 관리에서 만들 수 있어요"}</span></div>` : ""}
   </div>` : ""}
   ${on("eval") ? evalTodayCard() : ""}
   <div class="grid2">
@@ -1127,9 +1127,9 @@ function todayJobsCard(){
 /* 다이어리·오늘에 보일 것 고르기 (학급마다 저장) */
 const SHOW_OPTS = {
   diary: [["quick","빠른 입력"],["tt","시간표"],["todo","할 일"],["sub","제출"],["sch","학교 일정"],["event","학급 행사"],["meet","회의"],["counsel","상담"],["memo","메모"],["eval","평가"],["asg","과제 마감"],["att","출결"],["rec","학생 기록"],["exp","지출"]],
-  today: [["tt","오늘 시간표"],["quick","빠른 입력"],["stats","재적·출결·예산"],["eval","평가 확인"],["todo","오늘 할 일"],["event","다가오는 행사"],["tasks","업무"],["counsel","상담"],["submit","제출 체크"],["jobs","일인일역"]]
+  today: [["tt","오늘 시간표"],["quick","빠른 입력"],["roll","재적"],["attn","오늘 출결"],["budget","예산"],["eval","평가 확인"],["todo","오늘 할 일"],["event","다가오는 행사"],["tasks","업무"],["counsel","상담"],["submit","제출 체크"],["jobs","일인일역"]]
 };
-const shown = (area, k) => !(S.show && S.show[area] && S.show[area][k] === false);
+const shown = (area, k) => { const a = S.show && S.show[area]; if(!a) return true; if(a[k] === false) return false; return !(a.stats === false && ["roll","attn","budget"].includes(k)); };
 function showCfgCard(area){
   if(ui.showCfg !== area) return "";
   return `<div class="card show-cfg"><div class="spread"><h2>${area==="diary"?"다이어리":"오늘"}에 보일 것</h2><div class="row"><button class="btn sm ghost" data-act="showAll" data-a="${area}">모두 보이기</button><button class="btn sm" data-act="showCfg" data-a="${area}">닫기</button></div></div>
@@ -1138,7 +1138,7 @@ function showCfgCard(area){
 }
 const showBtn = area => `<button class="btn ${ui.showCfg===area?"pri":""}" data-act="showCfg" data-a="${area}" title="보일 것 고르기">⚙ 보기</button>`;
 A.showCfg = el => { ui.showCfg = ui.showCfg === el.dataset.a ? null : el.dataset.a; render(); };
-CH.showSet = el => { const a = el.dataset.a; S.show ||= {}; S.show[a] ||= {}; if(el.checked) delete S.show[a][el.dataset.k]; else S.show[a][el.dataset.k] = false; commit(); };
+CH.showSet = el => { const a = el.dataset.a; S.show ||= {}; S.show[a] ||= {}; if(S.show[a].stats === false){ ["roll","attn","budget"].forEach(k => S.show[a][k] = false); delete S.show[a].stats; } if(el.checked) delete S.show[a][el.dataset.k]; else S.show[a][el.dataset.k] = false; commit(); };
 A.showAll = el => { if(S.show) delete S.show[el.dataset.a]; commit(); };
 const diaryTodos = (d, late) => dayTodos(d, late).filter(it => shown("diary", it.k==="sub" ? "sub" : "todo"));
 function dayTodos(d, withLate){
