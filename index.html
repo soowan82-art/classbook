@@ -213,7 +213,9 @@ th.tt-today{color:var(--accent)}
 .tt-row .subj{justify-self:start}
 .tt-row .tt-pn{font-weight:600}
 .tt-memo-in{width:100%;padding:5px 9px}
-.tt-memo-txt{color:var(--muted);font-size:13px}
+.tt-memo-txt{color:var(--muted);font-size:13px;white-space:pre-wrap;word-break:keep-all;overflow-wrap:anywhere}
+textarea.tt-memo-in{resize:none;overflow:hidden;line-height:1.45;min-height:34px;word-break:keep-all;overflow-wrap:anywhere;field-sizing:content}
+.tt-row{align-items:start}.tt-row > .tt-pn,.tt-row > .subj{margin-top:6px}
 .tt-mini{display:flex;flex-direction:column;gap:2px;border:1px solid var(--line);border-radius:8px;padding:6px 7px;background:var(--surface);cursor:pointer;font:inherit;text-align:left;width:100%}
 .tt-mini:hover{border-color:var(--muted)}
 .tt-mrow{display:flex;align-items:center;gap:5px;font-size:11.5px;min-width:0}
@@ -639,7 +641,7 @@ function lookCard(){
 }
 A.lookAccent = el => { LOOK.accent = el.dataset.v; saveLook(); render(); };
 A.lookMode = el => { LOOK.mode = el.dataset.v; saveLook(); render(); };
-const APP_VER = "2026.11.13-24";
+const APP_VER = "2026.11.13-25";
 const LOGO_SVG = `<svg class="brand-logo" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" fill="#1F6E8C"/><g transform="translate(256 258) scale(1.13) translate(-256 -258)"><rect x="140" y="112" width="232" height="292" rx="30" fill="#FFFFFF"/><rect x="140" y="112" width="44" height="292" rx="22" fill="#D7E9F0"/><rect x="162" y="112" width="22" height="292" fill="#D7E9F0"/><path d="M318 112 H352 V214 L335 198 L318 214 Z" fill="#F2B84B"/><path d="M212 196 L236 220 L284 168" fill="none" stroke="#1F6E8C" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/><rect x="212" y="262" width="124" height="16" rx="8" fill="#9CC5D4"/><rect x="212" y="306" width="96" height="16" rx="8" fill="#9CC5D4"/><rect x="212" y="350" width="112" height="16" rx="8" fill="#C9DFE8"/></g></svg>`;
 let storageOK = true;
 /* 학급 여러 개: 학급마다 따로 저장한다. 처음 학급(c1)은 예전 저장 위치를 그대로 쓴다 */
@@ -1015,6 +1017,7 @@ function render(){
   let v; try{ v = VIEWS[r](); }catch(err){ console.error(err); v = `<div class="card"><h2>이 화면을 그리지 못했어요</h2><p class="small">${esc(err && err.message || String(err))}</p><p class="small muted">기록은 그대로 저장돼 있어요. 이 문구를 알려 주시면 고칠게요. 다른 메뉴는 그대로 쓸 수 있어요.</p></div>`; }
   $("#main").innerHTML = `<div class="wrap">${archiveBanner()}${syncBanner()}${liveS?"":sampleBanner()}${v}</div>`;
   AFTER[r] && AFTER[r]();
+  requestAnimationFrame(() => document.querySelectorAll("textarea.tt-memo-in").forEach(growTa));
   document.title = `${TITLE[r]} · ${clsName()} 학급일지`;
 }
 
@@ -2332,7 +2335,9 @@ CH.ttBand = async el => { const tt = TT(), b = el.value;
   tt.band = b; tt.subjects = ttBandSubjects(b).concat(extra); ui.ttBrush = null; commit(); };
 CH.ttPeriods = el => { TT().periods = Number(el.value); commit(); };
 CH.ttTime = el => { const tt = TT(); tt.times[Number(el.dataset.i)] = el.value; commit(); };
-IN.ttMemo = el => { const tt = TT(), d = el.dataset.d, i = el.dataset.i; const m = tt.memos[d] ||= {}; if(el.value.trim()) m[i] = el.value; else { delete m[i]; if(!Object.keys(m).length) delete tt.memos[d]; } persist(); };
+/* 메모 칸은 글이 길면 줄을 바꿔 아래로 늘어난다 */
+const growTa = el => { el.style.height = "auto"; el.style.height = el.scrollHeight + 2 + "px"; };
+IN.ttMemo = el => { growTa(el); const tt = TT(), d = el.dataset.d, i = el.dataset.i; const m = tt.memos[d] ||= {}; if(el.value.trim()) m[i] = el.value; else { delete m[i]; if(!Object.keys(m).length) delete tt.memos[d]; } persist(); };
 /* 다이어리·오늘 화면용 */
 function ttDayCard(d, editable){
   const rows = ttDay(d), tt = TT();
@@ -2340,7 +2345,7 @@ function ttDayCard(d, editable){
   if(!rows.some(r=>r.subj) && !ttHasAny()) return `<div class="card"><div class="spread"><h2>시간표</h2><a class="btn sm" href="#timetable">시간표 입력</a></div><div class="empty">기본 시간표를 입력하면 여기에 그날 시간표가 나와요</div></div>`;
   return `<div class="card"><div class="spread"><h2>${d===today()?"오늘 시간표":"이날 시간표"}</h2><a class="btn sm" href="#timetable" data-act="ttGoWeek" data-d="${d}">시간표 바꾸기</a></div>
     <div class="tt-day">${rows.map(r=>`<div class="tt-row"><span class="tt-pn num">${r.p+1}<span class="small muted">${tt.times[r.p]?" "+tt.times[r.p]:""}</span></span>${subjChip(r.subj)}${r.changed?`<span class="tt-badge static">변경</span>`:"<span></span>"}
-      ${editable ? `<input type="text" class="tt-memo-in" value="${esc(r.memo)}" placeholder="${r.subj?esc(cellLabel(r.subj))+" 메모 (준비물, 진도 등)":"메모"}" data-in="ttMemo" data-d="${d}" data-i="${r.p}" id="ttm-${d}-${r.p}" aria-label="${r.p+1}교시 메모">` : `<span class="tt-memo-txt">${esc(r.memo)}</span>`}</div>`).join("")}</div></div>`;
+      ${editable ? `<textarea rows="1" class="tt-memo-in" placeholder="${r.subj?esc(cellLabel(r.subj))+" 메모 (준비물, 진도 등)":"메모"}" data-in="ttMemo" data-d="${d}" data-i="${r.p}" id="ttm-${d}-${r.p}" aria-label="${r.p+1}교시 메모">${esc(r.memo)}</textarea>` : `<span class="tt-memo-txt">${esc(r.memo)}</span>`}</div>`).join("")}</div></div>`;
 }
 A.ttGoWeek = el => { ui.ttMode = "week"; ui.ttWeek = el.dataset.d; location.hash = "timetable"; };
 function ttMini(d){ // 주 보기 칸에 들어가는 작은 시간표
