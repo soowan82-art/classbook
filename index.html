@@ -415,7 +415,8 @@ label.f .combo select{flex:1}
 .chips{display:flex;gap:4px;flex-wrap:wrap}
 .chip{border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:3px 8px;font-size:12.5px;cursor:pointer;color:var(--muted)}
 .chip:hover{border-color:var(--muted)}
-.chip.on{color:#fff;border-color:transparent}
+.chip.on{color:var(--on-accent);background:var(--accent);border-color:transparent}
+.chip.on[class*="k-"]:not(.k-plain):not(.k-per){color:#fff}
 .chip.on.k-체험학습{background:var(--violet)} .chip.on.k-질병{background:var(--warn)} .chip.on.k-인정{background:var(--ok)} .chip.on.k-미인정{background:var(--bad)} .chip.on.k-기타{background:var(--muted)}
 .chip.on.k-plain{background:var(--accent);color:var(--on-accent)}
 .chip.k-per{min-width:30px;padding:3px 0;text-align:center}
@@ -692,7 +693,7 @@ A.calWReset = () => { LOOK.calw = 0; saveLook(); render(); };
 A.lookAccent = el => { LOOK.accent = el.dataset.v; saveLook(); render(); };
 A.lookTone = el => { LOOK.tone = el.dataset.v; saveLook(); render(); };
 A.lookMode = el => { LOOK.mode = el.dataset.v; saveLook(); render(); };
-const APP_VER = "2026.11.13-37";
+const APP_VER = "2026.11.13-39";
 const LOGO_SVG = `<svg class="brand-logo" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" style="fill:var(--brand,#1F6E8C)"/><g transform="translate(256 258) scale(1.13) translate(-256 -258)"><rect x="140" y="112" width="232" height="292" rx="30" fill="#FFFFFF"/><rect x="140" y="112" width="44" height="292" rx="22" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><rect x="162" y="112" width="22" height="292" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><path d="M318 112 H352 V214 L335 198 L318 214 Z" fill="#F2B84B"/><path d="M212 196 L236 220 L284 168" fill="none" style="stroke:var(--accent-ink,#1F6E8C)" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/><rect x="212" y="262" width="124" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="306" width="96" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="350" width="112" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 26%, #fff)"/></g></svg>`;
 let storageOK = true;
 /* 학급 여러 개: 학급마다 따로 저장한다. 처음 학급(c1)은 예전 저장 위치를 그대로 쓴다 */
@@ -1455,7 +1456,7 @@ VIEWS.attendance = () => {
   const legend = REASONS.map(r=>`<span class="row small muted" style="gap:4px"><i class="dot c-${r}"></i>${r==="체험학습"?"교외체험학습":r}</span>`).join("");
   return header("출석 체크", "날짜를 누르고 출석이 아닌 학생만 표시하세요. 표시하지 않은 학생은 출석으로 봅니다.",
     `<div class="seg"><button class="${ui.attView==="day"?"on":""}" data-act="attView" data-v="day">날짜별 입력</button><button class="${ui.attView==="month"?"on":""}" data-act="attView" data-v="month">월별 종합</button><button class="${ui.attView==="range"?"on":""}" data-act="attView" data-v="range">기간 종합</button><button class="${ui.attView==="field"?"on":""}" data-act="attView" data-v="field">체험학습 대장</button></div>`) + `
-  <div class="card">${ui.attView==="range" ? "" : `<div class="spread"><div class="row"><button class="btn" data-act="attMonth" data-n="-1" aria-label="이전 달">‹</button><h2 class="num" style="min-width:110px;text-align:center">${y}년 ${m}월</h2><button class="btn" data-act="attMonth" data-n="1" aria-label="다음 달">›</button><button class="btn sm ghost" data-act="attMonth" data-n="0">이번 달</button></div><div class="row">${legend}</div></div>`}
+  <div class="card">${ui.attView==="range" || (ui.attView==="field" && ui.fieldMode==="range") ? "" : `<div class="spread"><div class="row"><button class="btn" data-act="attMonth" data-n="-1" aria-label="이전 달">‹</button><h2 class="num" style="min-width:110px;text-align:center">${y}년 ${m}월</h2><button class="btn" data-act="attMonth" data-n="1" aria-label="다음 달">›</button><button class="btn sm ghost" data-act="attMonth" data-n="0">이번 달</button></div><div class="row">${legend}</div></div>`}
   ${ui.attView==="day" ? `<div class="grid2" style="grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);align-items:start">${calHtml}
     <div style="display:flex;flex-direction:column;gap:10px"><div class="spread"><h3>${md(sel)} ${HOLI[sel]?`<span class="pill bad">${HOLI[sel]}</span>`:""}</h3><span class="small muted">특이 ${Object.keys(recs).length}명 · 결석 ${Object.values(recs).filter(r=>r.kind==="결석").length}명 · 등교 ${S.students.length-Object.values(recs).filter(r=>r.kind==="결석").length}명</span></div>
     <div class="stu-att">${sorted().map(s => { const r = recs[s.id];
@@ -1500,15 +1501,7 @@ function attRangeDefault(){ const c = CAL(), t = today(); return t < c.t2[0] ? [
 function attRangeTable(){
   if(!ui.attFrom || !ui.attTo){ [ui.attFrom, ui.attTo] = attRangeDefault(); }
   let from = ui.attFrom, to = ui.attTo; if(from > to) [from, to] = [to, from];
-  const t = today(), d = new Date(), mon = mondayOf(d);
-  const P = [["이번 주", ymd(mon), ymd(addDays(mon,4))], ["이번 달", t.slice(0,8)+"01", ymd(new Date(d.getFullYear(), d.getMonth()+1, 0))],
-    ["지난달", ymd(new Date(d.getFullYear(), d.getMonth()-1, 1)), ymd(new Date(d.getFullYear(), d.getMonth(), 0))],
-    ["1학기", ...termRange("1")], ["2학기", ...termRange("2")], ["학년도 전체", ...termRange("all")]];
-  const days = schoolDays(from, to);
-  return `<div class="row att-range" style="gap:8px;margin-bottom:12px;flex-wrap:wrap">
-      <input type="date" value="${from}" data-ch="attFrom" aria-label="시작일"><span>~</span><input type="date" value="${to}" data-ch="attTo" aria-label="끝일">
-      <span class="small muted">수업일 ${days}일</span>
-      <span style="flex:1"></span>${P.map(([l,a,b])=>`<button class="chip ${a===from&&b===to?"on":""}" data-act="attRangeSet" data-a="${a}" data-b="${b}">${l}</button>`).join("")}</div>
+  return attRangeBar(from, to) + `
     <div class="row" style="margin-bottom:6px">${REASONS.map(r=>`<span class="row small muted" style="gap:4px"><i class="dot c-${r}"></i>${r==="체험학습"?"교외체험학습":r}</span>`).join("")}</div>
     ${attSumTable(attRangeRows(from, to), `${md(from)} ~ ${md(to)}`, "attExportRange", "이 기간")}`;
 }
@@ -1527,28 +1520,47 @@ function attSumTable(rows, label, act, emptyLabel){
   ${list.map(s=>`<tr><td class="num">${s.no}</td><td>${esc(s.name)}</td>${ATT_COLS.map(c=>`<td class="r num">${rows[s.id][c]||""}</td>`).join("")}<td class="small">${rows[s.id].dates.map(esc).join(", ")}</td></tr>`).join("") || `<tr><td colspan="11" class="empty">${emptyLabel} 출결 특이사항이 없어요</td></tr>`}
   ${list.length?`<tr><td></td><td><b>합계</b></td>${tot.map(v=>`<td class="r num"><b>${v||""}</b></td>`).join("")}<td></td></tr>`:""}</tbody></table></div>`;
 }
-function attFieldRows(y, m){
-  // 학생별로 체험학습 날짜를 모아 연속된 학교 날짜끼리 묶는다(주말·공휴일 건너뜀)
-  const pre = y ? `${y}-${pad(m)}-` : "";
+/* 체험학습 대장: 학생별로 체험학습 날짜를 모아 이어진 등교일끼리 한 건으로 묶고, [from, to]와 겹치는 건만 */
+function attFieldRows(from, to){
   const by = {};
-  Object.keys(S.attendance).sort().filter(d=>d.startsWith(pre)).forEach(d => Object.entries(S.attendance[d]).forEach(([sid,r]) => { if(r.reason==="체험학습") (by[sid] ||= []).push({d, note:r.note, kind:r.kind||"결석"}); }));
+  Object.keys(S.attendance).sort().forEach(d => Object.entries(S.attendance[d]).forEach(([sid,r]) => { if(r.reason==="체험학습") (by[sid] ||= []).push({d, note:r.note, kind:r.kind||"결석"}); }));
   const out = [];
   Object.entries(by).forEach(([sid, arr]) => {
     let cur = null;
     arr.forEach(({d,note,kind}) => {
       if(kind!=="결석"){ out.push({sid, start:d, end:d, days:0, note:`${kind}${note?" · "+note:""}`}); cur = null; return; }
-      if(cur){ let n = addDays(parse(cur.end),1); while(n.getDay()===0||n.getDay()===6||HOLI[ymd(n)]) n = addDays(n,1); if(ymd(n)===d){ cur.end = d; cur.days++; return; } }
+      if(cur && schoolStep(cur.end, 1) === d){ cur.end = d; cur.days++; if(note && !cur.note) cur.note = note; return; }
       cur = {sid, start:d, end:d, days:1, note}; out.push(cur);
     });
   });
-  return out.sort((a,b)=>a.start.localeCompare(b.start));
+  return out.filter(r => (!from || r.end >= from) && (!to || r.start <= to)).sort((a,b)=>a.start.localeCompare(b.start) || (stu(a.sid)?.no??0)-(stu(b.sid)?.no??0));
+}
+/* 기간 고르기 (기간 종합·체험학습 대장이 같이 씀) */
+function attRangeBar(from, to){
+  const t = today(), d = new Date(), mon = mondayOf(d);
+  const P = [["이번 주", ymd(mon), ymd(addDays(mon,4))], ["이번 달", t.slice(0,8)+"01", ymd(new Date(d.getFullYear(), d.getMonth()+1, 0))],
+    ["지난달", ymd(new Date(d.getFullYear(), d.getMonth()-1, 1)), ymd(new Date(d.getFullYear(), d.getMonth(), 0))],
+    ["1학기", ...termRange("1")], ["2학기", ...termRange("2")], ["학년도 전체", ...termRange("all")]];
+  return `<div class="row att-range" style="gap:8px;margin-bottom:12px;flex-wrap:wrap">
+      <input type="date" value="${from}" data-ch="attFrom" aria-label="시작일"><span>~</span><input type="date" value="${to}" data-ch="attTo" aria-label="끝일">
+      <span class="small muted">수업일 ${schoolDays(from, to)}일</span>
+      <span style="flex:1"></span>${P.map(([l,a,b])=>`<button class="chip ${a===from&&b===to?"on":""}" data-act="attRangeSet" data-a="${a}" data-b="${b}">${l}</button>`).join("")}</div>`;
 }
 function attFieldTable(y,m){
-  const list = attFieldRows(y,m);
-  return `<div class="spread" style="margin:4px 0 10px"><span class="small muted">${y}년 ${m}월 교외체험학습 ${list.length}건 (이어진 날짜는 한 건으로 묶어요)</span><button class="btn sm" data-act="fieldExport">올해 대장 내보내기</button></div>
-  <div class="scroll"><table class="t"><thead><tr><th>번호</th><th>이름</th><th>기간</th><th class="r">일수</th><th>내용</th></tr></thead><tbody>
-  ${list.map(r=>`<tr><td class="num">${stu(r.sid)?.no??""}</td><td>${esc(sname(r.sid))}</td><td class="num">${r.start===r.end?md(r.start):`${md(r.start)} ~ ${md(r.end)}`}</td><td class="r num">${r.days||"-"}</td><td>${esc(r.note)}</td></tr>`).join("") || `<tr><td colspan="5" class="empty">이번 달 체험학습 기록이 없어요</td></tr>`}</tbody></table></div>`;
+  const fm = ui.fieldMode || "month";
+  let from, to, label;
+  if(fm === "range"){ if(!ui.attFrom || !ui.attTo){ [ui.attFrom, ui.attTo] = attRangeDefault(); } from = ui.attFrom; to = ui.attTo; if(from > to) [from, to] = [to, from]; label = `${md(from)} ~ ${md(to)}`; }
+  else { from = `${y}-${pad(m)}-01`; to = ymd(new Date(y, m, 0)); label = `${y}년 ${m}월`; }
+  const list = attFieldRows(from, to), days = list.reduce((a,r)=>a+(r.days||0),0), who = new Set(list.map(r=>r.sid)).size;
+  ui.fieldList = {list, label};
+  return `<div class="spread" style="margin:4px 0 10px;flex-wrap:wrap;gap:8px"><div class="seg"><button class="${fm==="month"?"on":""}" data-act="fieldMode" data-v="month">월별</button><button class="${fm==="range"?"on":""}" data-act="fieldMode" data-v="range">기간별</button></div>
+    <div class="row"><button class="btn sm" data-act="fieldExport" data-k="view">이 목록 내보내기</button><button class="btn sm ghost" data-act="fieldExport" data-k="year">학년도 전체 내보내기</button></div></div>
+  ${fm === "range" ? attRangeBar(from, to) : ""}
+  <div class="small muted" style="margin-bottom:8px">${label} 교외체험학습 ${list.length}건 · ${who}명 · 결석 처리 ${days}일 (이어진 등교일은 한 건으로 묶어요${fm==="range"?", 기간에 걸친 건은 전체 기간으로 보여요":""})</div>
+  <div class="scroll"><table class="t"><thead><tr><th>연번</th><th>번호</th><th>이름</th><th>기간</th><th class="r">일수</th><th>내용</th></tr></thead><tbody>
+  ${list.map((r,i)=>`<tr><td class="num muted">${i+1}</td><td class="num">${stu(r.sid)?.no??""}</td><td>${esc(sname(r.sid))}</td><td class="num">${r.start===r.end?md(r.start):`${md(r.start)} ~ ${md(r.end)}`}</td><td class="r num">${r.days||"-"}</td><td>${esc(r.note)}</td></tr>`).join("") || `<tr><td colspan="6" class="empty">${fm==="range"?"이 기간에":"이번 달"} 체험학습 기록이 없어요</td></tr>`}</tbody></table></div>`;
 }
+A.fieldMode = el => { ui.fieldMode = el.dataset.v; render(); };
 A.attView = el => { ui.attView = el.dataset.v; render(); };
 A.attMonth = el => { const n = Number(el.dataset.n); if(n===0){ ui.attMonth = today().slice(0,7); ui.attDay = today(); } else { const [y,m] = ui.attMonth.split("-").map(Number); const d = new Date(y, m-1+n, 1); ui.attMonth = ymd(d).slice(0,7); ui.attDay = ymd(d); } render(); };
 A.attDay = el => { ui.attDay = el.dataset.d; if(el.dataset.d.slice(0,7)!==ui.attMonth) ui.attMonth = el.dataset.d.slice(0,7); render(); };
@@ -1600,8 +1612,10 @@ A.attExport = () => { const [y,m] = ui.attMonth.split("-").map(Number); const ro
   const sum = [["번호","이름",...ATT_COLS,"내용"], ...sorted().map(s=>{ const r = rows[s.id]; return [s.no, s.name, ...ATT_COLS.map(c=>r?r[c]||0:0), r?r.dates.join(", "):""]; })];
   const detail = [["날짜","번호","이름","구분","종류","교시","사유"]]; Object.keys(S.attendance).sort().filter(d=>d.startsWith(ui.attMonth)).forEach(d=>Object.entries(S.attendance[d]).forEach(([sid,r])=>detail.push([d, stu(sid)?.no??"", sname(sid), r.reason, r.kind, r.kind!=="결석"&&r.periods&&r.periods.length ? r.periods.join(",")+"교시" : "", r.note])));
   exportSheets(`${clsName()}_${y}년${m}월_출결`, [["월별 종합", sum], ["상세", detail]]); };
-A.fieldExport = () => { const y = ui.attMonth.slice(0,4); const list = attFieldRows(null).filter(r=>r.start.startsWith(y));
-  exportSheets(`${clsName()}_${y}_교외체험학습대장`, [["체험학습 대장", [["연번","번호","이름","시작일","종료일","일수","내용"], ...list.map((r,i)=>[i+1, stu(r.sid)?.no??"", sname(r.sid), r.start, r.end, r.days, r.note])]]]); };
+A.fieldExport = el => { let list, name;
+  if(el.dataset.k === "view" && ui.fieldList){ list = ui.fieldList.list; name = `${clsName()}_교외체험학습대장_${ui.fieldList.label.replace(/\s+/g,"")}`; }
+  else { const [a, b] = termRange("all"); list = attFieldRows(a, b); name = `${clsName()}_${CAL().year}학년도_교외체험학습대장`; }
+  exportSheets(name, [["체험학습 대장", [["연번","번호","이름","시작일","종료일","일수","내용"], ...list.map((r,i)=>[i+1, stu(r.sid)?.no??"", sname(r.sid), r.start, r.end, r.days, r.note])]]]); };
 
 /* ───────── 제출 체크 ───────── */
 VIEWS.submit = () => {
@@ -3796,8 +3810,8 @@ function jobChooser(){
       <p class="muted">학생마다 역할 하나씩 맡아요. 선생님이 직접 정하거나 무작위로 배정하고, 주기마다 한 칸씩 돌릴 수 있어요. 날마다 역할을 했는지 체크해요.</p>
       <span class="pill acc">역할 배정 · 돌리기 · 매일 확인</span></button>
     <button class="card choose" data-act="setJobMode" data-v="job"><h2>직업놀이</h2>
-      <p class="muted">직업마다 정원이 있고 학생이 지원해요. 1지망은 모두 필수, 정원이 넘으면 가위바위보, 떨어진 학생은 남은 직업을 골라요. 2지망부터는 희망자만 지원해요.</p>
-      <span class="pill vio">지망 지원 · 가위바위보 · 분기별 기록</span></button>
+      <p class="muted">직업마다 정원이 있고 학생이 지원해요. 1지망은 모두 필수, 정원이 넘으면 가위바위보나 추첨, 떨어진 학생은 남은 직업을 골라요. 2지망부터는 희망자만 지원해요.</p>
+      <span class="pill vio">지망 지원 · 가위바위보·추첨 · 분기별 기록</span></button>
   </div>`;
 }
 A.setJobMode = el => { S.jobMode = el.dataset.v; commit(); };
@@ -3899,21 +3913,18 @@ A.roleDraw = async () => { const R = rolesOf(); if(!R.list.length){ toast("먼�
   who.forEach(s => { const r = R.list.find(x=>x.id===R.assign[s.id]); items.push({label:`${s.no}번 ${s.name}`, pool:R.list.map(x=>x.name), result:r ? r.name : "역할 없음"}); });
   commit(); await drawShow("일인일역 추첨", items);
   if(roles.length < who.length) toast(`역할이 부족해서 ${who.length-roles.length}명은 역할이 없어요`); };
-/* 직업놀이: 처음부터 추첨으로 한 번에 */
-A.jobDrawAll = async () => { const J = S.jobs; if(!J.list.length){ toast("먼저 직업을 만들어 주세요"); return; }
-  const cap = J.list.reduce((a,j)=>a+Number(j.cap),0);
-  if(!(await ask(`지원 없이 추첨으로 모든 학생의 직업을 정할까요? (자리 ${cap}개 · 학생 ${S.students.length}명)${cap<S.students.length?` 자리가 부족해서 ${S.students.length-cap}명은 직업이 없어요.`:""}`, "추첨하기"))) return;
-  J.quarter = $("#jobQuarter")?.value.trim() || J.quarter || `${new Date().getFullYear()}년 ${Math.floor(new Date().getMonth()/3)+1}분기`;
-  const d = newDraft(), slots = shuffle(J.list.flatMap(j=>Array(Number(j.cap)).fill(j.id))), st = shuffle(S.students);
-  st.forEach((s,i)=>{ const jid = slots[i]; if(jid) (d.assign[jid] ||= []).push(s.id); });
-  d.step = "done"; J.draft = d; commit();
-  await drawShow(`${J.quarter} 직업 추첨`, sorted().map(s=>({label:`${s.no}번 ${s.name}`, pool:J.list.map(j=>j.name), result:J.list.find(j=>(d.assign[j.id]||[]).includes(s.id))?.name || "직업 없음"})));
-  toast("확인하고 '이대로 확정하기'를 누르세요"); };
 /* 정원이 넘친 직업: 추첨으로 이긴 학생 정하기 */
 A.jobRps = async el => { const d = S.jobs.draft, jid = el.dataset.j, j = S.jobs.list.find(x=>x.id===jid);
   const ap = Object.entries(d.apply).filter(([,x])=>x===jid).map(([s])=>s), rem = remaining(d,jid);
   const w = shuffle(ap).slice(0, rem); d.winners[jid] = w; commit();
   await drawShow(`${j.name} 추첨 (${ap.length}명 중 ${rem}명)`, w.map((sid,i)=>({label:`${j.name} ${rem>1?`${i+1}번째 자리`:"자리"}`, pool:ap.map(sname), result:sname(sid)}))); };
+/* 정원이 넘친 직업 모두 한꺼번에 추첨 */
+A.jobRpsAll = async () => { const d = S.jobs.draft, items = [];
+  const over = S.jobs.list.filter(j => Object.values(d.apply).filter(x=>x===j.id).length > remaining(d,j.id));
+  if(over.some(j => (d.winners[j.id]||[]).length) && !(await ask("이미 정한 직업도 다시 추첨할까요?", "다시 추첨"))) return;
+  over.forEach(j => { const ap = Object.entries(d.apply).filter(([,x])=>x===j.id).map(([s])=>s), rem = remaining(d,j.id), w = shuffle(ap).slice(0, rem); d.winners[j.id] = w;
+    w.forEach((sid,i) => items.push({label:`${j.name} (${ap.length}명 중 ${rem}명)${rem>1?` ${i+1}`:""}`, pool:ap.map(sname), result:sname(sid)})); });
+  commit(); await drawShow("정원 넘친 직업 추첨", items); };
 /* 떨어진 학생: 남은 직업 추첨 */
 A.jobPickDraw = async () => { const d = S.jobs.draft, items = [];
   const losers = shuffle(Object.keys(d.picks).filter(sid=>!d.picks[sid]));
@@ -3946,14 +3957,14 @@ VIEWS.jobs = () => {
   if(!d) return header("직업놀이", `${esc(clsName())} 분기별 직업 뽑기`, tabs) + `
     <div class="card" style="display:flex;flex-direction:column;gap:14px;max-width:640px">
       <h2>새 분기 직업 뽑기</h2>
-      <ol style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px"><li>모든 학생이 1지망을 꼭 지원해요.</li><li>지원자가 정원보다 많으면 가위바위보로 정해요.</li><li>떨어진 학생은 1지망 배정이 끝난 뒤 남은 직업 중 하나를 골라요.</li><li>2지망부터는 희망자만 같은 방식으로 지원해요.</li></ol>
+      <ol style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px"><li>모든 학생이 1지망을 꼭 지원해요.</li><li>지원자가 정원보다 많으면 가위바위보나 추첨으로 정해요.</li><li>떨어진 학생은 1지망 배정이 끝난 뒤 남은 직업 중 하나를 골라요.</li><li>2지망부터는 희망자만 같은 방식으로 지원해요.</li></ol>
       <label class="f">분기 이름<input type="text" id="jobQuarter" value="${esc(J.quarter || `${new Date().getFullYear()}년 ${Math.floor(new Date().getMonth()/3)+1}분기`)}"></label>
       <div class="small muted">직업 ${J.list.length}개 · 자리 ${totalCap}개 · 학생 ${S.students.length}명 ${totalCap<S.students.length?`<span style="color:var(--bad)">· 자리가 부족해요</span>`:""}</div>
-      <div class="row"><button class="btn pri" data-act="jobStart" ${J.list.length?"":"disabled"}>1지망 받기 시작</button><button class="btn" data-act="jobDrawAll" ${J.list.length?"":"disabled"}>🎲 지원 없이 추첨으로 정하기</button><button class="btn" data-act="jobTab" data-v="list">직업 목록 고치기</button></div>
+      <div class="row"><button class="btn pri" data-act="jobStart" ${J.list.length?"":"disabled"}>1지망 받기 시작</button><button class="btn" data-act="jobTab" data-v="list">직업 목록 고치기</button></div>
     </div>`;
 
   const r = d.round, first = r===1;
-  const stepNames = [["apply",`${r}지망 지원`],["resolve","가위바위보"],["pick","남은 직업 고르기"]];
+  const stepNames = [["apply",`${r}지망 지원`],["resolve","가위바위보·추첨"],["pick","남은 직업 고르기"]];
   const stepIdx = stepNames.findIndex(s=>s[0]===d.step);
   const stepsHtml = `<div class="steps">${stepNames.map(([k,l],i)=>`<span class="step ${i===stepIdx?"on":i<stepIdx?"done":""}">${i+1}. ${l}</span>`).join("")}</div>`;
   const holding = id => S.jobs.list.filter(j=>(d.assign[j.id]||[]).includes(id)).map(j=>j.name);
@@ -3974,9 +3985,9 @@ VIEWS.jobs = () => {
     const over = S.jobs.list.filter(j=>Object.values(d.apply).filter(x=>x===j.id).length > remaining(d,j.id));
     const ok = S.jobs.list.filter(j=>{ const c = Object.values(d.apply).filter(x=>x===j.id).length; return c && c<=remaining(d,j.id); });
     const allSet = over.every(j=>(d.winners[j.id]||[]).length===remaining(d,j.id));
-    return top + `<div class="small muted">정원보다 지원자가 많은 직업은 교실에서 가위바위보를 하고, 이긴 학생 이름을 눌러 주세요. 이긴 학생 수가 남은 자리 수와 같아야 해요.</div>
+    return top + `<div class="spread"><div class="small muted">정원보다 지원자가 많은 직업은 <b>가위바위보</b>를 하고 이긴 학생 이름을 누르거나, <b>🎲 추첨</b>으로 정해요. 뽑힌 학생 수가 남은 자리 수와 같아야 해요.</div>${over.length ? `<button class="btn pri" data-act="jobRpsAll">🎲 넘친 직업 모두 추첨</button>` : ""}</div>
       ${over.length ? `<div class="jobs">${over.map(j=>{ const rem = remaining(d,j.id), ap = Object.entries(d.apply).filter(([,x])=>x===j.id).map(([sid])=>sid), w = d.winners[j.id]||[];
-        return `<div class="job over"><div class="spread"><b>${esc(j.name)}</b><span class="pill ${w.length===rem?"ok":"warn"}">이긴 학생 ${w.length}/${rem}</span></div><div class="names">${ap.map(sid=>`<button class="nm-chip ${w.includes(sid)?"win":""}" data-act="jobWin" data-j="${j.id}" data-s="${sid}" aria-pressed="${w.includes(sid)}">${esc(sname(sid))}</button>`).join("")}</div><button class="btn sm ghost" data-act="jobRps" data-j="${j.id}">🎲 추첨으로 정하기</button></div>`; }).join("")}</div>` : `<div class="banner" style="background:var(--ok-soft)">정원을 넘은 직업이 없어요. 모두 1지망대로 배정돼요.</div>`}
+        return `<div class="job over"><div class="spread"><b>${esc(j.name)}</b><span class="pill ${w.length===rem?"ok":"warn"}">지원 ${ap.length}명 · 뽑힌 학생 ${w.length}/${rem}</span></div><div class="names">${ap.map(sid=>`<button class="nm-chip ${w.includes(sid)?"win":""}" data-act="jobWin" data-j="${j.id}" data-s="${sid}" aria-pressed="${w.includes(sid)}">${esc(sname(sid))}</button>`).join("")}</div><button class="btn sm" data-act="jobRps" data-j="${j.id}">🎲 이 직업 추첨${w.length?" 다시":""}</button></div>`; }).join("")}</div>` : `<div class="banner" style="background:var(--ok-soft)">정원을 넘은 직업이 없어요. 모두 1지망대로 배정돼요.</div>`}
       ${ok.length ? `<div><h3 style="margin-bottom:6px">바로 배정되는 직업</h3><div class="jobs">${ok.map(j=>`<div class="job"><b>${esc(j.name)}</b><div class="names">${Object.entries(d.apply).filter(([,x])=>x===j.id).map(([sid])=>`<span class="nm-chip static">${esc(sname(sid))}</span>`).join("")}</div></div>`).join("")}</div></div>` : ""}
       <div class="row" style="justify-content:space-between"><button class="btn" data-act="jobBack" data-to="apply">지원 다시 받기</button><button class="btn pri" data-act="jobToPick" ${allSet?"":"disabled"}>배정하고 다음으로</button></div></div>`;
   }
