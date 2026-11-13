@@ -1603,6 +1603,7 @@ A.seatLayout = async el => { const v = el.dataset.v, st = S.seats;
   if((st.locked.length || Object.keys(st.gfix).length) && !(await ask("배치 모양을 바꾸면 학생들이 새 모양에 차례로 앉고, 고정·성별 지정은 지워져요. 바꿀까요?", "바꾸기"))) return;
   if(v === "custom"){ st.layout = "custom"; ui.seatMode = "shape"; commit(); return; }
   ui.seatMode = ""; seatApplyLayout(v, false); toast(`${SEAT_LAYOUTS.find(x=>x[0]===v)[1]}로 바꿨어요. 줄·칸 수는 바꿀 수 있어요`); };
+CH.seatAvoid = el => { S.seats.avoidPrev = el.checked; commit(); };
 CH.seatGapC = el => { S.seats.gapC = Number(el.value) || 0; S.seats.pair = S.seats.gapC === 2; commit(); };
 CH.seatGapR = el => { S.seats.gapR = Number(el.value) || 0; commit(); };
 /* 화면에 보이는 위치 기준 통로(띄움) */
@@ -1639,7 +1640,7 @@ VIEWS.seats = () => {
       <label class="f" style="flex-direction:row;align-items:center;gap:6px" title="몇 줄마다 가로 통로를 둘지">줄 띄움<select data-ch="seatGapR" style="width:auto"><option value="0" ${!st.gapR?"selected":""}>없음</option>${[2,3].map(n=>`<option value="${n}" ${st.gapR===n?"selected":""}>${n}줄마다</option>`).join("")}</select></label></div>
     <div class="row"><button class="btn ${mode==="shape"?"pri":""}" data-act="seatMode" data-v="shape">${mode==="shape"?"모양 완료":"자리 모양 고치기"}</button><button class="btn ${mode==="vac"?"pri":""}" data-act="seatMode" data-v="vac">${mode==="vac"?"빈자리 완료":"빈자리 정하기"}</button><button class="btn ${mode==="lock"?"pri":""}" data-act="seatMode" data-v="lock">${mode==="lock"?"고정 완료":"학생 자리 고정"}</button>
       <button class="btn ${mode==="gender"?"pri":""}" data-act="seatMode" data-v="gender">${mode==="gender"?"성별 지정 완료":"남·여 자리 정하기"}</button>
-      <button class="btn" data-act="seatShuffle" data-g="0">무작위 섞기</button><button class="btn" data-act="seatShuffle" data-g="1">남녀 짝으로 섞기</button><button class="btn pri" data-act="seatShow">🎲 학생 앞에서 자리 뽑기</button><button class="btn" data-act="seatExport">내보내기</button></div></div>
+      <label class="check" title="고정한 학생은 빼고, 바로 전과 같은 자리에 앉지 않게 섞어요"><input type="checkbox" ${st.avoidPrev!==false?"checked":""} data-ch="seatAvoid"><span>직전 자리 피하기</span></label><button class="btn" data-act="seatShuffle" data-g="0">무작위 섞기</button><button class="btn" data-act="seatShuffle" data-g="1">남녀 짝으로 섞기</button><button class="btn pri" data-act="seatShow">🎲 학생 앞에서 자리 뽑기</button><button class="btn" data-act="seatExport">내보내기</button></div></div>
     ${mode==="gender" ? `<div class="banner" style="background:var(--bg);border-color:var(--line);margin-bottom:12px"><div class="small">남자리 <b class="num" style="color:var(--accent)">${gm}</b> / 남학생 ${nb}명 · 여자리 <b class="num" style="color:var(--violet)">${gf}</b> / 여학생 ${ng}명${gm>nb||gf>ng?` <span style="color:var(--warn)">· 정한 자리가 학생보다 많아요</span>`:""}</div>
       <div class="row"><button class="btn sm" data-act="gPreset" data-v="pair">짝마다 남·여</button><button class="btn sm" data-act="gPreset" data-v="check">체크무늬</button><button class="btn sm" data-act="gPreset" data-v="row">줄마다 번갈아</button><button class="btn sm danger" data-act="gPreset" data-v="clear">모두 지우기</button></div></div>` : ""}
     <div class="board scroll">${ui.seatView==="teacher"?"":front}<div class="seats" style="grid-template-columns:repeat(${st.cols},auto)">${order.map(seatHtml).join("")}</div>${ui.seatView==="teacher"?front:""}</div>
@@ -1693,6 +1694,18 @@ function seatShuffleMap(pairMode){ seatFix(); const st = S.seats, n = st.rows*st
   fillNeed(free.filter(i=>st.gfix[i])); fillNeed(free.filter(i=>need[i] && !st.gfix[i]));
   const rest = shuffle(boys.concat(girls));
   shuffle(free.filter(i=>!need[i])).concat(unmet).forEach(i => { if(map[i]===null && rest.length) map[i] = rest.pop().id; });
+  // 직전 자리 피하기(고정 학생 제외): 같은 자리에 다시 앉은 학생은 조건(성별 자리)이 맞는 다른 자리와 바꾼다
+  if(st.avoidPrev !== false){
+    const prev = st.map, gOf = id => (stu(id)?.gender==="여" ? "여" : "남");
+    const ok = (i, id) => !id || ((!need[i] || gOf(id)===need[i]) && prev[i] !== id);
+    const bad = () => free.filter(i => map[i] && map[i]===prev[i]);
+    for(let pass = 0; pass < 4 && bad().length; pass++){
+      shuffle(bad()).forEach(i => { if(map[i]!==prev[i]) return;
+        const j = shuffle(free).find(j => j!==i && ok(i, map[j]) && ok(j, map[i]));
+        if(j !== undefined){ [map[i], map[j]] = [map[j], map[i]]; } });
+    }
+    const left = bad().length; if(left) msgs.push(`${left}명은 바꿀 자리가 없어 직전 자리에 다시 앉았어요`);
+  }
   const mis = free.filter(i=>st.gfix[i] && map[i] && ((stu(map[i]).gender==="여"?"여":"남") !== st.gfix[i])).length;
   if(mis) msgs.push(`성별을 정한 자리 ${mis}곳은 학생 수가 맞지 않아 다른 성별이 앉았어요`);
   return {map, msgs};
