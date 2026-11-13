@@ -194,6 +194,11 @@ table.t{width:100%;border-collapse:collapse;font-size:13.5px}
 .look-sw{display:inline-flex;align-items:center;gap:6px;padding:6px 12px 6px 8px;border:1.5px solid var(--line);border-radius:999px;background:var(--surface);cursor:pointer;font-size:13.5px}.look-sw i{width:18px;height:18px;border-radius:50%;background:var(--c);box-shadow:0 0 0 3px var(--cs)}.look-sw.on{border-color:var(--c);font-weight:600}
 .show-chip{display:inline-flex;align-items:center;gap:5px;padding:5px 11px 5px 8px;border:1px solid var(--line);border-radius:999px;font-size:13px;cursor:pointer;background:var(--surface);color:var(--muted)}.show-chip.on{border-color:var(--accent);background:var(--accent-soft);color:var(--ink)}
 .ct-t td{vertical-align:middle;padding:5px 6px}.ct-t .ct-r1 td{border-bottom:none;padding-bottom:2px}.ct-t .ct-r2 td{padding-top:2px}.ct-addr{display:flex;align-items:center;gap:8px}.ct-addr .ct-in{flex:1}.ct-pair{display:flex;gap:4px}.ct-name{white-space:nowrap;font-weight:500}.ct-in{padding:5px 7px;font-size:13px;min-width:0}
+.tile.sub-late{background:var(--warn-soft,#FFF4E0)!important;border-color:var(--warn)!important;color:var(--ink)!important}.tile.sub-late .no{color:var(--warn)!important}
+.tile.sub-fix{background:var(--bad-soft,#FDECEC)!important;border-color:var(--bad)!important;border-style:dashed!important}.tile.sub-fix .no{color:var(--bad)!important}
+.sub-stamp .seg button.on.st-late{background:var(--warn);color:#fff;border-color:var(--warn)}.sub-stamp .seg button.on.st-fix{background:var(--bad);color:#fff;border-color:var(--bad)}
+.mchip.fix{border-color:var(--bad);border-style:dashed;color:var(--bad)}.sub-sel{width:auto;padding:4px 6px;font-size:12.5px}
+.lv-rt button{font-size:12px;padding:4px 7px}.g-rt-c{white-space:nowrap}.g-rt-info{background:var(--accent-soft);border-color:var(--accent)}
 .g-grp{font-size:12px;font-weight:700;color:var(--muted);padding:10px 4px 2px;display:flex;gap:6px;align-items:center}.g-grp .num{font-weight:500}
 .g-bulk{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;margin:12px 0 8px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--bg-soft,#f7f7f5)}
 .g-bulk.on{justify-content:space-between;border-color:var(--accent);background:var(--accent-soft);position:sticky;top:0;z-index:2}
@@ -693,7 +698,7 @@ A.calWReset = () => { LOOK.calw = 0; saveLook(); render(); };
 A.lookAccent = el => { LOOK.accent = el.dataset.v; saveLook(); render(); };
 A.lookTone = el => { LOOK.tone = el.dataset.v; saveLook(); render(); };
 A.lookMode = el => { LOOK.mode = el.dataset.v; saveLook(); render(); };
-const APP_VER = "2026.11.13-39";
+const APP_VER = "2026.11.13-41";
 const LOGO_SVG = `<svg class="brand-logo" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" style="fill:var(--brand,#1F6E8C)"/><g transform="translate(256 258) scale(1.13) translate(-256 -258)"><rect x="140" y="112" width="232" height="292" rx="30" fill="#FFFFFF"/><rect x="140" y="112" width="44" height="292" rx="22" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><rect x="162" y="112" width="22" height="292" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><path d="M318 112 H352 V214 L335 198 L318 214 Z" fill="#F2B84B"/><path d="M212 196 L236 220 L284 168" fill="none" style="stroke:var(--accent-ink,#1F6E8C)" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/><rect x="212" y="262" width="124" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="306" width="96" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="350" width="112" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 26%, #fff)"/></g></svg>`;
 let storageOK = true;
 /* 학급 여러 개: 학급마다 따로 저장한다. 처음 학급(c1)은 예전 저장 위치를 그대로 쓴다 */
@@ -1160,7 +1165,7 @@ function todaySubmitCard(){
   const asg = S.assignments.filter(a => a.due >= ymd(addDays(d,-7))).sort((a,b)=>a.due.localeCompare(b.due));
   return `<div class="card"><div class="spread"><h2>제출 현황</h2><a class="btn sm" href="#submit">제출 체크</a></div>
       ${asg.length ? asg.map(a => { const n = asgDone(a), tot = asgTargets(a).length||1; const miss = asgMiss(a);
-        return `<div style="padding:8px 0;border-bottom:1px solid var(--line)"><div class="spread"><span style="font-weight:500">${esc(a.title)}</span><span class="small muted num">${n}/${asgTargets(a).length} · ${md(a.due)}</span></div><div class="bar ${n===tot?"ok":""}" style="margin:6px 0"><i style="width:${n/tot*100}%"></i></div>${miss.length?`<div class="small muted">미제출: ${miss.slice(0,8).map(s=>esc(s.name)).join(", ")}${miss.length>8?` 외 ${miss.length-8}명`:""}</div>`:""}</div>`; }).join("") : `<div class="empty">최근 과제가 없어요</div>`}
+        const fx = asgFix(a); return `<div style="padding:8px 0;border-bottom:1px solid var(--line)"><div class="spread"><span style="font-weight:500">${esc(a.title)}</span><span class="small muted num">${n}/${asgTargets(a).length} · ${md(a.due)}</span></div><div class="bar ${n===tot?"ok":""}" style="margin:6px 0"><i style="width:${n/tot*100}%"></i></div>${miss.length?`<div class="small muted">미제출: ${miss.slice(0,8).map(s=>esc(s.name)).join(", ")}${miss.length>8?` 외 ${miss.length-8}명`:""}</div>`:""}${fx.length?`<div class="small" style="color:var(--bad)">수정 중: ${fx.map(s=>esc(s.name)).join(", ")}</div>`:""}</div>`; }).join("") : `<div class="empty">최근 과제가 없어요</div>`}
     </div>`;
 }
 function todayJobsCard(){
@@ -1634,61 +1639,76 @@ VIEWS.submit = () => {
       <button class="btn pri" data-act="addAsg">과제 추가</button>
       <div class="list">${list.map(x=>{ const n = asgDone(x), tot = asgTargets(x).length || 1; return `<div class="li ${x.id===ui.submitSel?"on":""}" data-act="selAsg" data-id="${x.id}" style="flex-direction:column;align-items:stretch;gap:5px"><div class="spread"><span class="t1">${esc(x.title)}</span><span class="small muted num">${n}/${asgTargets(x).length}</span></div><div class="bar ${n===asgTargets(x).length?"ok":""}"><i style="width:${n/tot*100}%"></i></div><span class="small muted">마감 ${md(x.due)}${Object.keys(x.exempt||{}).length?` · 제외 ${sorted().filter(s=>isEx(x,s.id)).length}명`:""}</span></div>`; }).join("") || `<div class="empty">과제를 추가해 보세요</div>`}</div>
     </div>
-    <div class="card">${a ? `<div class="spread"><div><h2>${esc(a.title)}</h2><div class="small muted">마감 ${md(a.due)} · 대상 ${asgTargets(a).length}명 · 제출 ${asgDone(a)}명 · 미제출 ${miss.length}명${exN?` · 제외 ${exN}명`:""}</div></div>
+    <div class="card">${a ? `<div class="spread"><div><h2>${esc(a.title)}</h2><div class="small muted">마감 ${md(a.due)} · 대상 ${asgTargets(a).length}명 · 제출 ${asgDone(a)}명${asgLate(a).length?`(늦게 ${asgLate(a).length})`:""}${asgFix(a).length?` · 수정 중 ${asgFix(a).length}명`:""} · 미제출 ${miss.length}명${exN?` · 제외 ${exN}명`:""}</div></div>
       <div class="row"><button class="btn sm ${exMode?"pri":""}" data-act="exMode">${exMode?"제외 고르기 끝":"제외할 학생 고르기"}</button>${exMode?"":`<button class="btn sm" data-act="asgAll" data-v="1">모두 제출</button><button class="btn sm" data-act="asgAll" data-v="0">모두 해제</button>`}<button class="btn sm danger" data-act="delAsg">과제 삭제</button></div></div>
-      <div class="tiles ${exMode?"ex-mode":""}" style="margin-bottom:14px">${sorted().map(s=>{ const ex = isEx(a,s.id), on = !ex && a.submitted[s.id];
-        return `<button class="tile ${on?"on":""} ${ex?"ex":""}" data-act="${exMode?"asgEx":"asgToggle"}" data-s="${s.id}" ${!exMode&&ex?"disabled":""} aria-pressed="${exMode?ex:!!on}"><span class="no num">${s.no}번${ex?" · 제외":""}</span><span>${esc(s.name)}</span></button>`; }).join("")}</div>
-      <div class="banner" style="background:var(--bg);border-color:var(--line)"><div><b style="color:var(--ink)">미제출</b> <span id="missTxt">${miss.length ? miss.map(s=>`${s.no} ${esc(s.name)}`).join(", ") : "모두 제출했어요"}</span></div>${miss.length?`<button class="btn sm" data-act="copyMiss">명단 복사</button>`:""}</div>` : `<div class="empty">왼쪽에서 과제를 추가하거나 골라 주세요</div>`}</div>
+      ${exMode ? "" : `<div class="row sub-stamp" style="gap:8px;margin-bottom:10px"><span class="small muted">누르면 표시할 것</span><div class="seg">${Object.entries(SUB_ST).map(([k,l])=>`<button class="${(ui.subStamp||"ok")===k?"on":""} st-${k}" data-act="subStamp" data-v="${k}">${l}</button>`).join("")}</div><span class="small muted">같은 표시를 한 번 더 누르면 미제출로 돌아가요</span></div>`}
+      <div class="tiles ${exMode?"ex-mode":""}" style="margin-bottom:14px">${sorted().map(s=>{ const ex = isEx(a,s.id), st = ex ? "" : subSt(a, s.id);
+        return `<button class="tile ${st==="ok"?"on":""} ${st==="late"?"on sub-late":""} ${st==="fix"?"sub-fix":""} ${ex?"ex":""}" data-act="${exMode?"asgEx":"asgToggle"}" data-s="${s.id}" ${!exMode&&ex?"disabled":""} aria-pressed="${exMode?ex:!!st}"><span class="no num">${s.no}번${ex?" · 제외":st&&st!=="ok"?` · ${SUB_ST[st]}`:""}</span><span>${esc(s.name)}</span></button>`; }).join("")}</div>
+      <div class="banner" style="background:var(--bg);border-color:var(--line);flex-direction:column;align-items:stretch;gap:6px"><div class="spread"><div><b style="color:var(--ink)">미제출</b> <span id="missTxt">${miss.length ? miss.map(s=>`${s.no} ${esc(s.name)}`).join(", ") : "없어요"}</span></div>${miss.length||asgFix(a).length?`<button class="btn sm" data-act="copyMiss">명단 복사</button>`:""}</div>
+        ${asgFix(a).length ? `<div><b style="color:var(--bad)">수정 중</b> ${asgFix(a).map(s=>`${s.no} ${esc(s.name)}`).join(", ")}</div>` : ""}
+        ${asgLate(a).length ? `<div><b style="color:var(--warn)">늦게 제출</b> ${asgLate(a).map(s=>`${s.no} ${esc(s.name)}`).join(", ")}</div>` : ""}</div>` : `<div class="empty">왼쪽에서 과제를 추가하거나 골라 주세요</div>`}</div>
   </div>`;
 };
 function isEx(a, id){ return !!(a.exempt && a.exempt[id]); }
 function asgTargets(a){ return sorted().filter(s=>!isEx(a,s.id)); }
-function asgDone(a){ return asgTargets(a).filter(s=>a.submitted[s.id]).length; }
-function asgMiss(a){ return asgTargets(a).filter(s=>!a.submitted[s.id]); }
+/* 제출 상태: "" 미제출 · ok 제출 · late 늦게 제출 · fix 제출했지만 수정 중(통과 못함) */
+const SUB_ST = {ok:"제출", late:"늦게 제출", fix:"수정 중"};
+function subSt(a, sid){ const v = a.submitted[sid]; return v === true ? "ok" : (v === "late" || v === "fix") ? v : ""; }
+const subDone = (a, sid) => { const x = subSt(a, sid); return x === "ok" || x === "late"; };
+function asgDone(a){ return asgTargets(a).filter(s=>subDone(a, s.id)).length; }
+function asgMiss(a){ return asgTargets(a).filter(s=>!subSt(a, s.id)); }
+function asgFix(a){ return asgTargets(a).filter(s=>subSt(a, s.id)==="fix"); }
+function asgLate(a){ return asgTargets(a).filter(s=>subSt(a, s.id)==="late"); }
+function setSub(a, sid, st){ if(!st) delete a.submitted[sid]; else a.submitted[sid] = st === "ok" ? true : st; }
 A.addAsg = () => { const t = $("#asgTitle").value.trim(); if(!t){ $("#asgTitle").focus(); return; } const a = {id:uid(), title:t, due:$("#asgDue").value||today(), submitted:{}, exempt:{}}; S.assignments.push(a); ui.submitSel = a.id; ui.exMode = false; commit(); };
 EN.addAsg = () => A.addAsg();
 A.selAsg = el => { ui.submitSel = el.dataset.id; ui.exMode = false; render(); };
 A.exMode = () => { ui.exMode = !ui.exMode; render(); };
 function setEx(a, sid, on){ a.exempt ||= {}; if(on){ a.exempt[sid] = true; delete a.submitted[sid]; } else delete a.exempt[sid]; }
 A.asgEx = el => { const a = S.assignments.find(x=>x.id===ui.submitSel); setEx(a, el.dataset.s, !isEx(a, el.dataset.s)); commit(); };
-A.asgToggle = el => { const a = S.assignments.find(x=>x.id===ui.submitSel); if(isEx(a, el.dataset.s)) return; if(a.submitted[el.dataset.s]) delete a.submitted[el.dataset.s]; else a.submitted[el.dataset.s] = true; commit(); };
+A.asgToggle = el => { const a = S.assignments.find(x=>x.id===ui.submitSel), sid = el.dataset.s; if(isEx(a, sid)) return; const k = ui.subStamp || "ok"; setSub(a, sid, subSt(a, sid) === k ? "" : k); commit(); };
+A.subStamp = el => { ui.subStamp = el.dataset.v; render(); };
 A.asgAll = el => { const a = S.assignments.find(x=>x.id===ui.submitSel); a.submitted = el.dataset.v==="1" ? Object.fromEntries(asgTargets(a).map(s=>[s.id,true])) : {}; commit(); };
 A.delAsg = async () => { if(await ask("이 과제와 제출 기록을 삭제할까요?","삭제",true)){ S.assignments = S.assignments.filter(x=>x.id!==ui.submitSel); ui.submitSel=null; commit(); } };
 function submitByStudent(list, modeSeg){
   const st = sorted();
   if(!ui.submitStu || !stu(ui.submitStu)) ui.submitStu = st[0].id;
   const s = stu(ui.submitStu);
-  const missOf = id => list.filter(a=>!isEx(a,id) && !a.submitted[id]);
+  const missOf = id => list.filter(a=>!isEx(a,id) && !subDone(a, id));
   const mine = missOf(s.id), t = today();
   const mineList = list.filter(a=>!isEx(a,s.id)), exList = list.filter(a=>isEx(a,s.id));
   const done = mineList.length - mine.length;
   const missRows = st.map(x=>({x, m:missOf(x.id)})).filter(r=>r.m.length);
-  const overview = `<div class="card"><div class="spread"><h2>미제출 한눈에 보기 <span class="small muted">${missRows.length}명</span></h2><div class="row"><span class="small muted">과제 이름을 누르면 바로 제출로 바뀌어요</span>${missRows.length?`<button class="btn sm" data-act="copyMissAll">전체 명단 복사</button>`:""}</div></div>
-    ${list.length ? (missRows.length ? `<div class="miss-all">${missRows.map(({x,m})=>`<div class="miss-row ${x.id===s.id?"on":""}"><button class="miss-nm" data-act="submitStu" data-id="${x.id}"><span class="muted small num">${x.no}</span> ${esc(x.name)} <span class="pill ${m.length>=3?"bad":"warn"} num">${m.length}</span></button><div class="miss-chips">${m.map(a=>`<button class="mchip ${a.due<t?"late":""}" data-act="quickSubmit" data-a="${a.id}" data-s="${x.id}" title="눌러서 제출로 바꾸기">${esc(a.title)}${a.due<t?" · 마감 지남":""}</button>`).join("")}</div></div>`).join("")}</div>` : `<div class="empty">모든 학생이 해당 과제를 다 냈어요</div>`) : `<div class="empty">아직 과제가 없어요</div>`}</div>`;
+  const overview = `<div class="card"><div class="spread"><h2>미제출·수정 중 한눈에 보기 <span class="small muted">${missRows.length}명</span></h2><div class="row"><span class="small muted">과제 이름을 누르면 바로 제출로 바뀌어요</span>${missRows.length?`<button class="btn sm" data-act="copyMissAll">전체 명단 복사</button>`:""}</div></div>
+    ${list.length ? (missRows.length ? `<div class="miss-all">${missRows.map(({x,m})=>`<div class="miss-row ${x.id===s.id?"on":""}"><button class="miss-nm" data-act="submitStu" data-id="${x.id}"><span class="muted small num">${x.no}</span> ${esc(x.name)} <span class="pill ${m.length>=3?"bad":"warn"} num">${m.length}</span></button><div class="miss-chips">${m.map(a=>{ const fx = subSt(a, x.id)==="fix"; return `<button class="mchip ${a.due<t?"late":""} ${fx?"fix":""}" data-act="quickSubmit" data-a="${a.id}" data-s="${x.id}" title="눌러서 ${a.due<t?"늦게 제출":"제출"}로 바꾸기">${esc(a.title)}${fx?" · 수정 중":a.due<t?" · 마감 지남":""}</button>`; }).join("")}</div></div>`).join("")}</div>` : `<div class="empty">모든 학생이 해당 과제를 다 냈어요</div>`) : `<div class="empty">아직 과제가 없어요</div>`}</div>`;
   return header("제출 체크", "위에서 학생별 미제출 과제를 한눈에 보고, 아래에서 한 학생씩 자세히 체크해요. 해당 없는 과제는 '제외'를 누르세요.", modeSeg) + overview + `
   <div class="split">
     <div class="card" style="padding:12px"><div class="list">
       ${st.map(x=>{ const m = missOf(x.id).length; return `<div class="li ${x.id===s.id?"on":""}" data-act="submitStu" data-id="${x.id}"><span><span class="muted small num">${x.no}</span> ${esc(x.name)}</span>${m?`<span class="pill ${m>=3?"bad":"warn"} num">${m}</span>`:`<span class="pill ok">완료</span>`}</div>`; }).join("")}
     </div></div>
-    <div class="card">${list.length ? `<div class="spread"><div><h2><span class="muted num" style="font-size:14px">${s.no}번</span> ${esc(s.name)}</h2><div class="small muted">해당 과제 ${mineList.length}개 중 제출 ${done} · 미제출 ${mine.length}${exList.length?` · 제외 ${exList.length}`:""}</div></div>
+    <div class="card">${list.length ? `<div class="spread"><div><h2><span class="muted num" style="font-size:14px">${s.no}번</span> ${esc(s.name)}</h2><div class="small muted">해당 과제 ${mineList.length}개 중 제출 ${done} · 미완료 ${mine.length}${exList.length?` · 제외 ${exList.length}`:""}</div></div>
       <div class="row"><button class="btn sm" data-act="stuAll" data-v="1">모두 제출</button><button class="btn sm" data-act="stuAll" data-v="0">모두 해제</button><button class="btn sm" data-act="stuNext">다음 학생 →</button></div></div>
       <div class="bar ${mine.length?"":"ok"}" style="margin-bottom:14px"><i style="width:${mineList.length?done/mineList.length*100:100}%"></i></div>
-      <div class="list">${list.map(a=>{ const ex = isEx(a,s.id), on = !ex && !!a.submitted[s.id], late = !ex && !on && a.due < t;
-        return `<div class="sub-line ${ex?"sub-ex":""}"><button class="li sub-row ${on?"sub-on":""}" data-act="stuToggle" data-a="${a.id}" aria-pressed="${on}" ${ex?"disabled":""}><span style="text-align:left"><span class="t1">${esc(a.title)}</span><br><span class="small muted">마감 ${md(a.due)}</span></span><span class="pill ${ex?"":on?"ok":late?"bad":""}">${ex?"제외":on?"제출":late?"마감 지남":"미제출"}</span></button><button class="btn sm ${ex?"":"ghost"}" data-act="stuEx" data-a="${a.id}">${ex?"제외 취소":"제외"}</button></div>`; }).join("")}</div>`
+      <div class="list">${list.map(a=>{ const ex = isEx(a,s.id), st = ex ? "" : subSt(a, s.id), on = st==="ok"||st==="late", over = !ex && !st && a.due < t;
+        return `<div class="sub-line ${ex?"sub-ex":""}"><button class="li sub-row ${on?"sub-on":""}" data-act="stuToggle" data-a="${a.id}" aria-pressed="${on}" ${ex?"disabled":""}><span style="text-align:left"><span class="t1">${esc(a.title)}</span><br><span class="small muted">마감 ${md(a.due)}</span></span><span class="pill ${ex?"":st==="ok"?"ok":st==="late"?"warn":st==="fix"?"bad":over?"bad":""}">${ex?"제외":st?SUB_ST[st]:over?"마감 지남":"미제출"}</span></button>
+          ${ex ? "" : `<select class="sub-sel" data-ch="stuSt" data-a="${a.id}" aria-label="${esc(a.title)} 제출 상태"><option value="" ${!st?"selected":""}>미제출</option>${Object.entries(SUB_ST).map(([k,l])=>`<option value="${k}" ${st===k?"selected":""}>${l}</option>`).join("")}</select>`}<button class="btn sm ${ex?"":"ghost"}" data-act="stuEx" data-a="${a.id}">${ex?"제외 취소":"제외"}</button></div>`; }).join("")}</div>`
       : `<div class="empty">아직 과제가 없어요. '과제별'에서 과제를 추가해 주세요.</div>`}</div>
   </div>`;
 }
 A.submitMode = el => { ui.submitMode = el.dataset.v; ui.exMode = false; render(); };
-A.quickSubmit = el => { const a = S.assignments.find(x=>x.id===el.dataset.a); if(!a || isEx(a, el.dataset.s)) return; a.submitted[el.dataset.s] = true; commit(); toast(`${sname(el.dataset.s)} · ${a.title} 제출`); };
+A.quickSubmit = el => { const a = S.assignments.find(x=>x.id===el.dataset.a); if(!a || isEx(a, el.dataset.s)) return; const st = a.due < today() ? "late" : "ok"; setSub(a, el.dataset.s, st); commit(); toast(`${sname(el.dataset.s)} · ${a.title} ${SUB_ST[st]}`); };
 A.copyMissAll = async () => { const list = S.assignments.slice().sort((a,b)=>b.due.localeCompare(a.due));
-  const txt = sorted().map(x=>{ const m = list.filter(a=>!isEx(a,x.id) && !a.submitted[x.id]); return m.length ? `${x.no} ${x.name}: ${m.map(a=>a.title).join(", ")}` : ""; }).filter(Boolean).join("\n");
+  const txt = sorted().map(x=>{ const m = list.filter(a=>!isEx(a,x.id) && !subDone(a, x.id)); return m.length ? `${x.no} ${x.name}: ${m.map(a=>a.title + (subSt(a,x.id)==="fix" ? "(수정 중)" : "")).join(", ")}` : ""; }).filter(Boolean).join("\n");
   try{ await navigator.clipboard.writeText(txt); toast("미제출 명단을 복사했어요"); }catch(e){ toast("복사가 막혀 있어요"); } };
 A.submitStu = el => { ui.submitStu = el.dataset.id; render(); };
-A.stuToggle = el => { const a = S.assignments.find(x=>x.id===el.dataset.a); if(isEx(a, ui.submitStu)) return; if(a.submitted[ui.submitStu]) delete a.submitted[ui.submitStu]; else a.submitted[ui.submitStu] = true; commit(); };
+A.stuToggle = el => { const a = S.assignments.find(x=>x.id===el.dataset.a), sid = ui.submitStu; if(isEx(a, sid)) return; setSub(a, sid, subDone(a, sid) ? "" : (a.due < today() ? "late" : "ok")); commit(); };
+CH.stuSt = el => { const a = S.assignments.find(x=>x.id===el.dataset.a); if(isEx(a, ui.submitStu)) return; setSub(a, ui.submitStu, el.value); commit(); };
 A.stuEx = el => { const a = S.assignments.find(x=>x.id===el.dataset.a); setEx(a, ui.submitStu, !isEx(a, ui.submitStu)); commit(); };
 A.stuAll = el => { S.assignments.forEach(a=>{ if(isEx(a, ui.submitStu)) return; if(el.dataset.v==="1") a.submitted[ui.submitStu] = true; else delete a.submitted[ui.submitStu]; }); commit(); };
 A.stuNext = () => { const st = sorted(), i = st.findIndex(x=>x.id===ui.submitStu); ui.submitStu = st[(i+1)%st.length].id; render(); };
-A.copyMiss = async () => { try{ await navigator.clipboard.writeText($("#missTxt").textContent); toast("미제출 명단을 복사했어요"); }catch(e){ toast("복사가 막혀 있어요. 명단을 직접 선택해 복사해 주세요"); } };
+A.copyMiss = async () => { const a = S.assignments.find(x=>x.id===ui.submitSel), f = asgFix(a), m = asgMiss(a);
+  const txt = [m.length ? `미제출: ${m.map(s=>`${s.no} ${s.name}`).join(", ")}` : "", f.length ? `수정 중: ${f.map(s=>`${s.no} ${s.name}`).join(", ")}` : ""].filter(Boolean).join("\n");
+  try{ await navigator.clipboard.writeText(txt); toast("미제출 명단을 복사했어요"); }catch(e){ toast("복사가 막혀 있어요. 명단을 직접 선택해 복사해 주세요"); } };
 
 /* ───────── 학생 기록 ───────── */
 const REC_CATS = ["학습","생활","교우","상담","칭찬","기타"];
@@ -1731,6 +1751,13 @@ A.recExport = () => { const rows = [["날짜","번호","이름","분류","언제
   exportSheets(`${clsName()}_학생누가기록`, [["누가기록", rows]]); };
 
 /* ───────── 성적 ───────── */
+/* 재시험: 평가마다 켜고(a.retakeOn), 재시험 볼 학생을 골라(a.retake[sid]) 결과를 넣으면 둘 중 나은 쪽이 최종 */
+const hasV = v => v !== undefined && v !== null && v !== "";
+function gBetter(a, x, y){ if(!hasV(x)) return y; if(!hasV(y)) return x;
+  if(a.mode === "level"){ const i = a.levels.indexOf(x), j = a.levels.indexOf(y); return j >= 0 && (i < 0 || j < i) ? y : x; }
+  return Number(y) > Number(x) ? y : x; }
+function gFinal(a, sid){ const v = a.scores[sid]; if(!a.retakeOn || !a.retake || !(sid in a.retake)) return v; return gBetter(a, v, a.retake[sid]); }
+const gRetakeUsed = (a, sid) => !!(a.retakeOn && a.retake && hasV(a.retake[sid]) && gFinal(a, sid) === a.retake[sid] && a.retake[sid] !== a.scores[sid]);
 /* 평가 종류: 수행평가(등급) / 단원·형성평가(점수) */
 const aKind = a => a.kind || ((S.evalPlans||[]).some(p => p.assessId === a.id) ? "perf" : a.mode === "score" ? "test" : "perf");
 const TEST_TYPES = ["단원평가","형성평가"];
@@ -1750,9 +1777,9 @@ VIEWS.grades = () => {
   const a = S.assessments.find(x=>x.id===ui.gradeSel);
   let summary = "";
   if(a){
-    if(a.mode==="level"){ summary = a.levels.map(l=>`<span class="pill">${esc(l)} <b class="num">${S.students.filter(s=>a.scores[s.id]===l).length}</b></span>`).join("") + `<span class="pill">미입력 <b class="num">${S.students.filter(s=>!a.scores[s.id]).length}</b></span>`; }
-    else { const v = S.students.map(s=>a.scores[s.id]).filter(x=>x!==undefined&&x!==""); const avg = v.length ? (v.reduce((p,c)=>p+Number(c),0)/v.length).toFixed(1) : "-";
-      summary = `<span class="pill">평균 <b class="num">${avg}</b>/${a.max}</span><span class="pill">최고 <b class="num">${v.length?Math.max(...v):"-"}</b></span><span class="pill">최저 <b class="num">${v.length?Math.min(...v):"-"}</b></span><span class="pill">입력 <b class="num">${v.length}/${S.students.length}</b></span>`; }
+    if(a.mode==="level"){ summary = a.levels.map(l=>`<span class="pill">${esc(l)} <b class="num">${S.students.filter(s=>gFinal(a,s.id)===l).length}</b></span>`).join("") + `<span class="pill">미입력 <b class="num">${S.students.filter(s=>!gFinal(a,s.id)).length}</b></span>`; }
+    else { const v = S.students.map(s=>gFinal(a,s.id)).filter(x=>x!==undefined&&x!==""); const avg = v.length ? (v.reduce((p,c)=>p+Number(c),0)/v.length).toFixed(1) : "-";
+      summary = (a.retakeOn ? `<span class="small muted" style="width:100%">재시험 반영한 최종 기준</span>` : "") + `<span class="pill">평균 <b class="num">${avg}</b>/${a.max}</span><span class="pill">최고 <b class="num">${v.length?Math.max(...v):"-"}</b></span><span class="pill">최저 <b class="num">${v.length?Math.min(...v):"-"}</b></span><span class="pill">입력 <b class="num">${v.length}/${S.students.length}</b></span>`; }
   }
   const nP = S.assessments.filter(x=>aKind(x)==="perf").length, nT = S.assessments.length - nP;
   const subjDL = `<datalist id="gSubList">${[...new Set(TT().subjects.map(x=>x.name).concat(["국어","수학","사회","과학","영어","도덕","음악","미술","체육","실과"]))].map(x=>`<option value="${esc(x)}">`).join("")}</datalist>`;
@@ -1779,12 +1806,13 @@ VIEWS.grades = () => {
       <div class="list" style="margin-top:4px">${groups.length ? groups.map(g=>`<div class="g-grp">${esc(g.label)} <span class="num">${g.items.length}</span></div>` + g.items.map(x=>`<div class="li ${x.id===ui.gradeSel?"on":""}" data-act="gradeSel" data-id="${x.id}"><div><div class="t1">${aKind(x)==="test"?`<span class="pill" style="font-size:11px;padding:0 6px">${esc(x.testType||"단원평가")}</span> `:""}${esc(x.title)}</div><div class="small muted">${ui.gGroup==="month"?esc(x.subject)+" · ":""}${x.date?md(x.date):""}${aKind(x)==="test"?` · ${x.max}점 만점`:""}</div></div><span class="small muted num">${S.students.filter(s=>x.scores[s.id]!==undefined&&x.scores[s.id]!=="").length}/${S.students.length}</span></div>`).join("")).join("") : `<div class="empty">${tab==="perf"?"수행평가":"단원·형성평가"}를 추가해 보세요</div>`}</div>
     </div>
     <div class="card">${a ? `<div class="spread"><div><h2>${esc(a.subject)} · ${esc(a.title)}</h2><div class="row" style="margin-top:6px">${summary}</div></div>
-      <div class="row">${aKind(a)==="test"?`<select data-ch="gType" aria-label="평가 종류">${TEST_TYPES.map(x=>`<option ${(a.testType||"단원평가")===x?"selected":""}>${x}</option>`).join("")}</select>`:""}${a.mode==="score"?`<label class="f" style="flex-direction:row;align-items:center;gap:6px">만점<input type="number" class="scoreIn" style="width:76px" value="${a.max}" data-ch="gMax" min="1"></label>`:""}<input type="date" value="${a.date}" data-ch="gDate"><button class="btn sm danger" data-act="delGrade">평가 삭제</button></div></div>
+      <div class="row">${aKind(a)==="test"?`<select data-ch="gType" aria-label="평가 종류">${TEST_TYPES.map(x=>`<option ${(a.testType||"단원평가")===x?"selected":""}>${x}</option>`).join("")}</select>`:""}${a.mode==="score"?`<label class="f" style="flex-direction:row;align-items:center;gap:6px">만점<input type="number" class="scoreIn" style="width:76px" value="${a.max}" data-ch="gMax" min="1"></label>`:""}<input type="date" value="${a.date}" data-ch="gDate"><label class="row small g-rt-tg" style="gap:5px"><input type="checkbox" ${a.retakeOn?"checked":""} data-ch="gRetakeOn">재시험 있음</label><button class="btn sm danger" data-act="delGrade">평가 삭제</button></div></div>
+      ${a.retakeOn ? `<div class="banner g-rt-info" style="margin-top:10px"><div class="small">재시험 볼 학생은 <b>재시험</b> 칸의 '＋ 재시험'을 누르고, 결과를 넣으세요. 처음 결과와 재시험 중 <b>더 나은 쪽이 최종</b>이 돼요. 재시험 대상 <b class="num">${Object.keys(a.retake||{}).length}명</b> · 결과 입력 <b class="num">${Object.values(a.retake||{}).filter(hasV).length}명</b></div></div>` : ""}
       ${gBulkBar(a)}
-      <div class="scroll"><table class="t ${ui.gBulk?"g-picking":""}"><thead><tr>${ui.gBulk?`<th style="width:34px"></th>`:""}<th>번호</th><th>이름</th><th>${a.mode==="level"?"등급":"점수"}</th></tr></thead><tbody>
+      <div class="scroll"><table class="t ${ui.gBulk?"g-picking":""}"><thead><tr>${ui.gBulk?`<th style="width:34px"></th>`:""}<th>번호</th><th>이름</th><th>${a.mode==="level"?"등급":"점수"}</th>${a.retakeOn && !ui.gBulk ? `<th>재시험</th><th>최종</th>` : ""}</tr></thead><tbody>
       ${ui.gBulk ? sorted().map(s=>{ const on = ui.gBulk.sel.includes(s.id), v = a.scores[s.id];
         return `<tr class="g-row ${on?"on":""}" data-act="gPick" data-s="${s.id}"><td><input type="checkbox" ${on?"checked":""} tabindex="-1" aria-label="${esc(s.name)} 고르기"></td><td class="num">${s.no}</td><td>${esc(s.name)}</td><td>${v!==undefined&&v!=="" ? `<span class="pill">${esc(String(v))}</span>` : `<span class="small muted">미입력</span>`}${on ? ` <span class="small" style="color:var(--accent-ink)">→ ${esc(String(ui.gBulk.v))}</span>` : ""}</td></tr>`; }).join("") :
-      sorted().map(s=>`<tr><td class="num">${s.no}</td><td>${esc(s.name)}</td><td>${a.mode==="level" ? `<div class="lv">${a.levels.map(l=>`<button class="${a.scores[s.id]===l?"on":""}" data-act="gLevel" data-s="${s.id}" data-l="${esc(l)}">${esc(l)}</button>`).join("")}</div>` : `<input type="number" class="scoreIn num" min="0" max="${a.max}" value="${a.scores[s.id]??""}" data-ch="gScore" data-s="${s.id}" aria-label="${esc(s.name)} 점수">`}</td></tr>`).join("")}
+      sorted().map(s=>`<tr><td class="num">${s.no}</td><td>${esc(s.name)}</td><td>${a.mode==="level" ? `<div class="lv">${a.levels.map(l=>`<button class="${a.scores[s.id]===l?"on":""}" data-act="gLevel" data-s="${s.id}" data-l="${esc(l)}">${esc(l)}</button>`).join("")}</div>` : `<input type="number" class="scoreIn num" min="0" max="${a.max}" value="${a.scores[s.id]??""}" data-ch="gScore" data-s="${s.id}" aria-label="${esc(s.name)} 점수">`}</td>${a.retakeOn ? gRetakeCells(a, s) : ""}</tr>`).join("")}
       </tbody></table></div>` : `<div class="empty">왼쪽에서 평가를 추가하거나 골라 주세요</div>`}</div>
   </div>`;
 };
@@ -1817,6 +1845,17 @@ A.gPickAll = el => { const a = S.assessments.find(x=>x.id===ui.gradeSel), k = el
 A.gBulkCancel = () => { ui.gBulk = null; render(); };
 A.gBulkApply = () => { const a = S.assessments.find(x=>x.id===ui.gradeSel), B = ui.gBulk; B.sel.forEach(id => a.scores[id] = B.v);
   const n = B.sel.length; ui.gBulk = null; commit(); toast(`${n}명에게 '${B.v}'을(를) 넣었어요`); };
+function gRetakeCells(a, s){
+  const R = a.retake || {}, on = s.id in R, f = gFinal(a, s.id), used = gRetakeUsed(a, s.id);
+  const cell = !on ? `<button class="btn sm ghost" data-act="gRetake" data-s="${s.id}">＋ 재시험</button>`
+    : `<div class="row" style="gap:4px;flex-wrap:nowrap">${a.mode==="level" ? `<div class="lv lv-rt">${a.levels.map(l=>`<button class="${R[s.id]===l?"on":""}" data-act="gRetakeLv" data-s="${s.id}" data-l="${esc(l)}">${esc(l)}</button>`).join("")}</div>`
+      : `<input type="number" class="scoreIn num" min="0" max="${a.max}" value="${R[s.id]??""}" data-ch="gRetakeSc" data-s="${s.id}" aria-label="${esc(s.name)} 재시험 점수" placeholder="재시험">`}<button class="x" data-act="gRetake" data-s="${s.id}" title="재시험 대상에서 빼기" aria-label="재시험 빼기">×</button></div>`;
+  return `<td class="g-rt-c">${cell}</td><td style="white-space:nowrap">${hasV(f) ? `<span class="pill ${used?"acc":""}">${esc(String(f))}${a.mode==="score"?`<span class="muted">/${a.max}</span>`:""}</span>${used?` <span class="small" style="color:var(--accent-ink)">재시험</span>`:""}` : `<span class="small muted">-</span>`}</td>`;
+}
+CH.gRetakeOn = el => { const a = S.assessments.find(x=>x.id===ui.gradeSel); a.retakeOn = el.checked; a.retake ||= {}; commit(); };
+A.gRetake = el => { const a = S.assessments.find(x=>x.id===ui.gradeSel), sid = el.dataset.s; a.retake ||= {}; if(sid in a.retake) delete a.retake[sid]; else a.retake[sid] = ""; commit(); };
+A.gRetakeLv = el => { const a = S.assessments.find(x=>x.id===ui.gradeSel), sid = el.dataset.s; a.retake[sid] = a.retake[sid] === el.dataset.l ? "" : el.dataset.l; commit(); };
+CH.gRetakeSc = el => { const a = S.assessments.find(x=>x.id===ui.gradeSel), sid = el.dataset.s; a.retake[sid] = el.value === "" ? "" : Math.max(0, Math.min(a.max, Number(el.value))); commit(); };
 A.gLevel = el => { const a = S.assessments.find(x=>x.id===ui.gradeSel); a.scores[el.dataset.s] === el.dataset.l ? delete a.scores[el.dataset.s] : a.scores[el.dataset.s] = el.dataset.l; commit(); };
 CH.gScore = el => { const a = S.assessments.find(x=>x.id===ui.gradeSel); if(el.value===""){ delete a.scores[el.dataset.s]; } else { let v = Math.max(0, Math.min(a.max, Number(el.value))); a.scores[el.dataset.s] = v; } commit(); };
 CH.gMax = el => { const a = S.assessments.find(x=>x.id===ui.gradeSel); a.max = Math.max(1, Number(el.value)||100); commit(); };
@@ -1824,7 +1863,7 @@ CH.gDate = el => { const a = S.assessments.find(x=>x.id===ui.gradeSel); a.date =
 A.delGrade = async () => { if(await ask("이 평가와 입력한 성적을 삭제할까요?","삭제",true)){ S.assessments = S.assessments.filter(x=>x.id!==ui.gradeSel); ui.gradeSel=null; commit(); } };
 A.gradeExport = () => {
   const sheet = (kind) => { const as = S.assessments.filter(a=>aKind(a)===kind).sort((a,b)=>gSubjOrder(a.subject)-gSubjOrder(b.subject)||a.subject.localeCompare(b.subject)||(a.date||"").localeCompare(b.date||""));
-    return [["번호","이름",...as.map(a=>`${a.subject}-${kind==="test"?`[${a.testType||"단원평가"}] `:""}${a.title}${kind==="test"?` (${a.max}점)`:""}`)], ...sorted().map(s=>[s.no, s.name, ...as.map(a=>a.scores[s.id]??"")])]; };
+    return [["번호","이름",...as.map(a=>`${a.subject}-${kind==="test"?`[${a.testType||"단원평가"}] `:""}${a.title}${kind==="test"?` (${a.max}점)`:""}`)], ...sorted().map(s=>[s.no, s.name, ...as.map(a=>{ const f = gFinal(a, s.id); return hasV(f) ? (gRetakeUsed(a, s.id) ? `${f} (재시험)` : f) : ""; })])]; };
   exportSheets(`${clsName()}_성적`, [["수행평가", sheet("perf")], ["단원·형성평가", sheet("test")]]); };
 
 /* ───────── 예산 ───────── */
@@ -3585,8 +3624,8 @@ function studentDigest(sid, term){
   const recs = S.records.filter(r=>r.sid===sid && inRange(r.date,R)).sort((a,b)=>a.date.localeCompare(b.date));
   const cs = (S.counsels||[]).filter(c=>c.sid===sid && inRange(c.date,R)).sort((a,b)=>a.date.localeCompare(b.date));
   const att = {}; Object.entries(S.attendance).forEach(([d,o])=>{ if(inRange(d,R) && o[sid]){ const r = o[sid]; const k = r.kind==="결석" ? (r.reason==="체험학습"?"체험학습":"결석") : r.kind; att[k] = (att[k]||0)+1; } });
-  const asg = S.assignments.filter(a=>inRange(a.due,R) && !isEx(a,sid)); const miss = asg.filter(a=>!a.submitted[sid]);
-  const grades = S.assessments.filter(a=>inRange(a.date,R) && a.scores[sid]!==undefined && a.scores[sid]!=="").map(a=>({t:`${a.subject} ${a.title}`, v: a.mode==="score" ? `${a.scores[sid]}/${a.max}점` : a.scores[sid]}));
+  const asg = S.assignments.filter(a=>inRange(a.due,R) && !isEx(a,sid)); const miss = asg.filter(a=>!subDone(a, sid));
+  const grades = S.assessments.filter(a=>inRange(a.date,R) && hasV(gFinal(a, sid))).map(a=>{ const f = gFinal(a, sid), rt = gRetakeUsed(a, sid) ? " (재시험)" : ""; return {t:`${a.subject} ${a.title}`, v: (a.mode==="score" ? `${f}/${a.max}점` : f) + rt}; });
   const roles = [];
   (S.jobs.history||[]).filter(h=>inRange(ymd(new Date(h.at)),R)).forEach(h=>Object.entries(h.assign).forEach(([jid,a])=>{ if(a.includes(sid)) roles.push(h.names?.[jid]||""); }));
   (S.roles?.history||[]).filter(h=>inRange(ymd(new Date(h.at)),R)).forEach(h=>{ const rid = h.assign[sid]; if(rid) roles.push(h.names[rid]||""); });
