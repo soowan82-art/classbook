@@ -231,6 +231,21 @@ th.tt-today{color:var(--accent)}
 .task-row.late .task-title{color:var(--bad)}
 .task-row.compact{padding:6px 2px}
 .task-row.editing{background:var(--accent-soft);flex-direction:column}
+.tt-weekcal{max-width:520px}
+.tt-off{background:repeating-linear-gradient(45deg,transparent 0 8px,color-mix(in srgb,var(--line) 40%,transparent) 8px 9px);text-align:center;vertical-align:middle}
+.twc{display:flex;flex-direction:column;gap:3px}
+.twc-h,.twc-w{display:grid;grid-template-columns:repeat(7,1fr);text-align:center}
+.twc-h span{font-size:12px;color:var(--muted);padding:2px 0}
+.twc-w{border:1px solid transparent;border-radius:8px;background:none;padding:5px 0;cursor:pointer;font:inherit}
+.twc-w:hover{background:var(--accent-soft)}
+.twc-w.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.twc-w.on span{color:#fff!important}
+.twc-w.cur:not(.on){border-color:var(--accent)}
+.twc-w span{position:relative;font-size:14px}
+.twc-w span.out{color:var(--muted);opacity:.55}
+.twc-w span.hol{color:var(--bad)}
+.twc-w span.td{font-weight:800}
+.twc-dot{position:absolute;left:50%;bottom:-5px;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:var(--warn)}
 .qk-row{gap:8px;align-items:flex-end;flex-wrap:wrap}
 .combo{display:inline-flex;gap:4px;align-items:center;min-width:0}
 .combo select{width:auto;max-width:100%}
@@ -575,7 +590,7 @@ let liveS = null;   // 지난 학년도 보관 기록을 보는 동안 지금 �
 const VIEWS = {}, AFTER = {}, A = {}, CH = {}, EN = {}, IN = {};
 /* ───────── 저장 ───────── */
 const KEY = "hopyeong-classbook-v1";
-const APP_VER = "2026.11.13-5";
+const APP_VER = "2026.11.13-6";
 let storageOK = true;
 /* 학급 여러 개: 학급마다 따로 저장한다. 처음 학급(c1)은 예전 저장 위치를 그대로 쓴다 */
 const REG_KEY = KEY + "-classes";
@@ -1907,15 +1922,17 @@ VIEWS.timetable = () => {
     : days.map(d=>{ const dt = parse(d), ch = Object.keys(tt.over[d]||{}).length; return `<th class="c ${d===t?"tt-today":""}"><div>${WD[dt.getDay()]} <span class="muted num">${dt.getMonth()+1}/${dt.getDate()}</span></div>${HOLI[d]?`<div class="small holi">${HOLI[d]}</div>`:""}${ch?`<button class="btn sm ghost" data-act="ttResetDay" data-d="${d}" style="padding:1px 6px;font-size:11.5px">기본으로</button>`:""}</th>`; }).join("");
   const rows = Array.from({length:tt.periods}, (_,i) => `<tr><th class="tt-p"><b>${i+1}교시</b>${tt.times[i]?`<div class="small muted num">${tt.times[i]}</div>`:""}</th>${
     mode==="base" ? [1,2,3,4,5].map(w=>{ const src = ui.ttDraft || tt.base, v = (src[w]||[])[i]||"", ch = ui.ttDraft && v !== ((tt.base[w]||[])[i]||""); return `<td><button class="tt-cell ${ch?"changed":""}" data-act="ttCell" data-w="${w}" data-i="${i}" aria-label="${WD[w]} ${i+1}교시 ${esc(cellLabel(v))||"비어 있음"}">${subjChip(v)}</button></td>`; }).join("")
-    : days.map(d=>{ const r = ttDay(d)[i]; return `<td class="${d===t?"tt-today":""}"><button class="tt-cell ${r.changed?"changed":""}" data-act="ttCell" data-d="${d}" data-i="${i}" title="${r.changed?`기본: ${esc(cellLabel(r.base))||"없음"} → 이날만 ${esc(cellLabel(r.subj))||"비움"}`:""}">${subjChip(r.subj)}${r.changed?`<span class="tt-badge">변경</span>`:""}${r.memo?`<span class="tt-memo">${esc(r.memo)}</span>`:""}</button></td>`; }).join("")
+    : days.map(d=>{ const r = ttDay(d)[i]; if(!r) return `<td class="tt-off">${i===0?`<span class="small" style="color:var(--bad)">${esc(offName(d)||"쉬는 날")}</span>`:""}</td>`; return `<td class="${d===t?"tt-today":""}"><button class="tt-cell ${r.changed?"changed":""}" data-act="ttCell" data-d="${d}" data-i="${i}" title="${r.changed?`기본: ${esc(cellLabel(r.base))||"없음"} → 이날만 ${esc(cellLabel(r.subj))||"비움"}`:""}">${subjChip(r.subj)}${r.changed?`<span class="tt-badge">변경</span>`:""}${r.memo?`<span class="tt-memo">${esc(r.memo)}</span>`:""}</button></td>`; }).join("")
   }</tr>`).join("");
   const draft = mode==="base" && ui.ttDraft, dirty = draft && JSON.stringify(ui.ttDraft) !== JSON.stringify(tt.base);
   const modeBar = mode==="base"
     ? (draft ? `<div class="tt-modebar base editing"><div><b>기본 시간표를 고치는 중</b><div class="small">과목을 고르고 칸을 누르세요. <b>저장</b>을 눌러야 모든 주에 적용돼요.${dirty?` <span class="pill warn">저장 안 한 변경 있음</span>`:""}</div></div><div class="row"><button class="btn" data-act="ttDraftCancel">취소</button><button class="btn pri" data-act="ttDraftSave" ${dirty?"":"disabled"}>저장</button></div></div>`
              : `<div class="tt-modebar base"><div><b>기본 시간표 · 매주 반복</b><div class="small">여기를 바꾸면 앞으로 모든 주에 적용돼요. 실수로 바뀌지 않게 잠겨 있어요.</div></div><button class="btn pri" data-act="ttDraftStart">기본 시간표 고치기</button></div>`)
-    : `<div class="tt-modebar week"><div><b>날짜별 시간표 · ${md(days[0])} ~ ${md(days[4])}</b><div class="small">여기서 바꾸면 <b>그날만</b> 바뀌어요. 기본 시간표는 그대로예요. 교시별 메모는 다이어리에서 적어요.</div></div></div>`;
-  return header("시간표", mode==="base" ? "요일별 기본 시간표" : "이번 주 시간표",
-    `<div class="seg big-seg"><button class="${mode==="week"?"on":""}" data-act="ttMode" data-v="week">날짜별 (이번 주)</button><button class="${mode==="base"?"on":""}" data-act="ttMode" data-v="base">기본 시간표 (매주)</button></div>` +
+    : `<div class="tt-modebar week"><div><b>날짜별 시간표 · ${md(days[0])} ~ ${md(days[4])}</b><div class="small">여기서 바꾸면 <b>그날만</b> 바뀌어요. 기본 시간표는 그대로예요. 교시별 메모는 다이어리에서 적어요.</div></div>
+        <div class="row" style="gap:6px"><input type="date" value="${ui.ttWeek}" data-ch="ttPick" aria-label="날짜로 주 고르기" title="날짜를 고르면 그 주로 가요"><button class="btn sm ${ui.ttCalOpen?"pri":""}" data-act="ttCalToggle">📅 달력에서 고르기</button></div></div>
+      ${ui.ttCalOpen ? ttWeekCal(days) : ""}`;
+  return header("시간표", mode==="base" ? "요일별 기본 시간표" : `${md(days[0])} ~ ${md(days[4])}${days.includes(t) ? " · 이번 주" : ""}`,
+    `<div class="seg big-seg"><button class="${mode==="week"?"on":""}" data-act="ttMode" data-v="week">날짜별</button><button class="${mode==="base"?"on":""}" data-act="ttMode" data-v="base">기본 시간표 (매주)</button></div>` +
     (mode==="week" ? `<button class="btn" data-act="ttWk" data-n="-7">이전 주</button><button class="btn" data-act="ttWk" data-n="0">이번 주</button><button class="btn" data-act="ttWk" data-n="7">다음 주</button>` : "")) +
   modeBar + (mode==="base" && !draft ? "" : pal) + `<div class="card ${mode==="base"?"tt-basecard":""} ${draft?"tt-drafting":""}"><div class="scroll"><table class="tt-table"><thead><tr><th></th>${head}</tr></thead><tbody>${rows}</tbody></table></div>
     ${mode==="base" && ttHasAny() ? ttHoursSummary() : ""}
@@ -1940,7 +1957,28 @@ A.ttDraftStart = () => { ui.ttDraft = JSON.parse(JSON.stringify(TT().base)); ren
 A.ttDraftCancel = async () => { const dirty = JSON.stringify(ui.ttDraft) !== JSON.stringify(TT().base);
   if(dirty && !(await ask("고친 내용을 버릴까요?","버리기",true))) return; ui.ttDraft = null; render(); };
 A.ttDraftSave = () => { TT().base = ui.ttDraft; ui.ttDraft = null; commit(); toast("기본 시간표를 저장했어요. 앞으로 모든 주에 적용돼요"); };
-A.ttWk = el => { const n = Number(el.dataset.n); ui.ttWeek = n===0 ? today() : ymd(addDays(parse(ui.ttWeek), n)); render(); };
+/* 달력에서 주 고르기: 몇 달 뒤도 바로 간다. 날짜만 바꾼 칸이 있는 주는 점으로 표시 */
+function ttWeekCal(days){
+  const tt = TT(), base = parse((ui.ttCalMonth || ui.ttWeek.slice(0,7)) + "-01"), y = base.getFullYear(), m = base.getMonth();
+  const start = mondayOf(new Date(y, m, 1)), weeks = [];
+  for(let w = 0; w < 6; w++){ const mon = addDays(start, w*7); if(w && mon.getMonth() !== m && mon > new Date(y, m+1, 0)) break; weeks.push(mon); }
+  const changed = d => Object.keys(tt.over[d] || {}).length > 0;
+  const months = [0,1,2,3].map(k => new Date(new Date().getFullYear(), new Date().getMonth()+k, 1));
+  return `<div class="card tt-weekcal"><div class="spread" style="margin-bottom:8px">
+      <div class="row"><button class="btn sm" data-act="ttCalMon" data-n="-1" aria-label="이전 달">‹</button><b class="num" style="min-width:90px;text-align:center">${y}년 ${m+1}월</b><button class="btn sm" data-act="ttCalMon" data-n="1" aria-label="다음 달">›</button></div>
+      <div class="seg">${months.map((d,k)=>`<button class="${d.getFullYear()===y&&d.getMonth()===m?"on":""}" data-act="ttCalMonGo" data-v="${ymd(d).slice(0,7)}">${k===0?"이번 달":`${d.getMonth()+1}월`}</button>`).join("")}</div></div>
+    <div class="twc"><div class="twc-h">${["월","화","수","목","금","토","일"].map(w=>`<span>${w}</span>`).join("")}</div>
+    ${weeks.map(mon => { const ds = [0,1,2,3,4,5,6].map(i=>ymd(addDays(mon,i))), sel = ds[0] === days[0], cur = ds.includes(today());
+      return `<button class="twc-w ${sel?"on":""} ${cur?"cur":""}" data-act="ttCalPick" data-d="${ds[0]}">${ds.map((d,i)=>{ const dt = parse(d), off = i<5 && offName(d);
+        return `<span class="${dt.getMonth()!==m?"out":""} ${i>=5||off?"hol":""} ${d===today()?"td":""}" title="${off?esc(off):""}">${dt.getDate()}${i<5&&changed(d)?`<i class="twc-dot"></i>`:""}</span>`; }).join("")}</button>`; }).join("")}
+    </div><div class="small muted" style="margin-top:6px">주를 누르면 그 주 시간표로 가요. 점(•)은 그날만 바꾼 시간이 있는 날, 빨간 날은 쉬는 날이에요.</div></div>`;
+}
+A.ttCalToggle = () => { ui.ttCalOpen = !ui.ttCalOpen; ui.ttCalMonth = ui.ttWeek.slice(0,7); render(); };
+A.ttCalMon = el => { const b = parse((ui.ttCalMonth || ui.ttWeek.slice(0,7)) + "-01"); ui.ttCalMonth = ymd(new Date(b.getFullYear(), b.getMonth() + Number(el.dataset.n), 1)).slice(0,7); render(); };
+A.ttCalMonGo = el => { ui.ttCalMonth = el.dataset.v; render(); };
+A.ttCalPick = el => { ui.ttWeek = el.dataset.d; render(); };
+CH.ttPick = el => { if(el.value){ ui.ttWeek = el.value; ui.ttCalMonth = el.value.slice(0,7); render(); } };
+A.ttWk = el => { const n = Number(el.dataset.n); ui.ttWeek = n===0 ? today() : ymd(addDays(parse(ui.ttWeek), n)); ui.ttCalMonth = ui.ttWeek.slice(0,7); render(); };
 A.ttSp = el => { ui.ttSp = el.dataset.v==="1"; render(); };
 A.ttBrush = el => { const v = el.dataset.v; ui.ttBrush = ui.ttBrush===v ? null : v; render(); };
 A.ttEditToggle = () => { ui.ttEdit = !ui.ttEdit; render(); };
