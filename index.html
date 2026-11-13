@@ -109,7 +109,7 @@ a.btn{text-decoration:none;color:var(--ink);display:inline-block}
 .x:hover{color:var(--bad);background:var(--bad-soft)}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
-input[type=text],input[type=number],input[type=date],input[type=time],input[type=search],select,textarea{
+input[type=text],input[type=tel],input[type=number],input[type=date],input[type=time],input[type=search],select,textarea{
   border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:7px 10px;min-width:0}
 input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
 textarea{width:100%;resize:vertical;line-height:1.6}
@@ -190,7 +190,7 @@ table.t{width:100%;border-collapse:collapse;font-size:13.5px}
 .tt-badge{position:absolute;top:2px;right:4px;font-size:10px;color:var(--warn);font-weight:600}
 .tt-badge.static{position:static}
 .look-sw{display:inline-flex;align-items:center;gap:6px;padding:6px 12px 6px 8px;border:1.5px solid var(--line);border-radius:999px;background:var(--surface);cursor:pointer;font-size:13.5px}.look-sw i{width:18px;height:18px;border-radius:50%;background:var(--c);box-shadow:0 0 0 3px var(--cs)}.look-sw.on{border-color:var(--c);font-weight:600}
-.ct-t td{vertical-align:middle;padding:5px 6px}.ct-pair{display:flex;gap:4px}.ct-in{padding:5px 7px;font-size:13px;min-width:0}
+.ct-t td{vertical-align:middle;padding:5px 6px}.ct-t .ct-r1 td{border-bottom:none;padding-bottom:2px}.ct-t .ct-r2 td{padding-top:2px}.ct-addr{display:flex;align-items:center;gap:8px}.ct-addr .ct-in{flex:1}.ct-pair{display:flex;gap:4px}.ct-in{padding:5px 7px;font-size:13px;min-width:0}
 .g-bulk{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;margin:12px 0 8px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--bg-soft,#f7f7f5)}
 .g-bulk.on{justify-content:space-between;border-color:var(--accent);background:var(--accent-soft);position:sticky;top:0;z-index:2}
 .g-picking .g-row{cursor:pointer}.g-picking .g-row.on td{background:var(--accent-soft)}
@@ -632,7 +632,7 @@ function lookCard(){
 }
 A.lookAccent = el => { LOOK.accent = el.dataset.v; saveLook(); render(); };
 A.lookMode = el => { LOOK.mode = el.dataset.v; saveLook(); render(); };
-const APP_VER = "2026.11.13-20";
+const APP_VER = "2026.11.13-21";
 const LOGO_SVG = `<svg class="brand-logo" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" fill="#1F6E8C"/><g transform="translate(256 258) scale(1.13) translate(-256 -258)"><rect x="140" y="112" width="232" height="292" rx="30" fill="#FFFFFF"/><rect x="140" y="112" width="44" height="292" rx="22" fill="#D7E9F0"/><rect x="162" y="112" width="22" height="292" fill="#D7E9F0"/><path d="M318 112 H352 V214 L335 198 L318 214 Z" fill="#F2B84B"/><path d="M212 196 L236 220 L284 168" fill="none" stroke="#1F6E8C" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/><rect x="212" y="262" width="124" height="16" rx="8" fill="#9CC5D4"/><rect x="212" y="306" width="96" height="16" rx="8" fill="#9CC5D4"/><rect x="212" y="350" width="112" height="16" rx="8" fill="#C9DFE8"/></g></svg>`;
 let storageOK = true;
 /* 학급 여러 개: 학급마다 따로 저장한다. 처음 학급(c1)은 예전 저장 위치를 그대로 쓴다 */
@@ -3949,12 +3949,13 @@ function contactsCard(){
   </div>
   ${ui.ctImp ? ctImportCard() : ""}
   <div class="card"><div class="spread"><h2>연락처·주소 <span class="small muted">${n}/${L.length}명 입력</span></h2><button class="btn sm" data-act="ctExport">내보내기</button></div>
-    <div class="scroll"><table class="t ct-t"><thead><tr><th style="width:44px">번호</th><th style="width:80px">이름</th><th>보호자 1</th><th>보호자 2</th><th style="width:150px">학생 연락처</th><th>주소</th></tr></thead><tbody>
+    <div class="scroll"><table class="t ct-t"><thead><tr><th style="width:44px">번호</th><th style="width:80px">이름</th><th>보호자 1</th><th>보호자 2</th><th style="width:150px">학생 연락처</th></tr></thead><tbody>
     ${L.map(s => { const c = s.ct || {}, inp = (k, ph, w, cls="") => `<input type="${/^p|sp/.test(k)?"tel":"text"}" class="ct-in ${cls}" value="${esc(c[k]||"")}" placeholder="${ph}" data-ch="ctSet" data-id="${s.id}" data-k="${k}" style="width:${w}" aria-label="${esc(s.name)} ${ph}">`;
-      return `<tr><td class="num">${s.no}</td><td>${esc(s.name)}</td>
-        <td><div class="ct-pair">${inp("r1","관계","70px")}${inp("p1","연락처","130px","num")}</div></td>
-        <td><div class="ct-pair">${inp("r2","관계","70px")}${inp("p2","연락처","130px","num")}</div></td>
-        <td>${inp("sp","연락처","130px","num")}</td><td>${inp("addr","주소","100%")}</td></tr>`; }).join("")}
+      return `<tr class="ct-r1"><td class="num" rowspan="2">${s.no}</td><td rowspan="2">${esc(s.name)}</td>
+        <td><div class="ct-pair">${inp("r1","관계","64px")}${inp("p1","연락처","124px","num")}</div></td>
+        <td><div class="ct-pair">${inp("r2","관계","64px")}${inp("p2","연락처","124px","num")}</div></td>
+        <td>${inp("sp","연락처","124px","num")}</td></tr>
+        <tr class="ct-r2"><td colspan="3"><div class="ct-addr"><span class="small muted">주소</span>${inp("addr","주소","100%")}</div></td></tr>`; }).join("")}
     </tbody></table></div></div>`;
 }
 CH.ctSet = el => { const s = stu(el.dataset.id), k = el.dataset.k; s.ct ||= {}; let v = el.value.trim(); if(/^(p1|p2|sp)$/.test(k)) v = fmtPhone(v); s.ct[k] = v; if(el.value !== v) el.value = v; persist(); };
