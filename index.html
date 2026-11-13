@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>학급일지</title>
-<meta name="theme-color" content="#1F6E8C">
+<meta name="theme-color" content="#F5F7F9">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 512 512%22%3E%3Crect width=%22512%22 height=%22512%22 rx=%22112%22 fill=%22%231F6E8C%22/%3E%3Cg transform=%22translate(256 258) scale(1.13) translate(-256 -258)%22%3E%3Crect x=%22140%22 y=%22112%22 width=%22232%22 height=%22292%22 rx=%2230%22 fill=%22%23FFFFFF%22/%3E%3Crect x=%22140%22 y=%22112%22 width=%2244%22 height=%22292%22 rx=%2222%22 fill=%22%23D7E9F0%22/%3E%3Crect x=%22162%22 y=%22112%22 width=%2222%22 height=%22292%22 fill=%22%23D7E9F0%22/%3E%3Cpath d=%22M318 112 H352 V214 L335 198 L318 214 Z%22 fill=%22%23F2B84B%22/%3E%3Cpath d=%22M212 196 L236 220 L284 168%22 fill=%22none%22 stroke=%22%231F6E8C%22 stroke-width=%2218%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22/%3E%3Crect x=%22212%22 y=%22262%22 width=%22124%22 height=%2216%22 rx=%228%22 fill=%22%239CC5D4%22/%3E%3Crect x=%22212%22 y=%22306%22 width=%2296%22 height=%2216%22 rx=%228%22 fill=%22%239CC5D4%22/%3E%3Crect x=%22212%22 y=%22350%22 width=%22112%22 height=%2216%22 rx=%228%22 fill=%22%23C9DFE8%22/%3E%3C/g%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -641,31 +641,34 @@ const VIEWS = {}, AFTER = {}, A = {}, CH = {}, EN = {}, IN = {};
 /* ───────── 저장 ───────── */
 const KEY = "hopyeong-classbook-v1";
 /* ───── 화면 색(테마) — 이 기기에만 저장, 모든 학급에 같이 적용 ───── */
-const ACCENTS = {   // 파스텔: [채움색, 옅은 바탕, 글자색(진하게), 채움 위 글자]
-  teal:  {name:"청록", l:["#7FB8C9","#E8F4F7","#2C6A7D","#16323C"]},
-  navy:  {name:"파랑", l:["#8FA8E0","#EDF1FC","#34508F","#1B2747"]},
-  green: {name:"초록", l:["#8CC7A4","#EAF6EF","#2F7350","#173A27"]},
-  purple:{name:"보라", l:["#B3A3E3","#F2EEFC","#5B47A0","#2B2150"]},
-  pink:  {name:"분홍", l:["#EAA2BA","#FCEFF4","#A23E63","#4A1C2D"]},
-  orange:{name:"주황", l:["#F0B98A","#FDF2E8","#9C5418","#4A2809"]},
-  gray:  {name:"먹색", l:["#A3AEBB","#EFF2F5","#3F4A57","#1E242B"]}
+const ACCENTS = {   // p: 파스텔 [채움색, 옅은 바탕, 글자색, 채움 위 글자] · v: 원색 · vd: 원색 어둡게
+  teal:  {name:"청록", p:["#7FB8C9","#E8F4F7","#2C6A7D","#16323C"], v:["#1F6E8C","#E7F2F6","#1F6E8C","#FFFFFF"], vd:["#5FB3D1","#16303B","#5FB3D1","#0F1418"]},
+  navy:  {name:"파랑", p:["#8FA8E0","#EDF1FC","#34508F","#1B2747"], v:["#2F4FA8","#EAEFFB","#2F4FA8","#FFFFFF"], vd:["#8AA4F0","#1C2645","#8AA4F0","#0F1418"]},
+  green: {name:"초록", p:["#8CC7A4","#EAF6EF","#2F7350","#173A27"], v:["#2E7D4F","#E7F3EC","#2E7D4F","#FFFFFF"], vd:["#6CC495","#17321F","#6CC495","#0F1418"]},
+  purple:{name:"보라", p:["#B3A3E3","#F2EEFC","#5B47A0","#2B2150"], v:["#6A4BB8","#F0ECFA","#6A4BB8","#FFFFFF"], vd:["#B19CF2","#2A2244","#B19CF2","#0F1418"]},
+  pink:  {name:"분홍", p:["#EAA2BA","#FCEFF4","#A23E63","#4A1C2D"], v:["#B8457A","#FBEAF2","#B8457A","#FFFFFF"], vd:["#F08DBA","#3B1C2B","#F08DBA","#0F1418"]},
+  orange:{name:"주황", p:["#F0B98A","#FDF2E8","#9C5418","#4A2809"], v:["#C0601A","#FCEEE3","#C0601A","#FFFFFF"], vd:["#F0A066","#3A2414","#F0A066","#0F1418"]},
+  gray:  {name:"먹색", p:["#A3AEBB","#EFF2F5","#3F4A57","#1E242B"], v:["#3F4A57","#ECEFF2","#3F4A57","#FFFFFF"], vd:["#AEB8C4","#252C34","#AEB8C4","#0F1418"]}
 };
 const LOOK_KEY = KEY + "-look";
 let LOOK = (() => { try{ return JSON.parse(localStorage.getItem(LOOK_KEY)) || {}; }catch(e){ return {}; } })();
+if(LOOK.accent === "classic"){ LOOK.accent = "teal"; LOOK.tone = "vivid"; }
+const lookPal = a => { const vivid = LOOK.tone === "vivid"; a.l = vivid ? a.v : a.p; a.d = vivid ? a.vd : null; return a; };
 const darkMQ = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
 function applyLook(){
-  const root = document.documentElement, mode = LOOK.mode || "auto", a = ACCENTS[LOOK.accent] || ACCENTS.teal;
+  const root = document.documentElement, mode = LOOK.mode || "auto", a = lookPal({...(ACCENTS[LOOK.accent] || ACCENTS.teal)});
   if(mode === "auto") root.removeAttribute("data-theme"); else root.setAttribute("data-theme", mode);
   const dark = mode === "dark" || (mode === "auto" && darkMQ && darkMQ.matches);
   const mixc = (hex, base, p) => { const h = x => parseInt(x, 16), A = [1,3,5].map(i => h(hex.slice(i,i+2))), B = [1,3,5].map(i => h(base.slice(i,i+2))); return "#" + A.map((v,i) => Math.round(v*p + B[i]*(1-p)).toString(16).padStart(2,"0")).join(""); };
-  const [c, soft, ink, on] = dark ? [a.l[0], mixc(a.l[0], "#182029", .22), mixc(a.l[0], "#ffffff", .7), "#0F1418"] : a.l;
+  const [c, soft, ink, on] = dark ? (a.d || [a.l[0], mixc(a.l[0], "#182029", .22), mixc(a.l[0], "#ffffff", .7), "#0F1418"]) : a.l;
   root.style.setProperty("--accent", c); root.style.setProperty("--accent-soft", soft); root.style.setProperty("--accent-ink", ink); root.style.setProperty("--on-accent", on); root.style.setProperty("--brand", a.l[0]);
-  document.querySelector('meta[name="theme-color"]')?.setAttribute("content", a.l[0]);
+  // 휴대폰·태블릿 위아래 막대는 화면 바탕색에 맞춘다
+  document.querySelector('meta[name="theme-color"]')?.setAttribute("content", dark ? "#11161C" : "#F5F7F9");
   // 탭 아이콘(파비콘)도 고른 색으로
   const ic = document.querySelector('link[rel="icon"]'); if(ic){ ic.dataset.orig ||= ic.getAttribute("href");
     const mix = (hex, p) => { const n = parseInt(hex.slice(1), 16), r = n>>16, g = n>>8&255, b = n&255, f = x => Math.round(x*p/100 + 255*(1-p/100)).toString(16).padStart(2,"0"); return "#" + f(r) + f(g) + f(b); };
     const m = {"1F6E8C": a.l[0], "D7E9F0": mix(a.l[0], 18), "9CC5D4": mix(a.l[0], 45), "C9DFE8": mix(a.l[0], 26)};
-    ic.setAttribute("href", ic.dataset.orig.replace(/%23(1F6E8C|D7E9F0|9CC5D4|C9DFE8)/gi, (_, h) => "%23" + m[h.toUpperCase()].slice(1).toUpperCase())); }
+    let k = 0; ic.setAttribute("href", ic.dataset.orig.replace(/%23(1F6E8C|D7E9F0|9CC5D4|C9DFE8)/gi, (_, h) => { h = h.toUpperCase(); const c = h === "1F6E8C" && k++ ? a.l[2] : m[h]; return "%23" + c.slice(1).toUpperCase(); })); }
 }
 function saveLook(){ try{ localStorage.setItem(LOOK_KEY, JSON.stringify(LOOK)); }catch(e){} applyLook(); }
 darkMQ && darkMQ.addEventListener && darkMQ.addEventListener("change", applyLook);
@@ -673,7 +676,8 @@ applyLook();
 function lookCard(){
   const cur = LOOK.accent || "teal", mode = LOOK.mode || "auto";
   return `<div class="card"><h2>화면 색</h2><div class="small muted" style="margin-bottom:10px">버튼·테두리·강조 색을 바꿔요. 이 기기에만 저장되고 모든 학급에 같이 적용돼요.</div>
-    <div class="row" style="gap:8px">${Object.entries(ACCENTS).map(([k, a]) => `<button class="look-sw ${k===cur?"on":""}" data-act="lookAccent" data-v="${k}" style="--c:${a.l[0]};--cs:${a.l[1]}" aria-label="${a.name}"><i></i>${a.name}</button>`).join("")}</div>
+    <div class="row" style="gap:8px">${Object.entries(ACCENTS).map(([k, a0]) => { const a = lookPal({...a0}); return `<button class="look-sw ${k===cur?"on":""}" data-act="lookAccent" data-v="${k}" style="--c:${a.l[0]};--cs:${a.l[1]}" aria-label="${a.name}"><i></i>${a.name}</button>`; }).join("")}</div>
+    <div class="row" style="gap:8px;margin-top:12px"><span class="small muted">색감</span><div class="seg"><button class="${LOOK.tone!=="vivid"?"on":""}" data-act="lookTone" data-v="pastel">파스텔</button><button class="${LOOK.tone==="vivid"?"on":""}" data-act="lookTone" data-v="vivid">원색</button></div></div>
     <div class="row" style="gap:8px;margin-top:12px"><span class="small muted">밝기</span><div class="seg"><button class="${mode==="auto"?"on":""}" data-act="lookMode" data-v="auto">기기 설정 따라</button><button class="${mode==="light"?"on":""}" data-act="lookMode" data-v="light">밝게</button><button class="${mode==="dark"?"on":""}" data-act="lookMode" data-v="dark">어둡게</button></div></div></div>`;
 }
 /* 달력 칸 너비 (이 기기에만 저장): 0 = 화면에 맞춤, 그 밖은 요일 칸 최소 너비(px). 넓히면 옆으로 밀어서 보고, 이름·내용이 다 보인다 */
@@ -686,8 +690,9 @@ IN.calW = el => { const v = Number(el.value); LOOK.calw = v; try{ localStorage.s
   document.querySelectorAll(".calw-v").forEach(x => x.textContent = v ? v + "px" : "화면에 맞춤"); };
 A.calWReset = () => { LOOK.calw = 0; saveLook(); render(); };
 A.lookAccent = el => { LOOK.accent = el.dataset.v; saveLook(); render(); };
+A.lookTone = el => { LOOK.tone = el.dataset.v; saveLook(); render(); };
 A.lookMode = el => { LOOK.mode = el.dataset.v; saveLook(); render(); };
-const APP_VER = "2026.11.13-34";
+const APP_VER = "2026.11.13-37";
 const LOGO_SVG = `<svg class="brand-logo" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" style="fill:var(--brand,#1F6E8C)"/><g transform="translate(256 258) scale(1.13) translate(-256 -258)"><rect x="140" y="112" width="232" height="292" rx="30" fill="#FFFFFF"/><rect x="140" y="112" width="44" height="292" rx="22" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><rect x="162" y="112" width="22" height="292" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><path d="M318 112 H352 V214 L335 198 L318 214 Z" fill="#F2B84B"/><path d="M212 196 L236 220 L284 168" fill="none" style="stroke:var(--accent-ink,#1F6E8C)" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/><rect x="212" y="262" width="124" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="306" width="96" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="350" width="112" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 26%, #fff)"/></g></svg>`;
 let storageOK = true;
 /* 학급 여러 개: 학급마다 따로 저장한다. 처음 학급(c1)은 예전 저장 위치를 그대로 쓴다 */
