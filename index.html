@@ -231,6 +231,10 @@ th.tt-today{color:var(--accent)}
 .task-row.late .task-title{color:var(--bad)}
 .task-row.compact{padding:6px 2px}
 .task-row.editing{background:var(--accent-soft);flex-direction:column}
+.qk-row{gap:8px;align-items:flex-end;flex-wrap:wrap}
+.qk-f{flex-direction:row!important;align-items:center;gap:6px;font-size:13px;white-space:nowrap}
+.qk-f input,.qk-f select{width:auto}
+.qk-card .seg button{padding:6px 12px}
 .ep-drop.over{outline:2px dashed var(--accent);outline-offset:-6px;background:var(--accent-soft)}
 .ep-imp td{vertical-align:top}
 .ep-imp select{padding:2px 4px;width:auto}
@@ -941,6 +945,53 @@ function render(){
 
 /* ───────── 오늘 ───────── */
 
+/* ───── 오늘 화면 '빠른 입력': 할 일·회의·제출·행사·상담·메모를 바로 넣는다 ───── */
+const QK = [["task","할 일"],["meet","회의"],["sub","제출"],["event","행사"],["counsel","상담"],["memo","메모"]];
+function todayQuickCard(){
+  const k = ui.qk || "task", t = today(), st = sorted();
+  const f = {
+    task: `<input type="text" id="qkTitle" placeholder="할 일 (예: 학부모 안내장 만들기)" style="flex:2;min-width:200px" data-enter="qkSave">
+      <label class="f qk-f">마감<input type="date" id="qkDate" value="${t}"></label>
+      <label class="f qk-f">분류<input type="text" id="qkCat" list="qkCatList" value="학급" style="width:110px">${dlist("qkCatList", taskCats())}</label>`,
+    meet: `<input type="text" id="qkTitle" placeholder="회의 이름 (예: 학년협의회)" style="flex:2;min-width:180px" data-enter="qkSave">
+      <label class="f qk-f">날짜<input type="date" id="qkDate" value="${t}"></label><label class="f qk-f">시각<input type="time" id="qkTime"></label>
+      <label class="f qk-f">종류<input type="text" id="qkKind" list="qkKindList" value="학년협의회" style="width:120px">${dlist("qkKindList", meetKinds())}</label>
+      <label class="f qk-f">장소<input type="text" id="qkPlace" placeholder="선택" style="width:110px" data-enter="qkSave"></label>`,
+    sub: `<input type="text" id="qkTitle" placeholder="제출할 것 (예: 출결 통계)" style="flex:2;min-width:180px" data-enter="qkSave">
+      <label class="f qk-f">마감<input type="date" id="qkDate" value="${t}"></label>
+      <label class="f qk-f">받는 곳<input type="text" id="qkTo" placeholder="예: 교무부" style="width:110px" data-enter="qkSave"></label>
+      <label class="f qk-f">방법<input type="text" id="qkHow" list="qkHowList" placeholder="선택" style="width:120px">${dlist("qkHowList", [...new Set(SUB_HOW.concat((S.submits||[]).map(x=>x.how).filter(Boolean)))])}</label>`,
+    event: `<input type="text" id="qkTitle" placeholder="행사 이름 (예: 과학 체험 강사 수업)" style="flex:2;min-width:180px" data-enter="qkSave">
+      <label class="f qk-f">날짜<input type="date" id="qkDate" value="${t}"></label><label class="f qk-f">시각<input type="time" id="qkTime"></label>
+      <label class="f qk-f">종류<select id="qkType">${EV_TYPES.map(x=>`<option>${x}</option>`).join("")}</select></label>`,
+    counsel: st.length ? `<label class="f qk-f">학생<select id="qkSid">${st.map(s=>`<option value="${s.id}">${s.no}. ${esc(s.name)}</option>`).join("")}</select></label>
+      <label class="f qk-f">날짜<input type="date" id="qkDate" value="${t}"></label>
+      <label class="f qk-f">누구와<select id="qkWho">${CS_WHO.map(x=>`<option>${x}</option>`).join("")}</select></label>
+      <label class="f qk-f">방법<select id="qkHow">${CS_HOW.map(x=>`<option>${x}</option>`).join("")}</select></label>
+      <label class="f qk-f">주제<select id="qkTopic">${CS_TOPIC.map(x=>`<option ${x==="생활"?"selected":""}>${x}</option>`).join("")}</select></label>
+      <label class="f qk-f">다음 상담<input type="date" id="qkNext"></label>
+      <textarea id="qkBody" rows="2" placeholder="상담 내용" style="flex-basis:100%"></textarea>` : `<div class="small muted">학생을 먼저 등록해 주세요.</div>`,
+    memo: `<input type="text" id="qkTitle" placeholder="메모 제목 (선택)" style="flex:1;min-width:180px">
+      <textarea id="qkBody" rows="2" placeholder="메모 내용" style="flex-basis:100%"></textarea>`
+  }[k];
+  return `<div class="card qk-card"><div class="spread" style="margin-bottom:10px"><h2>빠른 입력</h2><div class="seg">${QK.map(([v,l])=>`<button class="${k===v?"on":""}" data-act="qkKind" data-v="${v}">${l}</button>`).join("")}</div></div>
+    <div class="row qk-row">${f}<button class="btn pri" data-act="qkSave">넣기</button></div></div>`;
+}
+A.qkKind = el => { ui.qk = el.dataset.v; render(); ($("#qkTitle") || $("#qkBody"))?.focus(); };
+A.qkSave = () => {
+  const k = ui.qk || "task", v = id => ($("#"+id)?.value || "").trim(), title = v("qkTitle"), date = v("qkDate") || today();
+  let msg = "", go = "";
+  if(k==="task"){ if(!title) return $("#qkTitle").focus(); (S.tasks ||= []).push({id:uid(), title, due:date, cat:v("qkCat") || "기타", note:"", done:false, doneAt:"", created:today()}); msg = "할 일을 넣었어요"; go = "업무 관리"; }
+  else if(k==="meet"){ if(!title) return $("#qkTitle").focus(); (S.meetings ||= []).push({id:uid(), date, time:v("qkTime"), kind:v("qkKind") || "기타", title, place:v("qkPlace"), agenda:"", notes:"", todo:"", sent:0}); msg = "회의를 넣었어요"; go = "업무 관리 → 회의"; }
+  else if(k==="sub"){ if(!title) return $("#qkTitle").focus(); (S.submits ||= []).push({id:uid(), title, due:date, to:v("qkTo"), how:v("qkHow"), note:"", done:false, doneAt:""}); msg = "제출할 것을 넣었어요"; go = "업무 관리 → 제출"; }
+  else if(k==="event"){ if(!title) return $("#qkTitle").focus(); const type = v("qkType"); S.events.push({id:uid(), date, time:v("qkTime"), title, type, host:"", place:"우리 교실", note:"", checklist:defaultChecklist(type)}); msg = "행사를 넣었어요"; go = "학급 행사"; }
+  else if(k==="counsel"){ const body = v("qkBody"); if(!body){ toast("상담 내용을 적어 주세요"); return $("#qkBody").focus(); }
+    (S.counsels ||= []).push({...csBlank(v("qkSid")), date, who:v("qkWho"), how:v("qkHow"), topic:v("qkTopic"), content:body, next:v("qkNext")}); msg = `${sname(v("qkSid"))} 상담을 기록했어요`; go = "상담 기록"; }
+  else if(k==="memo"){ const body = $("#qkBody").value; if(!title && !body.trim()) return $("#qkBody").focus(); S.memos.push({id:uid(), title: title || body.trim().split("\n")[0].slice(0,30), body, pinned:false, updated:Date.now()}); msg = "메모를 넣었어요"; go = "메모장"; }
+  commit(); toast(`${msg} · ${go}에서 자세히 볼 수 있어요`);
+  setTimeout(() => ($("#qkTitle") || $("#qkBody"))?.focus(), 0);
+};
+EN.qkSave = () => A.qkSave();
 VIEWS.today = () => {
   const t = today(), d = new Date();
   const todos = dayTodos(t, true);
@@ -950,6 +1001,7 @@ VIEWS.today = () => {
   const b = S.budgets[0];
   const spent = b ? b.expenses.reduce((s,e)=>s+Number(e.amount||0),0) : 0;
   return header(`${d.getMonth()+1}월 ${d.getDate()}일 ${WD[d.getDay()]}요일`, (HOLI[t] ? `<span class="holi">${HOLI[t]}</span>` : `${esc(clsName())} 오늘의 학급`) + schoolEvents(t).map(x=>` <span class="pill acc">${esc(x.name)}</span>`).join("")) + ttDayCard(t, true) + `
+  ${todayQuickCard()}
   <div class="grid3">
     <div class="card stat"><span class="l">재적</span><span class="v num">${S.students.length}명</span><span class="small muted">남 ${S.students.filter(s=>s.gender==="남").length} · 여 ${S.students.filter(s=>s.gender==="여").length}</span></div>
     <div class="card stat"><span class="l">오늘 출결 특이사항</span><span class="v num">${att.length}건</span><span class="small muted">${att.length ? att.map(([sid,r])=>`${esc(sname(sid))} ${attLabel(r)}`).join(", ") : "모두 출석"}</span></div>
@@ -2608,13 +2660,17 @@ function archiveBanner(){ return liveS ? `<div class="banner" style="background:
 
 /* ───────── 업무 관리 ───────── */
 const TASK_CATS = ["학급","학년","공문·보고","행사","기타"];
+/* 기본 분류 + 직접 쓴 분류 */
+const taskCats = () => [...new Set(TASK_CATS.concat((S.tasks||[]).map(t=>t.cat).filter(Boolean)))];
+const meetKinds = () => [...new Set(MEET_KINDS.concat((S.meetings||[]).map(m=>m.kind).filter(Boolean)))];
+const dlist = (id, arr) => `<datalist id="${id}">${arr.map(x=>`<option value="${esc(x)}">`).join("")}</datalist>`;
 const taskPill = c => ({"학급":"acc","학년":"vio","공문·보고":"warn","행사":"ok"})[c] || "";
 function taskGroup(t){ if(t.done) return "완료"; if(!t.due) return "기한 없음"; const td = today(); if(t.due < td) return "기한 지남"; if(t.due === td) return "오늘"; return t.due <= ymd(addDays(new Date(),7)) ? "7일 안" : "나중에"; }
 function taskRow(t){
   if(ui.taskEdit===t.id) return `<div class="task-row editing"><div class="form" style="grid-template-columns:2fr 140px 130px;flex:1">
       <label class="f">업무<input type="text" id="teTitle" value="${esc(t.title)}" data-enter="taskSave"></label>
       <label class="f">마감일<input type="date" id="teDue" value="${t.due||""}"></label>
-      <label class="f">분류<select id="teCat">${TASK_CATS.map(c=>`<option ${c===t.cat?"selected":""}>${c}</option>`).join("")}</select></label>
+      <label class="f">분류<input type="text" id="teCat" list="taskCatList" value="${esc(t.cat||"")}" placeholder="골라도 되고 직접 써도 돼요">${dlist("taskCatList", taskCats())}</label>
       <label class="f" style="grid-column:1/-1">메모<input type="text" id="teNote" value="${esc(t.note||"")}" data-enter="taskSave"></label></div>
     <div class="row"><button class="btn sm" data-act="taskCancel">취소</button><button class="btn sm pri" data-act="taskSave">저장</button></div></div>`;
   const g = taskGroup(t);
@@ -2641,22 +2697,22 @@ VIEWS.tasks = () => {
   <div class="card"><div class="form" style="grid-template-columns:2fr 150px 130px auto">
     <label class="f">업무<input type="text" id="tTitle" placeholder="예: 학교폭력 예방교육 결과 보고" data-enter="taskAdd"></label>
     <label class="f">마감일(선택)<input type="date" id="tDue"></label>
-    <label class="f">분류<select id="tCat">${TASK_CATS.map(c=>`<option>${c}</option>`).join("")}</select></label>
+    <label class="f">분류<input type="text" id="tCat" list="taskCatList2" value="${esc(ui.taskCat!=="전체"?ui.taskCat:"학급")}" placeholder="예: 학급, 방과후" data-enter="taskAdd">${dlist("taskCatList2", taskCats())}</label>
     <button class="btn pri" data-act="taskAdd">업무 추가</button></div></div>
-  <div class="card"><div class="chips" style="margin-bottom:10px">${["전체",...TASK_CATS].map(c=>`<button class="chip k-plain ${cf===c?"on":""}" data-act="taskCat" data-c="${c}">${c}</button>`).join("")}${done.length && f!=="open" ? `<button class="btn sm ghost danger" data-act="taskClearDone" style="margin-left:auto">완료한 업무 모두 지우기</button>` : ""}</div>
+  <div class="card"><div class="chips" style="margin-bottom:10px">${["전체",...taskCats()].map(c=>`<button class="chip k-plain ${cf===c?"on":""}" data-act="taskCat" data-c="${c}">${c}</button>`).join("")}${done.length && f!=="open" ? `<button class="btn sm ghost danger" data-act="taskClearDone" style="margin-left:auto">완료한 업무 모두 지우기</button>` : ""}</div>
     <div class="seg" style="margin-bottom:10px"><button class="${f==="open"?"on":""}" data-act="taskFilter" data-v="open">할 일</button><button class="${f==="done"?"on":""}" data-act="taskFilter" data-v="done">완료</button><button class="${f==="all"?"on":""}" data-act="taskFilter" data-v="all">전체</button></div>
     ${groups.length ? groups.map(([g,l])=>`<div class="task-group"><div class="task-gh ${g==="기한 지남"?"bad":""}">${g} <span class="muted">${l.length}</span></div>${l.map(taskRow).join("")}</div>`).join("") : `<div class="empty">${f==="done"?"완료한 업무가 없어요":"할 일이 없어요. 위에서 업무를 추가해 보세요"}</div>`}
   </div>`;
 };
 A.taskFilter = el => { ui.taskFilter = el.dataset.v; render(); };
 A.taskCat = el => { ui.taskCat = el.dataset.c; render(); };
-A.taskAdd = () => { const t = $("#tTitle").value.trim(); if(!t){ $("#tTitle").focus(); return; } (S.tasks ||= []).push({id:uid(), title:t, due:$("#tDue").value||"", cat:$("#tCat").value, note:"", done:false, doneAt:"", created:today()}); commit(); $("#tTitle")?.focus(); };
+A.taskAdd = () => { const t = $("#tTitle").value.trim(); if(!t){ $("#tTitle").focus(); return; } (S.tasks ||= []).push({id:uid(), title:t, due:$("#tDue").value||"", cat:$("#tCat").value.trim() || "기타", note:"", done:false, doneAt:"", created:today()}); commit(); $("#tTitle")?.focus(); };
 EN.taskAdd = () => A.taskAdd();
 CH.taskDone = el => { const t = S.tasks.find(x=>x.id===el.dataset.id); if(!t) return; t.done = el.checked; t.doneAt = el.checked ? today() : ""; commit(); if(el.checked) toast("완료했어요"); };
 A.taskEditOpen = el => { ui.taskEdit = el.dataset.id; render(); $("#teTitle")?.focus(); };
 A.taskCancel = () => { ui.taskEdit = null; render(); };
 A.taskSave = () => { const t = S.tasks.find(x=>x.id===ui.taskEdit); const v = $("#teTitle").value.trim(); if(!v){ $("#teTitle").focus(); return; }
-  Object.assign(t, {title:v, due:$("#teDue").value||"", cat:$("#teCat").value, note:$("#teNote").value.trim()}); ui.taskEdit = null; commit(); };
+  Object.assign(t, {title:v, due:$("#teDue").value||"", cat:$("#teCat").value.trim() || "기타", note:$("#teNote").value.trim()}); ui.taskEdit = null; commit(); };
 EN.taskSave = () => A.taskSave();
 A.taskDel = async el => { if(await ask("이 업무를 지울까요?","지우기",true)){ S.tasks = S.tasks.filter(t=>t.id!==el.dataset.id); commit(); } };
 A.taskClearDone = async () => { const n = S.tasks.filter(t=>t.done).length; if(await ask(`완료한 업무 ${n}개를 모두 지울까요?`,"지우기",true)){ S.tasks = S.tasks.filter(t=>!t.done); commit(); } };
@@ -2682,7 +2738,7 @@ function meetRow(m){
     <div class="form" style="grid-template-columns:150px 110px 140px 1fr 1fr;flex:1">
       <label class="f">날짜<input type="date" id="meDate" value="${m.date}"></label>
       <label class="f">시각<input type="time" id="meTime" value="${m.time||""}"></label>
-      <label class="f">종류<select id="meKind">${MEET_KINDS.map(k=>`<option ${k===m.kind?"selected":""}>${k}</option>`).join("")}</select></label>
+      <label class="f">종류<input type="text" id="meKind" list="meetKindList" value="${esc(m.kind||"")}" placeholder="골라도 되고 직접 써도 돼요">${dlist("meetKindList", meetKinds())}</label>
       <label class="f">회의 이름<input type="text" id="meTitle" value="${esc(m.title)}"></label>
       <label class="f">장소<input type="text" id="mePlace" value="${esc(m.place||"")}" placeholder="예: 4학년 연구실"></label>
       <label class="f" style="grid-column:1/-1">안건 · 준비할 것<textarea id="meAgenda" rows="2" placeholder="예: 학년말 행사 계획, 생활기록부 점검 일정 · 준비물: 체험학습 결과 자료">${esc(m.agenda||"")}</textarea></label>
@@ -2707,7 +2763,7 @@ function meetView(){
   return `<div class="card"><div class="form" style="grid-template-columns:150px 110px 140px 2fr 1fr auto">
       <label class="f">날짜<input type="date" id="mDate" value="${today()}"></label>
       <label class="f">시각<input type="time" id="mTime"></label>
-      <label class="f">종류<select id="mKind">${MEET_KINDS.map(k=>`<option>${k}</option>`).join("")}</select></label>
+      <label class="f">종류<input type="text" id="mKind" list="meetKindList2" value="학년협의회" placeholder="예: 학년협의회" data-enter="meetAdd">${dlist("meetKindList2", meetKinds())}</label>
       <label class="f">회의 이름<input type="text" id="mTitle" placeholder="예: 11월 학년협의회" data-enter="meetAdd"></label>
       <label class="f">장소(선택)<input type="text" id="mPlace" placeholder="예: 연구실" data-enter="meetAdd"></label>
       <button class="btn pri" data-act="meetAdd">회의 추가</button></div></div>
@@ -2716,13 +2772,13 @@ function meetView(){
     : `<div class="empty">적어 둔 회의가 없어요. 회의 날짜와 이름을 넣어 두면 다이어리에 표시되고, 회의록과 할 일도 여기에 적을 수 있어요.</div>`}</div>`;
 }
 A.meetAdd = () => { const title = $("#mTitle").value.trim(), date = $("#mDate").value; if(!title || !date){ toast("날짜와 회의 이름을 적어 주세요"); $("#mTitle").focus(); return; }
-  (S.meetings ||= []).push({id:uid(), date, time:$("#mTime").value||"", kind:$("#mKind").value, title, place:$("#mPlace").value.trim(), agenda:"", notes:"", todo:"", sent:0}); commit(); toast("회의를 추가했어요"); };
+  (S.meetings ||= []).push({id:uid(), date, time:$("#mTime").value||"", kind:$("#mKind").value.trim() || "기타", title, place:$("#mPlace").value.trim(), agenda:"", notes:"", todo:"", sent:0}); commit(); toast("회의를 추가했어요"); };
 EN.meetAdd = () => A.meetAdd();
 A.meetOpen = el => { ui.meetEdit = el.dataset.id; render(); $("#meNotes")?.focus(); };
 A.meetCancel = () => { ui.meetEdit = null; render(); };
 A.meetAll = () => { ui.meetAll = !ui.meetAll; render(); };
 function meetCollect(){ const m = S.meetings.find(x=>x.id===ui.meetEdit); if(!m) return null;
-  Object.assign(m, {date:$("#meDate").value || m.date, time:$("#meTime").value||"", kind:$("#meKind").value, title:$("#meTitle").value.trim() || m.title, place:$("#mePlace").value.trim(), agenda:$("#meAgenda").value, notes:$("#meNotes").value, todo:$("#meTodo").value}); return m; }
+  Object.assign(m, {date:$("#meDate").value || m.date, time:$("#meTime").value||"", kind:$("#meKind").value.trim() || "기타", title:$("#meTitle").value.trim() || m.title, place:$("#mePlace").value.trim(), agenda:$("#meAgenda").value, notes:$("#meNotes").value, todo:$("#meTodo").value}); return m; }
 A.meetSave = () => { if(!meetCollect()) return; ui.meetEdit = null; commit(); toast("저장했어요"); };
 A.meetDel = async el => { if(await ask("이 회의를 지울까요? 회의록도 함께 지워져요.","지우기",true)){ S.meetings = S.meetings.filter(m=>m.id!==el.dataset.id); if(ui.meetEdit===el.dataset.id) ui.meetEdit = null; commit(); } };
 A.meetToTasks = () => { const m = meetCollect(); if(!m) return;
@@ -2743,7 +2799,7 @@ function subRow(x){
       <label class="f">제출할 것<input type="text" id="seTitle" value="${esc(x.title)}" data-enter="subSave"></label>
       <label class="f">마감일<input type="date" id="seDue" value="${x.due||""}"></label>
       <label class="f">받는 곳<input type="text" id="seTo" value="${esc(x.to||"")}" placeholder="예: 교무부, 학년부장"></label>
-      <label class="f">방법<select id="seHow">${SUB_HOW.map(h=>`<option ${h===x.how?"selected":""}>${h}</option>`).join("")}</select></label>
+      <label class="f">방법<input type="text" id="seHow" list="subHowList" value="${esc(x.how||"")}" placeholder="골라도 되고 직접 써도 돼요"></label>
       <label class="f" style="grid-column:1/-1">메모<input type="text" id="seNote" value="${esc(x.note||"")}" placeholder="예: 공문 번호, 양식 위치, 함께 낼 서류" data-enter="subSave"></label></div>
     <div class="row"><button class="btn sm" data-act="subCancel">취소</button><button class="btn sm pri" data-act="subSave">저장</button></div></div>`;
   const g = subGroup(x);
@@ -2752,6 +2808,7 @@ function subRow(x){
       <div class="row small muted" style="gap:6px">${x.to?`<span>→ ${esc(x.to)}</span>`:""}${x.how?`<span class="pill">${esc(x.how)}</span>`:""}${x.due?`<span>마감 ${md(x.due)}</span>${x.done?"":`<span class="pill ${g==="기한 지남"?"bad":g==="오늘"?"warn":""}">${dday(x.due)}</span>`}`:""}${x.done&&x.doneAt?`<span>${md(x.doneAt)} 제출</span>`:""}${x.note?`<span>· ${esc(x.note)}</span>`:""}</div></div>
     <button class="x" data-act="subDel" data-id="${x.id}" aria-label="삭제">×</button></div>`;
 }
+const subHowList = () => `<datalist id="subHowList">${[...new Set(SUB_HOW.concat((S.submits||[]).map(x=>x.how).filter(Boolean)))].map(h=>`<option value="${esc(h)}">`).join("")}</datalist>`;
 function subView(){
   const all = S.submits || [], f = ui.subFilter;
   let list = f==="done" ? all.filter(x=>x.done) : f==="all" ? all : all.filter(x=>!x.done);
@@ -2762,22 +2819,22 @@ function subView(){
       <label class="f">제출할 것<input type="text" id="sTitle" placeholder="예: 학기말 학생 출결 통계" data-enter="subAdd"></label>
       <label class="f">마감일<input type="date" id="sDue"></label>
       <label class="f">받는 곳(선택)<input type="text" id="sTo" placeholder="예: 교무부" data-enter="subAdd"></label>
-      <label class="f">방법<select id="sHow">${SUB_HOW.map(h=>`<option>${h}</option>`).join("")}</select></label>
+      <label class="f">방법<input type="text" id="sHow" list="subHowList" placeholder="골라도 되고 직접 써도 돼요" data-enter="subAdd"></label>
       <button class="btn pri" data-act="subAdd">추가</button></div>
-    <div class="small muted" style="margin-top:8px">학교에 내야 하는 서류·보고를 적어요. 학생 과제 제출은 '제출 체크' 메뉴에서 해요.</div></div>
+    ${subHowList()}<div class="small muted" style="margin-top:8px">학교에 내야 하는 서류·보고를 적어요. 학생 과제 제출은 '제출 체크' 메뉴에서 해요.</div></div>
   <div class="card"><div class="spread" style="margin-bottom:8px"><div class="seg"><button class="${f==="open"?"on":""}" data-act="subFilter" data-v="open">낼 것</button><button class="${f==="done"?"on":""}" data-act="subFilter" data-v="done">제출 완료</button><button class="${f==="all"?"on":""}" data-act="subFilter" data-v="all">전체</button></div>
       ${all.some(x=>x.done) && f!=="open" ? `<button class="btn sm ghost danger" data-act="subClearDone">제출 완료 모두 지우기</button>` : ""}</div>
     ${groups.length ? groups.map(([g,l])=>`<div class="task-group"><div class="task-gh ${g==="기한 지남"?"bad":""}">${g} <span class="muted">${l.length}</span></div>${l.map(subRow).join("")}</div>`).join("") : `<div class="empty">${f==="done"?"제출한 것이 없어요":"낼 것이 없어요"}</div>`}</div>`;
 }
 A.subAdd = () => { const t = $("#sTitle").value.trim(); if(!t){ $("#sTitle").focus(); return; }
-  (S.submits ||= []).push({id:uid(), title:t, due:$("#sDue").value||"", to:$("#sTo").value.trim(), how:$("#sHow").value, note:"", done:false, doneAt:""}); commit(); $("#sTitle")?.focus(); };
+  (S.submits ||= []).push({id:uid(), title:t, due:$("#sDue").value||"", to:$("#sTo").value.trim(), how:$("#sHow").value.trim(), note:"", done:false, doneAt:""}); commit(); $("#sTitle")?.focus(); };
 EN.subAdd = () => A.subAdd();
 A.subFilter = el => { ui.subFilter = el.dataset.v; render(); };
 CH.subDone = el => { const x = S.submits.find(y=>y.id===el.dataset.id); if(!x) return; x.done = el.checked; x.doneAt = el.checked ? today() : ""; commit(); if(el.checked) toast("제출 완료로 표시했어요"); };
 A.subOpen = el => { ui.subEdit = el.dataset.id; render(); $("#seTitle")?.focus(); };
 A.subCancel = () => { ui.subEdit = null; render(); };
 A.subSave = () => { const x = S.submits.find(y=>y.id===ui.subEdit); const t = $("#seTitle").value.trim(); if(!x || !t) return;
-  Object.assign(x, {title:t, due:$("#seDue").value||"", to:$("#seTo").value.trim(), how:$("#seHow").value, note:$("#seNote").value.trim()}); ui.subEdit = null; commit(); };
+  Object.assign(x, {title:t, due:$("#seDue").value||"", to:$("#seTo").value.trim(), how:$("#seHow").value.trim(), note:$("#seNote").value.trim()}); ui.subEdit = null; commit(); };
 EN.subSave = () => A.subSave();
 A.subDel = async el => { if(await ask("이 제출 항목을 지울까요?","지우기",true)){ S.submits = S.submits.filter(x=>x.id!==el.dataset.id); commit(); } };
 A.subClearDone = async () => { const n = S.submits.filter(x=>x.done).length; if(await ask(`제출 완료 ${n}개를 모두 지울까요?`,"지우기",true)){ S.submits = S.submits.filter(x=>!x.done); commit(); } };
@@ -2800,7 +2857,7 @@ function allWorkView(){
   const groups = order.map(g=>[g, openL.filter(i=>workGroup(i.date, false)===g)]).filter(([,l])=>l.length);
   const more = ui.allDoneMore, doneShow = more ? doneL : doneL.slice(0,10);
   const ak = ui.allAddKind;
-  return `<div class="card"><div class="row" style="gap:8px;align-items:flex-end;flex-wrap:wrap">
+  return subHowList() + `<div class="card"><div class="row" style="gap:8px;align-items:flex-end;flex-wrap:wrap">
       <div class="seg">${["task","sub","meet"].map(k=>`<button class="${ak===k?"on":""}" data-act="allAddKind" data-v="${k}">${K[k]}</button>`).join("")}</div>
       <input type="text" id="aTitle" placeholder="${ak==="meet"?"회의 이름 (예: 학년협의회)":ak==="sub"?"제출할 것 (예: 출결 통계)":"할 일 (예: 학부모 안내장 만들기)"}" style="flex:1;min-width:200px" data-enter="allAdd">
       <input type="date" id="aDate" value="${ak==="meet"?t:""}" aria-label="${ak==="meet"?"회의 날짜":"마감일"}">
@@ -2819,7 +2876,7 @@ A.allDoneMore = () => { ui.allDoneMore = !ui.allDoneMore; render(); };
 A.allAdd = () => { const k = ui.allAddKind, title = $("#aTitle").value.trim(), date = $("#aDate").value || "";
   if(!title){ $("#aTitle").focus(); return; }
   if(k==="meet"){ if(!date){ toast("회의 날짜를 골라 주세요"); return; } (S.meetings ||= []).push({id:uid(), date, time:$("#aTime")?.value||"", kind:"기타", title, place:"", agenda:"", notes:"", todo:"", sent:0}); }
-  else if(k==="sub") (S.submits ||= []).push({id:uid(), title, due:date, to:"", how:SUB_HOW[0], note:"", done:false, doneAt:""});
+  else if(k==="sub") (S.submits ||= []).push({id:uid(), title, due:date, to:"", how:"", note:"", done:false, doneAt:""});
   else (S.tasks ||= []).push({id:uid(), title, due:date, cat:"학급", note:"", done:false, doneAt:"", created:today()});
   commit(); toast(`${({task:"업무",sub:"제출",meet:"회의"})[k]}에 추가했어요`); $("#aTitle")?.focus(); };
 EN.allAdd = () => A.allAdd();
