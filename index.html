@@ -199,6 +199,7 @@ table.t{width:100%;border-collapse:collapse;font-size:13.5px}
 .sub-stamp .seg button.on.st-late{background:var(--warn);color:#fff;border-color:var(--warn)}.sub-stamp .seg button.on.st-fix{background:var(--bad);color:#fff;border-color:var(--bad)}
 .mchip.fix{border-color:var(--bad);border-style:dashed;color:var(--bad)}.sub-sel{width:auto;padding:4px 6px;font-size:12.5px}
 .lv-rt button{font-size:12px;padding:4px 7px}.g-rt-c{white-space:nowrap}.g-rt-info{background:var(--accent-soft);border-color:var(--accent)}
+.up-card{margin-top:16px}.up-g{padding:6px 0;border-top:1px solid var(--line)}.up-g:first-of-type{border-top:0}.up-h{font-size:13px;margin:2px 0 4px;color:var(--muted)}.up-h b{color:var(--ink)}
 .g-grp{font-size:12px;font-weight:700;color:var(--muted);padding:10px 4px 2px;display:flex;gap:6px;align-items:center}.g-grp .num{font-weight:500}
 .g-bulk{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;margin:12px 0 8px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--bg-soft,#f7f7f5)}
 .g-bulk.on{justify-content:space-between;border-color:var(--accent);background:var(--accent-soft);position:sticky;top:0;z-index:2}
@@ -698,7 +699,7 @@ A.calWReset = () => { LOOK.calw = 0; saveLook(); render(); };
 A.lookAccent = el => { LOOK.accent = el.dataset.v; saveLook(); render(); };
 A.lookTone = el => { LOOK.tone = el.dataset.v; saveLook(); render(); };
 A.lookMode = el => { LOOK.mode = el.dataset.v; saveLook(); render(); };
-const APP_VER = "2026.11.13-41";
+const APP_VER = "2026.11.14-1";
 const LOGO_SVG = `<svg class="brand-logo" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" style="fill:var(--brand,#1F6E8C)"/><g transform="translate(256 258) scale(1.13) translate(-256 -258)"><rect x="140" y="112" width="232" height="292" rx="30" fill="#FFFFFF"/><rect x="140" y="112" width="44" height="292" rx="22" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><rect x="162" y="112" width="22" height="292" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><path d="M318 112 H352 V214 L335 198 L318 214 Z" fill="#F2B84B"/><path d="M212 196 L236 220 L284 168" fill="none" style="stroke:var(--accent-ink,#1F6E8C)" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/><rect x="212" y="262" width="124" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="306" width="96" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="350" width="112" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 26%, #fff)"/></g></svg>`;
 let storageOK = true;
 /* 학급 여러 개: 학급마다 따로 저장한다. 처음 학급(c1)은 예전 저장 위치를 그대로 쓴다 */
@@ -1182,7 +1183,7 @@ function todayJobsCard(){
 /* 다이어리 할 일 = 업무 관리의 업무(마감일이 그날) + 제출(마감일이 그날). 어디서 체크해도 같은 데이터 */
 /* 다이어리·오늘에 보일 것 고르기 (학급마다 저장) */
 const SHOW_OPTS = {
-  diary: [["quick","빠른 입력"],["tt","시간표"],["todo","할 일"],["sub","제출"],["sch","학교 일정"],["event","학급 행사"],["meet","회의"],["counsel","상담"],["memo","메모"],["eval","평가"],["asg","과제 마감"],["att","출결"],["rec","학생 기록"],["exp","지출"]],
+  diary: [["quick","빠른 입력"],["upcoming","다가오는 업무"],["tt","시간표"],["todo","할 일"],["sub","제출"],["sch","학교 일정"],["event","학급 행사"],["meet","회의"],["counsel","상담"],["memo","메모"],["eval","평가"],["asg","과제 마감"],["att","출결"],["rec","학생 기록"],["exp","지출"]],
   today: [["tt","오늘 시간표"],["quick","빠른 입력"],["roll","재적"],["attn","오늘 출결"],["budget","예산"],["eval","평가 확인"],["todo","오늘 할 일"],["event","다가오는 행사"],["tasks","업무"],["counsel","상담"],["submit","제출 체크"],["jobs","일인일역"]]
 };
 const shown = (area, k) => { const a = S.show && S.show[area]; if(!a) return true; if(a[k] === false) return false; return !(a.stats === false && ["roll","attn","budget"].includes(k)); };
@@ -1341,7 +1342,7 @@ VIEWS.diary = () => {
         ${monthLines(k, evs, att, todos)}</button>`; }).join("")}</div></div>
       <div class="small muted" style="margin-top:10px">날짜를 누르면 그날을 크게 보고 할 일을 적을 수 있어요.</div></div>`;
   }
-  return header("다이어리", sub, seg + nav + showBtn("diary")) + showCfgCard("diary") + body;
+  return header("다이어리", sub, seg + nav + showBtn("diary")) + showCfgCard("diary") + body + (shown("diary","upcoming") ? upcomingCard() : "");
 };
 function weekOfMonth(mon){ const thu = addDays(mon,3); return Math.ceil(thu.getDate()/7); }
 A.goEvent = () => { location.hash = "events"; };
@@ -3310,6 +3311,24 @@ A.taskSave = () => { const t = S.tasks.find(x=>x.id===ui.taskEdit); const v = $(
 EN.taskSave = () => A.taskSave();
 A.taskDel = async el => { if(await ask("이 업무를 지울까요?","지우기",true)){ S.tasks = S.tasks.filter(t=>t.id!==el.dataset.id); commit(); } };
 A.taskClearDone = async () => { const n = S.tasks.filter(t=>t.done).length; if(await ask(`완료한 업무 ${n}개를 모두 지울까요?`,"지우기",true)){ S.tasks = S.tasks.filter(t=>!t.done); commit(); } };
+/* 다이어리: 다가오는 업무 — 기한 지난 것 + 앞으로 2주 할 일·제출·회의 */
+function upcomingCard(){
+  const t = today(), end = ymd(addDays(new Date(), 14)), it = [];
+  (S.tasks||[]).filter(x=>!x.done && x.due && x.due <= end).forEach(x=>it.push({d:x.due, k:"task", x}));
+  (S.submits||[]).filter(x=>!x.done && x.due && x.due <= end).forEach(x=>it.push({d:x.due, k:"sub", x}));
+  (S.meetings||[]).filter(m=>m.date >= t && m.date <= end).forEach(m=>it.push({d:m.date, k:"meet", x:m}));
+  it.sort((a,b)=>a.d.localeCompare(b.d) || (a.k==="meet" ? (a.x.time||"") : "").localeCompare(b.k==="meet" ? (b.x.time||"") : ""));
+  const noDue = (S.tasks||[]).filter(x=>!x.done && !x.due).length;
+  const dd = d => { const n = Math.round((parse(d) - parse(t)) / 864e5); return n < 0 ? `<span class="pill bad">${-n}일 지남</span>` : n === 0 ? `<span class="pill warn">오늘</span>` : `<span class="pill ${n<=3?"acc":""}">D-${n}</span>`; };
+  const groups = {}; it.forEach(r => { const g = r.d < t ? "기한 지남" : r.d; (groups[g] ||= []).push(r); });
+  const row = r => r.k === "meet"
+    ? `<div class="task-row compact" data-act="goMeet" style="cursor:pointer"><span class="pill vio">회의</span><div class="task-main"><div class="task-title">${r.x.time?`<b class="num">${esc(r.x.time)}</b> `:""}${esc(r.x.title)}</div>${r.x.place?`<div class="small muted">${esc(r.x.place)}</div>`:""}</div></div>`
+    : `<div class="task-row compact ${r.d<t?"late":""}"><input type="checkbox" data-ch="${r.k==="sub"?"subDone":"taskDone"}" data-id="${r.x.id}" aria-label="완료"><span class="pill ${r.k==="sub"?"":"acc"}">${r.k==="sub"?"제출":"할 일"}</span><div class="task-main"><div class="task-title">${esc(r.x.title)}</div>${r.k==="sub"&&r.x.how?`<div class="small muted">${esc(r.x.how)}</div>`:""}</div>${dd(r.d)}</div>`;
+  return `<div class="card up-card"><div class="spread"><h2>다가오는 업무 <span class="small muted">기한 지난 것 + 앞으로 2주</span></h2><a class="btn sm" href="#tasks">업무 관리</a></div>
+    ${it.length ? Object.entries(groups).map(([g, L]) => `<div class="up-g"><div class="up-h">${g==="기한 지남" ? `<b style="color:var(--bad)">기한 지남</b>` : `<b>${md(g)}</b>${g===t?" · 오늘":""}`}</div>${L.map(row).join("")}</div>`).join("")
+      : `<div class="empty">2주 안에 마감인 업무가 없어요</div>`}
+    ${noDue ? `<div class="small muted" style="margin-top:8px">기한 없는 할 일 ${noDue}개는 업무 관리에서 볼 수 있어요</div>` : ""}</div>`;
+}
 function tasksTodayCard(){
   const t = today(), wk = ymd(addDays(new Date(),7));
   const open = (S.tasks||[]).filter(x=>!x.done && !(x.due && x.due <= t)).sort((a,b)=>(a.due||"9999").localeCompare(b.due||"9999"));
