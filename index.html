@@ -210,7 +210,15 @@ table.t{width:100%;border-collapse:collapse;font-size:13.5px}
 .dash6{grid-template-columns:repeat(12,minmax(0,1fr))}.dw-fixed{margin-bottom:12px}.dw > .card{margin-bottom:0!important}
 .lay-bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:flex-end;margin:-6px 0 10px}.dash .tt-day textarea.tt-memo-in{min-height:30px}
 @media (max-width:1200px){.dash:not(.dash6){grid-template-columns:repeat(2,minmax(0,1fr))}.dw[style*="--dw:3"]{grid-column:span 2}}
-@media (max-width:860px){.dash,.dash6{grid-template-columns:minmax(0,1fr)}.dw{grid-column:auto!important}.dw-bar{display:none}}
+.m-only{display:none!important}.m-ghost{position:fixed;z-index:999;transform:translate(-50%,-130%);background:var(--accent);color:var(--on-accent);padding:6px 12px;border-radius:999px;font-size:13px;font-weight:600;pointer-events:none;box-shadow:var(--shadow);white-space:nowrap}
+@media (max-width:860px){.dash,.dash6{grid-template-columns:repeat(2,minmax(0,1fr));column-gap:10px}.dw{grid-column:span var(--mw,2)!important}.dw-bar{display:none}
+  .d-only{display:none!important}.m-only{display:inline-flex!important}.m-lay{display:flex!important;gap:8px;align-items:center;margin:0 0 10px;flex-wrap:wrap}
+  body.m-edit .dw-bar{display:flex;position:static;transform:none;opacity:1;justify-content:center;flex-wrap:wrap;margin:0 0 6px}
+  body.m-edit .dw > .card{outline:2px dashed var(--accent-soft);outline-offset:2px}
+  .m-grip{cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;border-color:var(--accent);color:var(--accent-ink)}
+  .dw.drop-b > .card{box-shadow:0 -4px 0 0 var(--accent)!important}.dw.drop-a > .card{box-shadow:0 4px 0 0 var(--accent)!important}
+  .dw-size{padding:5px 11px;font-size:12.5px}
+  .calw-bar input[type=range]{height:28px}}
 .att-add{margin:10px 0 12px;padding:8px 12px;border:1px dashed var(--line);border-radius:10px;background:var(--bg)}.att-add>summary{cursor:pointer;font-weight:600;list-style:none}.att-add>summary::-webkit-details-marker{display:none}.att-add[open]>summary{color:var(--accent-ink)}
 .stu-pick{position:relative;flex:1 1 240px;min-width:220px}
 .stu-pick-box{display:flex;flex-wrap:wrap;align-items:center;gap:4px;border:1px solid var(--line);border-radius:8px;padding:4px 30px 4px 6px;background:var(--surface);min-height:38px;cursor:text;position:relative}
@@ -747,7 +755,7 @@ A.calWReset = () => { LOOK.calw = 0; saveLook(); render(); };
 A.lookAccent = el => { LOOK.accent = el.dataset.v; saveLook(); render(); };
 A.lookTone = el => { LOOK.tone = el.dataset.v; saveLook(); render(); };
 A.lookMode = el => { LOOK.mode = el.dataset.v; saveLook(); render(); };
-const APP_VER = "2026.11.16-14";
+const APP_VER = "2026.11.16-16";
 const LOGO_SVG = `<svg class="brand-logo" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" style="fill:var(--brand,#1F6E8C)"/><g transform="translate(256 258) scale(1.13) translate(-256 -258)"><rect x="140" y="112" width="232" height="292" rx="30" fill="#FFFFFF"/><rect x="140" y="112" width="44" height="292" rx="22" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><rect x="162" y="112" width="22" height="292" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><path d="M318 112 H352 V214 L335 198 L318 214 Z" fill="#F2B84B"/><path d="M212 196 L236 220 L284 168" fill="none" style="stroke:var(--accent-ink,#1F6E8C)" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/><rect x="212" y="262" width="124" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="306" width="96" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="350" width="112" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 26%, #fff)"/></g></svg>`;
 let storageOK = true;
 /* 학급 여러 개: 학급마다 따로 저장한다. 처음 학급(c1)은 예전 저장 위치를 그대로 쓴다 */
@@ -1228,21 +1236,52 @@ VIEWS.today = () => {
   };
   const L = dashLayout();
   const cards = L.order.filter(on).map(k => { let h = ""; try{ h = W[k](); }catch(e){ console.error(k, e); } if(!h) return ""; const w = L.w(k);
-    return `<div class="dw dw-${k}" data-k="${k}" style="--dw:${w}"><div class="dw-bar"><span class="dw-grip" data-grip title="끌어서 옮기기">⠿ 옮기기</span><button class="dw-size" data-act="dwSize" data-k="${k}" title="넓이 바꾸기">↔ ${w}칸</button></div>${h}</div>`; }).join("");
-  return header(`${d.getMonth()+1}월 ${d.getDate()}일 ${WD[d.getDay()]}요일`, (HOLI[t] ? `<span class="holi">${HOLI[t]}</span>` : `${esc(clsName())} 오늘의 학급`) + schoolEvents(t).map(x=>` <span class="pill acc">${esc(x.name)}</span>`).join(""), showBtn("today")) + showCfgCard("today") + `<div class="dash">${cards}</div>`;
+    return `<div class="dw dw-${k}" data-k="${k}" style="--dw:${w};--mw:${mwOf("today", k)}"><div class="dw-bar"><span class="dw-grip d-only" data-grip title="끌어서 옮기기">⠿ 옮기기</span><button class="dw-size d-only" data-act="dwSize" data-k="${k}" title="넓이 바꾸기">↔ ${w}칸</button><span class="dw-grip m-only m-grip" data-mgrip title="꾹 눌러 끌어서 옮기기">⠿ 끌어서 옮기기</span><button class="dw-size m-only" data-act="mMove" data-d="-1" data-k="${k}" aria-label="앞으로">▲</button><button class="dw-size m-only" data-act="mMove" data-d="1" data-k="${k}" aria-label="뒤로">▼</button><button class="dw-size m-only" data-act="mW" data-k="${k}">↔ ${mwOf("today", k)===1?"반 칸":"한 줄"}</button></div>${h}</div>`; }).join("");
+  return header(`${d.getMonth()+1}월 ${d.getDate()}일 ${WD[d.getDay()]}요일`, (HOLI[t] ? `<span class="holi">${HOLI[t]}</span>` : `${esc(clsName())} 오늘의 학급`) + schoolEvents(t).map(x=>` <span class="pill acc">${esc(x.name)}</span>`).join(""), showBtn("today")) + showCfgCard("today") + mEditBtn() + `<div class="dash">${cards}</div>`;
 };
 /* 카드 높이만큼만 줄을 차지하게(빈틈 없이 쌓기) */
 /* 상자 안에서 N개까지만 보이고 나머지는 스크롤 (.lim-scroll[data-n] > .lim-item) */
 function limFit(){ document.querySelectorAll(".lim-scroll").forEach(b => { const n = Number(b.dataset.n) || 3, it = b.querySelectorAll(":scope > .lim-item");
   if(it.length <= n){ b.style.maxHeight = ""; b.classList.remove("has-more"); return; } const top = it[0].offsetTop, last = it[n-1]; b.style.maxHeight = (last.offsetTop + last.offsetHeight - top + 2) + "px"; b.classList.add("has-more"); }); }
 window.addEventListener("resize", () => { limFit(); });
-function dashFit(){ limFit(); document.querySelectorAll(".dash > .dw").forEach(w => { const c = w.querySelector(":scope > :not(.dw-bar)"); if(!c) return; const h = c.getBoundingClientRect().height; w.style.gridRowEnd = `span ${Math.max(1, Math.ceil((h + 16) / 4))}`; }); }
+function dashFit(){ limFit(); document.querySelectorAll(".dash > .dw").forEach(w => { const c = w.querySelector(":scope > :not(.dw-bar)"); if(!c) return; const bar = w.querySelector(":scope > .dw-bar"), bh = bar && getComputedStyle(bar).position === "static" ? bar.getBoundingClientRect().height + 6 : 0; const h = c.getBoundingClientRect().height + bh; w.style.gridRowEnd = `span ${Math.max(1, Math.ceil((h + 16) / 4))}`; }); }
 const dashRO = window.ResizeObserver ? new ResizeObserver(() => dashFit()) : null;
 function dashWatch(){ dashFit(); if(dashRO){ dashRO.disconnect(); document.querySelectorAll(".dash > .dw > :not(.dw-bar)").forEach(c => dashRO.observe(c)); } }
 /* ───── 모든 화면: 카드를 끌어서 옮기기 · 넓이 바꾸기 · 숨기기 (배치는 이 기기에 화면마다 저장) ─────
    그려진 화면에서 카드(.card)를 찾아 6칸 판 위에 다시 놓는다. 처음 넓이는 원래 화면에서 차지하던 폭에 맞춘다 */
 const LAY_W = [3,4,6,8,12];   // 12칸 판: 1/4 · 1/3 · 1/2 · 2/3 · 전체
 const layGet = r => ((LOOK.lay ||= {})[r] ||= {order:[], w:{}, hide:[]});
+/* 휴대폰(좁은 화면): 카드를 2칸 판에 '반 칸 / 한 줄'로 놓고 ▲▼로 순서 바꾸기. 배치는 이 기기에 화면마다 저장 */
+const mwOf = (view, k) => ((LOOK.mw || {})[view] || {})[k] || 2;
+const mEditBtn = () => `<div class="m-only m-lay"><button class="btn sm ${ui.mEdit?"pri":""}" data-act="mEdit">${ui.mEdit ? "✓ 배치 다 바꿨어요" : "↔ 카드 배치·너비 바꾸기"}</button>${ui.mEdit ? `<span class="small muted">⠿ 끌어서 옮기기 · ▲▼ 한 칸씩 · ↔ 반 칸/한 줄 · 이 기기에만 저장</span>` : ""}</div>`;
+A.mEdit = () => { ui.mEdit = !ui.mEdit; document.body.classList.toggle("m-edit", !!ui.mEdit); render(); };
+A.mW = el => { const view = route(), k = el.dataset.k; LOOK.mw ||= {}; const m = (LOOK.mw[view] ||= {}); m[k] = mwOf(view, k) === 1 ? 2 : 1; laySave(); render(); };
+/* k를 target 앞(after=false)이나 뒤로 옮겨 저장 */
+function mPlace(dash, k, target, after){ const view = route(), vis = [...dash.querySelectorAll(":scope > .dw:not(.dw-fixed)")].map(w => w.dataset.k);
+  let o = view === "today" ? dashLayout().order.slice() : [...new Set([...(layGet(view).order||[]), ...vis])].filter(x => x);
+  if(view !== "today"){ const rest = o.filter(x => !vis.includes(x)); o = vis.concat(rest); }
+  o = o.filter(x => x !== k); let i = o.indexOf(target); if(i < 0) return; o.splice(after ? i + 1 : i, 0, k);
+  if(view === "today") saveDash(o); else { layGet(view).order = o; laySave(); }
+  render(); setTimeout(() => document.querySelector(`.dw[data-k="${CSS.escape(k)}"]`)?.scrollIntoView({block:"nearest"}), 30); }
+A.mMove = el => { const k = el.dataset.k, d = Number(el.dataset.d), dash = el.closest(".dash"); if(!dash) return;
+  const vis = [...dash.querySelectorAll(":scope > .dw:not(.dw-fixed)")].map(w => w.dataset.k), j = vis.indexOf(k) + d; if(j < 0 || j >= vis.length) return;
+  mPlace(dash, k, vis[j], d > 0); };
+/* 휴대폰: '⠿ 끌어서 옮기기'를 손가락으로 잡고 끌어 다른 카드 위(위쪽 절반=앞, 아래쪽 절반=뒤)에 놓기 */
+(() => { let T = null;
+  const clear = () => document.querySelectorAll(".dw.drop-b,.dw.drop-a,.dw.dragging").forEach(x => x.classList.remove("drop-b","drop-a","dragging"));
+  const at = (x, y) => { const el = document.elementFromPoint(x, y), w = el && el.closest && el.closest(".dash > .dw:not(.dw-fixed)"); return w && w.dataset.k !== T.k ? w : null; };
+  document.addEventListener("touchstart", e => { const g = e.target.closest && e.target.closest("[data-mgrip]"); if(!g) return; const w = g.closest(".dw"); if(!w) return;
+    T = {k: w.dataset.k, dash: w.parentElement, ghost: null, tgt: null, after: false}; w.classList.add("dragging");
+    const gh = document.createElement("div"); gh.className = "m-ghost"; gh.textContent = (w.querySelector("h2,h3,.l")?.textContent || "카드").trim().slice(0, 20); document.body.appendChild(gh); T.ghost = gh;
+    const t = e.touches[0]; gh.style.left = t.clientX + "px"; gh.style.top = t.clientY + "px"; e.preventDefault(); }, {passive:false});
+  document.addEventListener("touchmove", e => { if(!T) return; e.preventDefault(); const t = e.touches[0]; T.ghost.style.left = t.clientX + "px"; T.ghost.style.top = t.clientY + "px";
+    const m = document.querySelector("#main"), sc = m && m.scrollHeight > m.clientHeight ? m : document.scrollingElement; if(t.clientY < 80) sc.scrollBy(0, -14); else if(t.clientY > innerHeight - 80) sc.scrollBy(0, 14);
+    T.ghost.style.display = "none"; const w = at(t.clientX, t.clientY); T.ghost.style.display = "";
+    document.querySelectorAll(".dw.drop-b,.dw.drop-a").forEach(x => x.classList.remove("drop-b","drop-a"));
+    if(w){ const r = w.getBoundingClientRect(), half = r.width < (T.dash.clientWidth * 0.75); T.after = half ? t.clientX > r.left + r.width/2 : t.clientY > r.top + r.height/2; w.classList.add(T.after ? "drop-a" : "drop-b"); T.tgt = w.dataset.k; } else T.tgt = null; }, {passive:false});
+  const end = () => { if(!T) return; const {k, dash, tgt, after, ghost} = T; ghost.remove(); clear(); T = null; if(tgt) mPlace(dash, k, tgt, after); };
+  document.addEventListener("touchend", end); document.addEventListener("touchcancel", () => { if(T){ T.ghost.remove(); clear(); T = null; } });
+})();
 function laySave(){ try{ localStorage.setItem(LOOK_KEY, JSON.stringify(LOOK)); }catch(e){} }
 function layoutize(r){
   const wrap = document.querySelector("#main .wrap"); if(!wrap) return;
@@ -1275,12 +1314,13 @@ function layoutize(r){
   const dash = document.createElement("div"); dash.className = "dash dash6"; dash.dataset.view = r;
   const hidden = [];
   seq.forEach(x => { if(!x.fixed && hide.has(x.k)){ hidden.push(x); return; }
-    const w = document.createElement("div"); w.className = "dw" + (x.fixed ? " dw-fixed" : ""); w.dataset.k = x.k || ""; const span = x.fixed ? 12 : (L.w && L.w[x.k]) || x.span; w.style.setProperty("--dw", span);
-    if(!x.fixed) w.innerHTML = `<div class="dw-bar"><span class="dw-grip" data-grip title="끌어서 옮기기">⠿ 옮기기</span><button class="dw-size" data-act="layW" data-k="${esc(x.k)}" title="넓이 바꾸기">↔ 넓이</button><button class="dw-size" data-act="layHide" data-k="${esc(x.k)}" title="이 카드 숨기기">✕ 숨기기</button></div>`;
+    const w = document.createElement("div"); w.className = "dw" + (x.fixed ? " dw-fixed" : ""); w.dataset.k = x.k || ""; const span = x.fixed ? 12 : (L.w && L.w[x.k]) || x.span; w.style.setProperty("--dw", span); w.style.setProperty("--mw", x.fixed ? 2 : mwOf(r, x.k));
+    if(!x.fixed) w.innerHTML = `<div class="dw-bar"><span class="dw-grip d-only" data-grip title="끌어서 옮기기">⠿ 옮기기</span><button class="dw-size d-only" data-act="layW" data-k="${esc(x.k)}" title="넓이 바꾸기">↔ 넓이</button><span class="dw-grip m-only m-grip" data-mgrip title="꾹 눌러 끌어서 옮기기">⠿ 끌어서 옮기기</span><button class="dw-size m-only" data-act="mMove" data-d="-1" data-k="${esc(x.k)}" aria-label="앞으로">▲</button><button class="dw-size m-only" data-act="mMove" data-d="1" data-k="${esc(x.k)}" aria-label="뒤로">▼</button><button class="dw-size m-only" data-act="mW" data-k="${esc(x.k)}">↔ ${mwOf(r, x.k)===1?"반 칸":"한 줄"}</button><button class="dw-size" data-act="layHide" data-k="${esc(x.k)}" title="이 카드 숨기기">✕ 숨기기</button></div>`;
     w.appendChild(x.el); dash.appendChild(w); });
   if(hidden.length || (L.order||[]).length || Object.keys(L.w||{}).length){ const bar = document.createElement("div"); bar.className = "lay-bar small";
     bar.innerHTML = (hidden.length ? `<span class="muted">숨긴 카드</span> ${hidden.map(x => `<button class="chip" data-act="layShow" data-k="${esc(x.k)}" title="다시 보이기">${esc(x.name)} ＋</button>`).join("")}` : "") + `<button class="btn sm ghost" data-act="layReset" title="이 화면 배치를 처음대로">처음 배치로</button>`;
     wrap.appendChild(bar); }
+  if(seq.filter(x => !x.fixed).length > 1){ const mb = document.createElement("div"); mb.innerHTML = mEditBtn(); wrap.appendChild(mb.firstElementChild); }
   wrap.appendChild(dash);
 }
 A.layW = el => { const r = route(), L = layGet(r), w = el.closest(".dw"), cur = Number(getComputedStyle(w).getPropertyValue("--dw")) || 12; L.w = L.w || {}; const i = LAY_W.findIndex(v => v > cur); L.w[el.dataset.k] = i < 0 ? LAY_W[0] : LAY_W[i]; laySave(); render(); };
@@ -1345,17 +1385,19 @@ const SHOW_OPTS = {
   diary: [["quick","빠른 입력"],["upcoming","다가오는 업무"],["tt","시간표"],["todo","할 일"],["sub","제출"],["sch","학교 일정"],["event","학급 행사"],["meet","회의"],["counsel","상담"],["memo","메모"],["eval","평가"],["asg","과제 마감"],["att","출결"],["rec","학생 기록"],["exp","지출"]],
   today: [["tt","오늘 시간표"],["quick","빠른 입력"],["sched","오늘 일정"],["todo","오늘 할 일"],["memo","오늘 메모"],["submit","제출 현황"],["tasks","회의·다가오는 업무"],["eval","평가 확인"],["event","다가오는 행사"],["counsel","상담"],["jobs","일인일역"],["roll","재적"],["attn","오늘 출결"],["budget","예산"]]
 };
-const shown = (area, k) => { const a = S.show && S.show[area]; if(!a) return true; if(a[k] === false) return false; return !(a.stats === false && ["roll","attn","budget"].includes(k)); };
+/* 보일 것 설정은 기기마다 따로(LOOK.show). 처음엔 예전에 학급 기록에 저장해 둔 설정(S.show)을 이어받음 */
+const showOf = () => { if(!LOOK.show){ LOOK.show = JSON.parse(JSON.stringify(S.show || {})); laySave(); } return LOOK.show; };
+const shown = (area, k) => { const a = showOf()[area]; if(!a) return true; if(a[k] === false) return false; return !(a.stats === false && ["roll","attn","budget"].includes(k)); };
 function showCfgCard(area){
   if(ui.showCfg !== area) return "";
   return `<div class="card show-cfg"><div class="spread"><h2>${area==="diary"?"다이어리":"오늘"}에 보일 것</h2><div class="row"><button class="btn sm ghost" data-act="showAll" data-a="${area}">모두 보이기</button><button class="btn sm" data-act="showCfg" data-a="${area}">닫기</button></div></div>
     <div class="row" style="gap:6px;margin-top:8px">${SHOW_OPTS[area].map(([k,l])=>`<label class="show-chip ${shown(area,k)?"on":""}"><input type="checkbox" ${shown(area,k)?"checked":""} data-ch="showSet" data-a="${area}" data-k="${k}">${l}</label>`).join("")}</div>
-    <div class="small muted" style="margin-top:8px">끈 것은 화면에서만 숨겨요. 기록은 지워지지 않아요.${area==="today" ? ` 카드 위 <b>⠿ 옮기기</b>를 잡아 끌면 자리를, <b>↔</b>를 누르면 넓이를 바꿔요. <button class="btn sm ghost" data-act="dashReset">처음 배치로</button>` : ""}</div></div>`;
+    <div class="small muted" style="margin-top:8px">끈 것은 화면에서만 숨겨요. 기록은 지워지지 않아요. <b>이 설정과 카드 배치는 이 기기에만 적용돼요</b> (휴대폰·PC 따로).${area==="today" ? ` 카드 위 <b>⠿ 옮기기</b>를 잡아 끌면 자리를, <b>↔</b>를 누르면 넓이를 바꿔요. <button class="btn sm ghost" data-act="dashReset">처음 배치로</button>` : ""}</div></div>`;
 }
 const showBtn = area => `<button class="btn ${ui.showCfg===area?"pri":""}" data-act="showCfg" data-a="${area}" title="보일 것 고르기">⚙ 보기</button>`;
 A.showCfg = el => { ui.showCfg = ui.showCfg === el.dataset.a ? null : el.dataset.a; render(); };
-CH.showSet = el => { const a = el.dataset.a; S.show ||= {}; S.show[a] ||= {}; if(S.show[a].stats === false){ ["roll","attn","budget"].forEach(k => S.show[a][k] = false); delete S.show[a].stats; } if(el.checked) delete S.show[a][el.dataset.k]; else S.show[a][el.dataset.k] = false; commit(); };
-A.showAll = el => { if(S.show) delete S.show[el.dataset.a]; commit(); };
+CH.showSet = el => { const a = el.dataset.a, SH = showOf(); SH[a] ||= {}; if(SH[a].stats === false){ ["roll","attn","budget"].forEach(k => SH[a][k] = false); delete SH[a].stats; } if(el.checked) delete SH[a][el.dataset.k]; else SH[a][el.dataset.k] = false; laySave(); render(); };
+A.showAll = el => { delete showOf()[el.dataset.a]; laySave(); render(); };
 const diaryTodos = (d, late) => dayTodos(d, late).filter(it => shown("diary", it.k==="sub" ? "sub" : "todo"));
 function dayTodos(d, withLate){
   const t = today();
