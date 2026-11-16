@@ -226,7 +226,16 @@ table.t{width:100%;border-collapse:collapse;font-size:13.5px}
 .date-pop{position:absolute;right:4px;width:26px!important;height:26px;opacity:0;cursor:pointer;padding:0!important;border:0!important}
 .date-tx::after{content:"📅";position:absolute;right:8px;pointer-events:none;font-size:14px;opacity:.7}
 .date-hint{color:var(--muted);white-space:nowrap}.date-hint.bad{color:var(--bad)}
+.att-g{display:inline-flex;align-items:center;gap:4px;border:1px solid transparent;background:none;border-radius:6px;padding:2px 6px;margin:1px 2px 1px 0;font:inherit;color:inherit;cursor:pointer;text-align:left}
+.att-g:hover,.att-g.on{border-color:var(--accent);background:var(--accent-soft)}
+.att-plus{border:1px dashed var(--line);background:none;border-radius:6px;width:22px;height:22px;line-height:18px;color:var(--muted);cursor:pointer;font-size:13px;padding:0;margin-left:2px}.att-plus:hover{border-color:var(--accent);color:var(--accent-ink)}
+.att-pen.on{background:var(--accent-soft)}
+.att-ed-tr>td{background:var(--bg);padding:10px!important}.att-ed{border:1px solid var(--accent);border-radius:10px;padding:10px;background:var(--surface)}
 .att-imp{margin-top:10px;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.sub-scroll{max-height:460px;overflow-y:auto;overscroll-behavior:contain;margin-right:-6px;padding-right:6px}
+.sub-item{padding:8px 0;border-bottom:1px solid var(--line)}.sub-item:last-child{border-bottom:0}
+.sub-title{border:0;background:none;padding:0;font:inherit;font-weight:500;color:var(--ink);cursor:pointer;text-align:left}.sub-title:hover{color:var(--accent-ink);text-decoration:underline}
+.sub-all{border:0;background:none;color:var(--accent-ink);cursor:pointer;font-size:11.5px;text-decoration:underline;padding:0 2px}
 .sub-nm{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:1px 8px;font-size:12.5px;cursor:pointer;color:var(--ink);margin:2px 2px 0 0}
 .sub-nm:hover{border-color:var(--accent);background:var(--accent-soft)}.sub-nm.fx{border-color:var(--bad);color:var(--bad)}
 .abs-filt{display:flex;flex-direction:column;gap:6px;margin:0 0 10px;padding:8px 10px;border:1px solid var(--line);border-radius:10px}
@@ -733,7 +742,7 @@ A.calWReset = () => { LOOK.calw = 0; saveLook(); render(); };
 A.lookAccent = el => { LOOK.accent = el.dataset.v; saveLook(); render(); };
 A.lookTone = el => { LOOK.tone = el.dataset.v; saveLook(); render(); };
 A.lookMode = el => { LOOK.mode = el.dataset.v; saveLook(); render(); };
-const APP_VER = "2026.11.16-10";
+const APP_VER = "2026.11.16-13";
 const LOGO_SVG = `<svg class="brand-logo" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" style="fill:var(--brand,#1F6E8C)"/><g transform="translate(256 258) scale(1.13) translate(-256 -258)"><rect x="140" y="112" width="232" height="292" rx="30" fill="#FFFFFF"/><rect x="140" y="112" width="44" height="292" rx="22" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><rect x="162" y="112" width="22" height="292" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><path d="M318 112 H352 V214 L335 198 L318 214 Z" fill="#F2B84B"/><path d="M212 196 L236 220 L284 168" fill="none" style="stroke:var(--accent-ink,#1F6E8C)" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/><rect x="212" y="262" width="124" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="306" width="96" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="350" width="112" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 26%, #fff)"/></g></svg>`;
 let storageOK = true;
 /* 학급 여러 개: 학급마다 따로 저장한다. 처음 학급(c1)은 예전 저장 위치를 그대로 쓴다 */
@@ -1107,9 +1116,12 @@ function render(){
   const r = route();
   renderSide(r);
   let v; try{ v = VIEWS[r](); }catch(err){ console.error(err); v = `<div class="card"><h2>이 화면을 그리지 못했어요</h2><p class="small">${esc(err && err.message || String(err))}</p><p class="small muted">기록은 그대로 저장돼 있어요. 이 문구를 알려 주시면 고칠게요. 다른 메뉴는 그대로 쓸 수 있어요.</p></div>`; }
+  const keepSc = [...document.querySelectorAll("#main .sub-scroll, #main .scroll")].map((el, i) => [i, el.className, el.scrollTop, el.scrollLeft]);
+  const mainTop = $("#main").scrollTop, prevR = ui._lastRoute; ui._lastRoute = r;
   $("#main").innerHTML = `<div class="wrap">${archiveBanner()}${syncBanner()}${liveS?"":sampleBanner()}${v}</div>`;
   if(r !== "today"){ try{ layoutize(r); }catch(err){ console.error("layout", err); } }
   AFTER[r] && AFTER[r]();
+  if(prevR === r){ const now = [...document.querySelectorAll("#main .sub-scroll, #main .scroll")]; keepSc.forEach(([i, c, t, l]) => { const el = now[i]; if(el && el.className === c){ el.scrollTop = t; el.scrollLeft = l; } }); $("#main").scrollTop = mainTop; }
   requestAnimationFrame(() => { document.querySelectorAll("textarea.tt-memo-in").forEach(growTa); if(document.querySelector(".dash")) dashWatch(); });
   document.title = `${TITLE[r]} · ${clsName()} 학급일지`;
 }
@@ -1287,15 +1299,25 @@ A.dashReset = () => { delete LOOK.dash; try{ localStorage.setItem(LOOK_KEY, JSON
 A.todaySub = el => { const a = S.assignments.find(x=>x.id===el.dataset.a), sid = el.dataset.s; if(!a) return; const prev = subSt(a, sid), st = a.due < today() ? "late" : "ok";
   setSub(a, sid, st); ui.lastSub = {aid:a.id, sid, prev}; commit();
   document.querySelectorAll(".toast").forEach(x=>x.remove()); const t = document.createElement("div"); t.className = "toast"; t.innerHTML = `${esc(sname(sid))} · ${esc(a.title)} ${SUB_ST[st]} <button class="toast-undo" data-act="undoSub">되돌리기</button>`; document.body.appendChild(t); setTimeout(()=>t.remove(), 5000); };
-A.undoSub = () => { const u = ui.lastSub; if(!u) return; const a = S.assignments.find(x=>x.id===u.aid); if(a){ setSub(a, u.sid, u.prev); commit(); } ui.lastSub = null; document.querySelectorAll(".toast").forEach(x=>x.remove()); toast("되돌렸어요"); };
+A.undoSub = () => { const u = ui.lastSub; if(!u) return; const a = S.assignments.find(x=>x.id===u.aid); if(a){ if(u.many) u.many.forEach(([sid, pv]) => setSub(a, sid, pv)); else setSub(a, u.sid, u.prev); commit(); } ui.lastSub = null; document.querySelectorAll(".toast").forEach(x=>x.remove()); toast("되돌렸어요"); };
 function todaySubmitCard(){
-  const d = new Date();
-  const asg = S.assignments.filter(a => a.due >= ymd(addDays(d,-7))).sort((a,b)=>a.due.localeCompare(b.due));
-  return `<div class="card"><div class="spread"><h2>제출 현황</h2><a class="btn sm" href="#submit">제출 체크</a></div>
-      ${asg.length ? asg.map(a => { const n = asgDone(a), tot = asgTargets(a).length||1; const miss = asgMiss(a);
-        const fx = asgFix(a); return `<div style="padding:8px 0;border-bottom:1px solid var(--line)"><div class="spread"><span style="font-weight:500">${esc(a.title)}</span><span class="small muted num">${n}/${asgTargets(a).length} · ${md(a.due)}</span></div><div class="bar ${n===tot?"ok":""}" style="margin:6px 0"><i style="width:${n/tot*100}%"></i></div>${miss.length?`<div class="small muted">미제출 <span style="font-size:11px">(이름을 누르면 제출)</span><div>${miss.map(s=>`<button class="sub-nm" data-act="todaySub" data-a="${a.id}" data-s="${s.id}">${esc(s.name)}</button>`).join("")}</div></div>`:""}${fx.length?`<div class="small" style="color:var(--bad);margin-top:4px">수정 중 <div>${fx.map(s=>`<button class="sub-nm fx" data-act="todaySub" data-a="${a.id}" data-s="${s.id}">${esc(s.name)}</button>`).join("")}</div></div>`:""}</div>`; }).join("") : `<div class="empty">최근 과제가 없어요</div>`}
-    </div>`;
+  const t = today(), recent = ymd(addDays(new Date(), -7));
+  const open = a => asgMiss(a).length || asgFix(a).length;
+  const all = S.assignments.slice().sort((a,b)=>a.due.localeCompare(b.due));
+  const asg = all.filter(a => open(a) || (ui.subShowDone && a.due >= recent)), nOpen = all.filter(open).length, nDone = all.filter(a => !open(a) && a.due >= recent).length;
+  return `<div class="card"><div class="spread"><h2>제출 현황 <span class="small muted">${nOpen ? `덜 낸 과제 ${nOpen}개` : ""}</span></h2><a class="btn sm" href="#submit">제출 체크</a></div>
+    ${nDone ? `<div class="row small" style="margin:2px 0 4px"><label class="row" style="gap:5px;cursor:pointer"><input type="checkbox" ${ui.subShowDone?"checked":""} data-ch="subShowDone">최근 다 낸 과제도 보기 (${nDone})</label></div>` : ""}
+    <div class="sub-scroll">${asg.length ? asg.map(a => { const n = asgDone(a), tot = asgTargets(a).length||1, miss = asgMiss(a), fx = asgFix(a), over = a.due < t;
+      return `<div class="sub-item"><div class="spread"><button class="sub-title" data-act="goSubmit" data-id="${a.id}" title="제출 체크에서 열기">${esc(a.title)}</button><span class="small muted num" style="white-space:nowrap">${n}/${asgTargets(a).length} · <span style="${over&&miss.length?"color:var(--bad)":""}">${md(a.due)}${over&&miss.length?" 지남":""}</span></span></div>
+        <div class="bar ${n===tot?"ok":""}" style="margin:6px 0"><i style="width:${n/tot*100}%"></i></div>
+        ${miss.length?`<div class="small muted">미제출 ${miss.length}명 <span style="font-size:11px">(이름을 누르면 ${over?"늦게 제출":"제출"})</span>${miss.length>1?` <button class="sub-all" data-act="todaySubAll" data-a="${a.id}">모두 ${over?"늦게 제출":"제출"}</button>`:""}<div>${miss.map(s=>`<button class="sub-nm" data-act="todaySub" data-a="${a.id}" data-s="${s.id}">${esc(s.name)}</button>`).join("")}</div></div>`:`<div class="small" style="color:var(--ok)">모두 냈어요</div>`}
+        ${fx.length?`<div class="small" style="color:var(--bad);margin-top:4px">수정 중 ${fx.length}명 <span style="font-size:11px">(이름을 누르면 통과 → ${over?"늦게 제출":"제출"})</span>${fx.length>1?` <button class="sub-all" data-act="todaySubAll" data-a="${a.id}" data-k="fix">모두 통과</button>`:""}<div>${fx.map(s=>`<button class="sub-nm fx" data-act="todaySub" data-a="${a.id}" data-s="${s.id}">${esc(s.name)}</button>`).join("")}</div></div>`:""}</div>`; }).join("") : `<div class="empty">덜 낸 과제가 없어요</div>`}</div></div>`;
 }
+CH.subShowDone = el => { ui.subShowDone = el.checked; render(); };
+A.todaySubAll = async el => { const a = S.assignments.find(x=>x.id===el.dataset.a); if(!a) return; const fixK = el.dataset.k === "fix", miss = fixK ? asgFix(a) : asgMiss(a), st = a.due < today() ? "late" : "ok";
+  if(!await ask(`'${esc(a.title)}' ${fixK?"수정 중":"미제출"} ${miss.length}명을 모두 ${SUB_ST[st]}로 바꿀까요?`, "모두 바꾸기")) return;
+  const prev = miss.map(s => [s.id, subSt(a, s.id)]); miss.forEach(s => setSub(a, s.id, st)); ui.lastSub = {aid:a.id, many:prev}; commit();
+  document.querySelectorAll(".toast").forEach(x=>x.remove()); const tt = document.createElement("div"); tt.className = "toast"; tt.innerHTML = `${esc(a.title)} ${miss.length}명 ${SUB_ST[st]} <button class="toast-undo" data-act="undoSub">되돌리기</button>`; document.body.appendChild(tt); setTimeout(()=>tt.remove(), 5000); };
 function todayJobsCard(){
   if(S.jobMode==="role"){ const R = rolesOf(), chk = R.checks[today()]||{}, name = id => R.list.find(r=>r.id===id)?.name;
     const w = sorted().filter(s=>name(R.assign[s.id])), left = w.filter(s=>!chk[s.id]);
@@ -1622,6 +1644,7 @@ function attRangeRows(from, to){
       if(a.r.kind==="결석") while(j+1 < L.length){ const b = L[j+1]; if(b.r.kind==="결석" && b.r.reason===a.r.reason && (b.r.note||"")===(a.r.note||"") && schoolStep(L[j].d, 1)===b.d) j++; else break; }
       const day = x => oneMonth ? `${Number(x.slice(8))}일` : `${Number(x.slice(5,7))}/${Number(x.slice(8))}`, note = a.r.note ? `(${a.r.note})` : "";
       o.dates.push(j > i ? `${day(a.d)}~${day(L[j].d)} ${attLabel(a.r)}${note} ${j-i+1}일` : `${day(a.d)} ${attLabel(a.r)}${note}`);
+      (o.groups ||= []).push({days: L.slice(i, j+1).map(x=>x.d), label: o.dates[o.dates.length-1], reason: a.r.reason});
       i = j;
     }
   });
@@ -1650,7 +1673,8 @@ function attSumTable(rows, label, act, emptyLabel){
   const tot = ATT_COLS.map(c=>list.reduce((a,s)=>a+rows[s.id][c],0));
   return `<div class="spread" style="margin:4px 0 10px"><span class="small muted">${label} 출결 특이사항 ${list.length}명</span><button class="btn sm" data-act="${act}">내보내기</button></div>
   <div class="scroll"><table class="t"><thead><tr><th>번호</th><th>이름</th>${ATT_COLS.map(c=>`<th class="r">${c}</th>`).join("")}<th>내용</th></tr></thead><tbody>
-  ${list.map(s=>`<tr><td class="num">${s.no}</td><td>${esc(s.name)}</td>${ATT_COLS.map(c=>`<td class="r num">${rows[s.id][c]||""}</td>`).join("")}<td class="small">${rows[s.id].dates.map(esc).join(", ")}</td></tr>`).join("") || `<tr><td colspan="11" class="empty">${emptyLabel} 출결 특이사항이 없어요</td></tr>`}
+  ${list.map(s=>`<tr><td class="num">${s.no}</td><td style="white-space:nowrap">${esc(s.name)} <button class="att-plus" data-act="attEdit" data-s="${s.id}" data-days="" title="${esc(s.name)} 출결 더 넣기" aria-label="${esc(s.name)} 출결 더 넣기">＋</button></td>${ATT_COLS.map(c=>`<td class="r num">${rows[s.id][c]||""}</td>`).join("")}<td class="small">${(rows[s.id].groups||[]).map(g=>`<button class="att-g ${attEditOn(s.id, g.days)?"on":""}" data-act="attEdit" data-s="${s.id}" data-days="${g.days.join(",")}" title="눌러서 고치기"><i class="dot c-${g.reason}"></i>${esc(g.label)}</button>`).join("")}</td></tr>${attEditOn(s.id) ? `<tr class="att-ed-tr"><td colspan="${3+ATT_COLS.length}">${attEditor()}</td></tr>` : ""}`).join("") || `<tr><td colspan="11" class="empty">${emptyLabel} 출결 특이사항이 없어요</td></tr>`}
+  ${attEditOn("__new") ? `<tr class="att-ed-tr"><td colspan="${3+ATT_COLS.length}">${attEditor()}</td></tr>` : ""}
   ${list.length?`<tr><td></td><td><b>합계</b></td>${tot.map(v=>`<td class="r num"><b>${v||""}</b></td>`).join("")}<td></td></tr>`:""}</tbody></table></div>`;
 }
 /* 체험학습 대장: 학생별로 체험학습 날짜를 모아 이어진 등교일끼리 한 건으로 묶고, [from, to]와 겹치는 건만 */
@@ -1729,8 +1753,8 @@ function looseRange(t){ t = String(t||"").replace(/\(\s*\d+\s*일\s*(?:간)?\s*\
   const n = parts[1].match(/^(\d+)\s*일\s*(?:간|동안)$/); if(n){ let k = Math.max(1, +n[1]), e = a; if(!isSchoolDay(a)) k++; while(--k > 0) e = schoolStep(e, 1) || e; return [a, e]; }
   const b = looseDate(parts[1], a); if(!b) return null; return a <= b ? [a, b] : [b, a]; }
 const mdShort = d => `${Number(d.slice(5,7))}/${Number(d.slice(8))}`;
-function dateTextHtml(p, def, single){
-  return `<label class="f qk-f">날짜<span class="date-tx"><input type="text" id="${p}Date" value="${def ? mdShort(def) : ""}" placeholder="${single ? "예: 오늘, 11/19" : "예: 11/19, 19~23, 오늘"}" data-in="dateTx" data-p="${p}" data-single="${single?1:""}" style="width:${single?110:150}px" autocomplete="off"><input type="date" class="date-pop" tabindex="-1" aria-label="달력에서 고르기" data-ch="datePop" data-p="${p}"></span><span class="small date-hint" id="${p}DateHint">${def ? dateHint(def, def, single) : ""}</span></label>`;
+function dateTextHtml(p, def, single, def2){
+  return `<label class="f qk-f">날짜<span class="date-tx"><input type="text" id="${p}Date" value="${def ? mdShort(def) + (def2 && def2 !== def ? "~" + mdShort(def2) : "") : ""}" placeholder="${single ? "예: 오늘, 11/19" : "예: 11/19, 19~23, 오늘"}" data-in="dateTx" data-p="${p}" data-single="${single?1:""}" style="width:${single?110:150}px" autocomplete="off"><input type="date" class="date-pop" tabindex="-1" aria-label="달력에서 고르기" data-ch="datePop" data-p="${p}"></span><span class="small date-hint" id="${p}DateHint">${def ? dateHint(def, def2 || def, single) : ""}</span></label>`;
 }
 function dateHint(a, b, single){ if(single || a === b) return md(a); const n = schoolDays(a, b); return `${md(a)} ~ ${md(b)} · 등교일 ${n}일`; }
 IN.dateTx = el => { const h = document.getElementById(el.dataset.p+"DateHint"), r = looseRange(el.value); if(!h) return;
@@ -1773,6 +1797,39 @@ function attAddBox(){
 document.addEventListener("toggle", e => { if(e.target.dataset && e.target.dataset.tg === "attAdd") ui.attAddOpen = e.target.open; }, true);
 A.attAddSave = () => { const r = attSaveEntry("aa"); if(!r) return; ui.attAddOpen = true;
   toast(`${r.who}명 ${r.label} ${r.days}일을 넣었어요${r.over?` (기존 ${r.over}건은 새 내용으로 바꿈)`:""}`); };
+/* ── 종합·대장 표에서 바로 고치기 ── */
+function attRowDays(r, type){ const out = []; for(let d = parse(r.start); ymd(d) <= r.end; d = addDays(d,1)){ const k = ymd(d), x = S.attendance[k]?.[r.sid]; if(x && (type === "field" ? x.reason === "체험학습" : x.reason !== "체험학습")) out.push(k); } return out; }
+const attEditOn = (sid, days) => { const e = ui.attEdit; if(!e || e.view !== ui.attView) return false; if(sid === "__new") return e.sid === "__new"; if(e.sid !== sid) return false; return days === undefined ? (ui.attView === "month" || ui.attView === "range") : e.days.join(",") === days.join(","); };
+function attEditor(){ const e = ui.attEdit, isNew = !e.days.length, r0 = isNew ? null : S.attendance[e.days[0]]?.[e.sid];
+  const defR = r0 ? r0.reason : ui.attView === "field" ? "체험학습" : "질병", d0 = isNew ? (ui.attView==="month" && ui.attDay?.slice(0,7)===ui.attMonth ? ui.attDay : today()) : e.days[0], d1 = isNew ? d0 : e.days[e.days.length-1];
+  return `<div class="att-ed"><div class="small" style="margin-bottom:8px"><b>${e.sid==="__new" ? "출결 넣기" : esc(sname(e.sid)) + (isNew ? " · 출결 더 넣기" : " · 기록 고치기")}</b>${isNew ? "" : ` <span class="muted">${e.days.length}일분 (${e.days.length>1?`${md(e.days[0])} ~ ${md(d1)}`:md(d0)})</span>`}</div>
+    <div class="row qk-row">${e.sid==="__new" ? stuPickHtml("ae") : ""}${dateTextHtml("ae", d0, false, d1)}
+      <label class="f qk-f">사유<select id="aeReason">${REASONS.map(x=>`<option value="${x}" ${x===defR?"selected":""}>${x==="체험학습"?"교외체험학습":x}</option>`).join("")}</select></label>
+      <label class="f qk-f">종류<select id="aeKind">${KINDS.map(k=>`<option ${r0&&r0.kind===k?"selected":""}>${k}</option>`).join("")}</select></label>
+      <label class="f qk-f">교시<input type="text" id="aePer" value="${r0 && r0.periods ? r0.periods.join(",") : ""}" placeholder="예: 2, 3·4" inputmode="numeric" style="width:90px"></label>
+      <input type="text" id="aeNote" value="${esc(r0?.note||"")}" placeholder="내용" style="flex:2;min-width:160px" data-enter="attEdSave">
+      <div class="row" style="gap:6px">${isNew ? "" : `<button class="btn sm danger" data-act="attEdDel">지우기</button>`}<button class="btn sm" data-act="attEdCancel">취소</button><button class="btn sm pri" data-act="attEdSave">${isNew?"넣기":"저장"}</button></div></div></div>`; }
+A.attEdit = el => { const sid = el.dataset.s, days = el.dataset.days ? el.dataset.days.split(",") : [];
+  if(ui.attEdit && ui.attEdit.sid === sid && ui.attEdit.days.join(",") === days.join(",") && ui.attEdit.view === ui.attView){ ui.attEdit = null; render(); return; }
+  ui.attEdit = {sid, days, view: ui.attView}; render(); setTimeout(() => { const t = document.querySelector(".att-ed"); t?.scrollIntoView({block:"nearest", behavior:"smooth"}); (document.getElementById("aePickQ") || document.getElementById("aeNote"))?.focus(); }, 30); };
+A.attEdCancel = () => { ui.attEdit = null; render(); };
+A.attEdSave = () => { const e = ui.attEdit; if(!e) return;
+  const sids = e.sid === "__new" ? stuPickRead("ae") : [e.sid]; if(!sids) return; const rg = dateRead("ae"); if(!rg) return;
+  const v = id => (document.getElementById("ae"+id)?.value || "").trim(), kind = v("Kind") || "결석", reason = v("Reason") || "질병";
+  const periods = kind === "결석" ? [] : [...new Set((v("Per").match(/\d+/g) || []).map(Number).filter(n => n >= 1 && n <= 8))].sort((a,b)=>a-b);
+  const days = []; for(let d = parse(rg[0]); ymd(d) <= rg[1]; d = addDays(d,1)){ const k = ymd(d); if(isSchoolDay(k)) days.push(k); } if(!days.length) days.push(rg[0]);
+  e.days.forEach(d => { if(S.attendance[d]){ delete S.attendance[d][e.sid]; if(!Object.keys(S.attendance[d]).length) delete S.attendance[d]; } });
+  days.forEach(d => { const day = S.attendance[d] ||= {}; sids.forEach(sid => { day[sid] = {kind, reason, note: v("Note"), periods: periods.slice()}; }); });
+  if(e.days.length && e.days[0] !== days[0] && S.attDocs) ["field","absent"].forEach(t => { const a = `${t}|${e.sid}|${e.days[0]}`, b = `${t}|${e.sid}|${days[0]}`; if(S.attDocs[a] && !S.attDocs[b]){ S.attDocs[b] = S.attDocs[a]; delete S.attDocs[a]; } });
+  ui.attEdit = null; commit(); toast(e.days.length ? `${sname(e.sid)} 기록을 고쳤어요 (${days.length}일)` : `${sids.length===1?sname(sids[0]):sids.length+"명"} ${reason}${kind} ${days.length}일을 넣었어요`); };
+EN.attEdSave = () => A.attEdSave();
+A.attEdDel = async () => { const e = ui.attEdit; if(!e || !e.days.length) return;
+  if(!await ask(`${esc(sname(e.sid))}의 이 기록 ${e.days.length}일분을 지우고 출석으로 돌릴까요?`, "지우기", true)) return;
+  const back = e.days.map(d => [d, S.attendance[d]?.[e.sid]]);
+  e.days.forEach(d => { if(S.attendance[d]){ delete S.attendance[d][e.sid]; if(!Object.keys(S.attendance[d]).length) delete S.attendance[d]; } });
+  ui.attEdit = null; ui.attUndo = {sid: e.sid, back}; commit();
+  document.querySelectorAll(".toast").forEach(x=>x.remove()); const t = document.createElement("div"); t.className = "toast"; t.innerHTML = `${esc(sname(e.sid))} 기록 ${e.days.length}일분을 지웠어요 <button class="toast-undo" data-act="attUndoDel">되돌리기</button>`; document.body.appendChild(t); setTimeout(()=>t.remove(), 5000); };
+A.attUndoDel = () => { const u = ui.attUndo; if(!u) return; u.back.forEach(([d, r]) => { if(r) (S.attendance[d] ||= {})[u.sid] = r; }); ui.attUndo = null; commit(); document.querySelectorAll(".toast").forEach(x=>x.remove()); toast("되돌렸어요"); };
 /* ── 출결 엑셀·표 파일로 넣기 ── */
 function attReasonKind(txt){ txt = String(txt||"");
   const reason = /체험|교외|가정학습/.test(txt) ? "체험학습" : /미인정|무단/.test(txt) ? "미인정" : /질병|병결|병원|아파|감기|독감|장염|코로나/.test(txt) ? "질병" : /인정|공결|경조|출석인정/.test(txt) ? "인정" : /기타/.test(txt) ? "기타" : "";
@@ -1860,11 +1917,11 @@ function attFieldTable(y, m, type = "field"){
     <div class="row"><button class="btn sm" data-act="fieldExport" data-k="view">이 목록 내보내기</button><button class="btn sm ghost" data-act="fieldExport" data-k="year">학년도 전체 내보내기</button></div></div>
   ${fm === "range" ? attRangeBar(from, to) : ""}${filt}
   <div class="small muted" style="margin-bottom:8px">${label} ${what} ${all.length}건 · ${who}명 · 결석 ${days}일 · <b style="color:${miss.length?"var(--bad)":"var(--ok)"}">서류 ${miss.length ? `안 낸 것 ${miss.length}건` : "모두 받음"}</b> (이어진 등교일은 한 건으로 묶어요${fm==="range"?", 기간에 걸친 건은 전체 기간으로 보여요":""})</div>
-  <div class="scroll"><table class="t doc-t"><thead><tr><th>연번</th><th>번호</th><th>이름</th>${F?"":"<th>구분</th>"}<th>기간</th><th class="r">일수</th><th>내용</th>${D.map(([k,l])=>`<th class="c"><div>${l}</div>${list.length?`<div class="doc-all"><button class="btn sm" data-act="attDocAll" data-d="${k}" data-v="1" title="지금 보이는 ${list.length}건 모두 받음으로">전체 체크</button><button class="btn sm ghost" data-act="attDocAll" data-d="${k}" data-v="0" title="지금 보이는 ${list.length}건 모두 해제">전체 해제</button></div>`:""}</th>`).join("")}</tr></thead><tbody>
+  <div class="scroll"><table class="t doc-t"><thead><tr><th>연번</th><th>번호</th><th>이름</th>${F?"":"<th>구분</th>"}<th>기간</th><th class="r">일수</th><th>내용</th><th class="c">고치기</th>${D.map(([k,l])=>`<th class="c"><div>${l}</div>${list.length?`<div class="doc-all"><button class="btn sm" data-act="attDocAll" data-d="${k}" data-v="1" title="지금 보이는 ${list.length}건 모두 받음으로">전체 체크</button><button class="btn sm ghost" data-act="attDocAll" data-d="${k}" data-v="0" title="지금 보이는 ${list.length}건 모두 해제">전체 해제</button></div>`:""}</th>`).join("")}</tr></thead><tbody>
   ${list.map((r,i)=>{ const o = docOf(type, r), key = docKey(type, r), done = docsDone(type, r);
-    return `<tr class="${done?"doc-done":"doc-miss"}"><td class="num muted">${i+1}</td><td class="num">${stu(r.sid)?.no??""}</td><td style="white-space:nowrap">${esc(sname(r.sid))}</td>${F?"":`<td style="white-space:nowrap"><i class="dot c-${r.reason}"></i> ${esc(r.reason)}${esc(r.kind)}</td>`}<td class="num" style="white-space:nowrap">${r.start===r.end?md(r.start):`${md(r.start)} ~ ${md(r.end)}`}</td><td class="r num">${r.days||"-"}</td><td>${esc(r.note)}</td>
-      ${D.map(([k,l])=>`<td class="c"><label class="doc-ck" title="${o[k]?`${md(o[k])} 받음`:"아직 안 냄"}"><input type="checkbox" ${o[k]?"checked":""} data-ch="attDoc" data-key="${esc(key)}" data-d="${k}" aria-label="${esc(sname(r.sid))} ${l} 받음">${o[k]?`<span class="small muted num">${Number(o[k].slice(5,7))}/${Number(o[k].slice(8))}</span>`:""}</label></td>`).join("")}</tr>`; }).join("")
-    || `<tr><td colspan="${7 + D.length + (F?0:1)}" class="empty">${ui.docMissOnly ? "서류를 안 낸 건이 없어요" : `${fm==="range"?"이 기간에":"이번 달"} ${F?"체험학습":what} 기록이 없어요`}</td></tr>`}</tbody></table></div>`;
+    return `<tr class="${done?"doc-done":"doc-miss"}"><td class="num muted">${i+1}</td><td class="num">${stu(r.sid)?.no??""}</td><td style="white-space:nowrap">${esc(sname(r.sid))}</td>${F?"":`<td style="white-space:nowrap"><i class="dot c-${r.reason}"></i> ${esc(r.reason)}${esc(r.kind)}</td>`}<td class="num" style="white-space:nowrap">${r.start===r.end?md(r.start):`${md(r.start)} ~ ${md(r.end)}`}</td><td class="r num">${r.days||"-"}</td><td>${esc(r.note)}</td><td class="c"><button class="btn sm ghost att-pen ${attEditOn(r.sid, attRowDays(r, type))?"on":""}" data-act="attEdit" data-s="${r.sid}" data-days="${attRowDays(r, type).join(",")}" aria-label="${esc(sname(r.sid))} 기록 고치기">✎</button></td>
+      ${D.map(([k,l])=>`<td class="c"><label class="doc-ck" title="${o[k]?`${md(o[k])} 받음`:"아직 안 냄"}"><input type="checkbox" ${o[k]?"checked":""} data-ch="attDoc" data-key="${esc(key)}" data-d="${k}" aria-label="${esc(sname(r.sid))} ${l} 받음">${o[k]?`<span class="small muted num">${Number(o[k].slice(5,7))}/${Number(o[k].slice(8))}</span>`:""}</label></td>`).join("")}</tr>${attEditOn(r.sid, attRowDays(r, type)) ? `<tr class="att-ed-tr"><td colspan="${8 + D.length + (F?0:1)}">${attEditor()}</td></tr>` : ""}`; }).join("")
+    || `<tr><td colspan="${8 + D.length + (F?0:1)}" class="empty">${ui.docMissOnly ? "서류를 안 낸 건이 없어요" : `${fm==="range"?"이 기간에":"이번 달"} ${F?"체험학습":what} 기록이 없어요`}</td></tr>`}</tbody></table></div>`;
 }
 A.absFilt = el => { const k = el.dataset.k === "reason" ? "absReason" : "absKind"; ui[k] = el.dataset.v; render(); };
 /* 지금 표에 보이는 건 전체를 체크/해제 (이미 받은 날짜는 그대로 둠) */
@@ -1953,7 +2010,7 @@ VIEWS.submit = () => {
     </div>
     <div class="card">${a ? `<div class="spread"><div><h2>${esc(a.title)}</h2><div class="small muted">마감 ${md(a.due)} · 대상 ${asgTargets(a).length}명 · 제출 ${asgDone(a)}명${asgLate(a).length?`(늦게 ${asgLate(a).length})`:""}${asgFix(a).length?` · 수정 중 ${asgFix(a).length}명`:""} · 미제출 ${miss.length}명${exN?` · 제외 ${exN}명`:""}</div></div>
       <div class="row"><button class="btn sm ${exMode?"pri":""}" data-act="exMode">${exMode?"제외 고르기 끝":"제외할 학생 고르기"}</button>${exMode?"":`<button class="btn sm" data-act="asgAll" data-v="1">모두 제출</button><button class="btn sm" data-act="asgAll" data-v="0">모두 해제</button>`}<button class="btn sm danger" data-act="delAsg">과제 삭제</button></div></div>
-      ${exMode ? "" : `<div class="row sub-stamp" style="gap:8px;margin-bottom:10px"><span class="small muted">누르면 표시할 것</span><div class="seg">${Object.entries(SUB_ST).map(([k,l])=>`<button class="${(ui.subStamp||"ok")===k?"on":""} st-${k}" data-act="subStamp" data-v="${k}">${l}</button>`).join("")}</div><span class="small muted">같은 표시를 한 번 더 누르면 미제출로 돌아가요</span></div>`}
+      ${exMode ? "" : `<div class="row sub-stamp" style="gap:8px;margin-bottom:10px"><span class="small muted">누르면 표시할 것</span><div class="seg">${Object.entries(SUB_ST).map(([k,l])=>`<button class="${(ui.subStamp||"ok")===k?"on":""} st-${k}" data-act="subStamp" data-v="${k}">${l}</button>`).join("")}</div><span class="small muted">같은 표시를 한 번 더 누르면 미제출로 돌아가요${a.due < today() ? " · 마감이 지나서 제출은 늦게 제출로 표시돼요" : ""}</span></div>`}
       <div class="tiles ${exMode?"ex-mode":""}" style="margin-bottom:14px">${sorted().map(s=>{ const ex = isEx(a,s.id), st = ex ? "" : subSt(a, s.id);
         return `<button class="tile ${st==="ok"?"on":""} ${st==="late"?"on sub-late":""} ${st==="fix"?"sub-fix":""} ${ex?"ex":""}" data-act="${exMode?"asgEx":"asgToggle"}" data-s="${s.id}" ${!exMode&&ex?"disabled":""} aria-pressed="${exMode?ex:!!st}"><span class="no num">${s.no}번${ex?" · 제외":st&&st!=="ok"?` · ${SUB_ST[st]}`:""}</span><span>${esc(s.name)}</span></button>`; }).join("")}</div>
       <div class="banner" style="background:var(--bg);border-color:var(--line);flex-direction:column;align-items:stretch;gap:6px"><div class="spread"><div><b style="color:var(--ink)">미제출</b> <span id="missTxt">${miss.length ? miss.map(s=>`${s.no} ${esc(s.name)}`).join(", ") : "없어요"}</span></div>${miss.length||asgFix(a).length?`<button class="btn sm" data-act="copyMiss">명단 복사</button>`:""}</div>
@@ -1978,9 +2035,9 @@ A.selAsg = el => { ui.submitSel = el.dataset.id; ui.exMode = false; render(); };
 A.exMode = () => { ui.exMode = !ui.exMode; render(); };
 function setEx(a, sid, on){ a.exempt ||= {}; if(on){ a.exempt[sid] = true; delete a.submitted[sid]; } else delete a.exempt[sid]; }
 A.asgEx = el => { const a = S.assignments.find(x=>x.id===ui.submitSel); setEx(a, el.dataset.s, !isEx(a, el.dataset.s)); commit(); };
-A.asgToggle = el => { const a = S.assignments.find(x=>x.id===ui.submitSel), sid = el.dataset.s; if(isEx(a, sid)) return; const k = ui.subStamp || "ok"; setSub(a, sid, subSt(a, sid) === k ? "" : k); commit(); };
+A.asgToggle = el => { const a = S.assignments.find(x=>x.id===ui.submitSel), sid = el.dataset.s; if(isEx(a, sid)) return; let k = ui.subStamp || "ok"; if(k === "ok" && a.due < today()) k = "late"; const cur = subSt(a, sid); setSub(a, sid, cur === k || (k === "late" && cur === "ok") ? "" : k); commit(); };
 A.subStamp = el => { ui.subStamp = el.dataset.v; render(); };
-A.asgAll = el => { const a = S.assignments.find(x=>x.id===ui.submitSel); a.submitted = el.dataset.v==="1" ? Object.fromEntries(asgTargets(a).map(s=>[s.id,true])) : {}; commit(); };
+A.asgAll = el => { const a = S.assignments.find(x=>x.id===ui.submitSel); if(el.dataset.v!=="1"){ a.submitted = {}; commit(); return; } const st = a.due < today() ? "late" : "ok"; asgTargets(a).forEach(s => { if(!subDone(a, s.id)) setSub(a, s.id, st); }); commit(); if(st === "late") toast("마감이 지나서 아직 안 낸 학생은 '늦게 제출'로 표시했어요"); };
 A.delAsg = async () => { if(await ask("이 과제와 제출 기록을 삭제할까요?","삭제",true)){ S.assignments = S.assignments.filter(x=>x.id!==ui.submitSel); ui.submitSel=null; commit(); } };
 function submitByStudent(list, modeSeg){
   const st = sorted();
@@ -2016,7 +2073,7 @@ A.submitStu = el => { ui.submitStu = el.dataset.id; render(); };
 A.stuToggle = el => { const a = S.assignments.find(x=>x.id===el.dataset.a), sid = ui.submitStu; if(isEx(a, sid)) return; setSub(a, sid, subDone(a, sid) ? "" : (a.due < today() ? "late" : "ok")); commit(); };
 CH.stuSt = el => { const a = S.assignments.find(x=>x.id===el.dataset.a); if(isEx(a, ui.submitStu)) return; setSub(a, ui.submitStu, el.value); commit(); };
 A.stuEx = el => { const a = S.assignments.find(x=>x.id===el.dataset.a); setEx(a, ui.submitStu, !isEx(a, ui.submitStu)); commit(); };
-A.stuAll = el => { S.assignments.forEach(a=>{ if(isEx(a, ui.submitStu)) return; if(el.dataset.v==="1") a.submitted[ui.submitStu] = true; else delete a.submitted[ui.submitStu]; }); commit(); };
+A.stuAll = el => { S.assignments.forEach(a=>{ if(isEx(a, ui.submitStu)) return; if(el.dataset.v==="1"){ if(!subDone(a, ui.submitStu)) setSub(a, ui.submitStu, a.due < today() ? "late" : "ok"); } else delete a.submitted[ui.submitStu]; }); commit(); };
 A.stuNext = () => { const st = sorted(), i = st.findIndex(x=>x.id===ui.submitStu); ui.submitStu = st[(i+1)%st.length].id; render(); };
 A.copyMiss = async () => { const a = S.assignments.find(x=>x.id===ui.submitSel), f = asgFix(a), m = asgMiss(a);
   const txt = [m.length ? `미제출: ${m.map(s=>`${s.no} ${s.name}`).join(", ")}` : "", f.length ? `수정 중: ${f.map(s=>`${s.no} ${s.name}`).join(", ")}` : ""].filter(Boolean).join("\n");
