@@ -212,9 +212,23 @@ table.t{width:100%;border-collapse:collapse;font-size:13.5px}
 @media (max-width:1200px){.dash:not(.dash6){grid-template-columns:repeat(2,minmax(0,1fr))}.dw[style*="--dw:3"]{grid-column:span 2}}
 @media (max-width:860px){.dash,.dash6{grid-template-columns:minmax(0,1fr)}.dw{grid-column:auto!important}.dw-bar{display:none}}
 .att-add{margin:10px 0 12px;padding:8px 12px;border:1px dashed var(--line);border-radius:10px;background:var(--bg)}.att-add>summary{cursor:pointer;font-weight:600;list-style:none}.att-add>summary::-webkit-details-marker{display:none}.att-add[open]>summary{color:var(--accent-ink)}
-.stu-pick{position:relative;flex:1 1 220px;min-width:200px}.stu-pick>summary{list-style:none;cursor:pointer;border:1px solid var(--line);border-radius:8px;padding:8px 30px 8px 10px;background:var(--surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;position:relative}.stu-pick>summary::-webkit-details-marker{display:none}.stu-pick>summary::after{content:"▾";position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--muted)}
-.stu-pick[open]>summary{border-color:var(--accent)}.stu-pick-in{position:absolute;z-index:30;left:0;top:calc(100% + 4px);width:min(420px,86vw);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px;box-shadow:0 8px 24px rgba(0,0,0,.14)}
-.stu-pick-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:2px 8px;max-height:260px;overflow:auto}.stu-pick-g label{display:flex;gap:6px;align-items:center;padding:4px 2px;cursor:pointer;white-space:nowrap}.stu-pick-g input{width:16px;height:16px;accent-color:var(--accent-ink)}
+.stu-pick{position:relative;flex:1 1 240px;min-width:220px}
+.stu-pick-box{display:flex;flex-wrap:wrap;align-items:center;gap:4px;border:1px solid var(--line);border-radius:8px;padding:4px 30px 4px 6px;background:var(--surface);min-height:38px;cursor:text;position:relative}
+.stu-pick-box:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.stu-pick-box input{border:0!important;outline:0;box-shadow:none!important;background:transparent;flex:1 1 90px;min-width:90px;padding:4px!important}
+.stu-pick-sel{display:contents}.sp-chip{display:inline-flex;align-items:center;gap:2px;background:var(--accent-soft);color:var(--accent-ink);border-radius:999px;padding:2px 4px 2px 9px;font-size:13px;white-space:nowrap}
+.sp-chip button{border:0;background:none;color:inherit;cursor:pointer;font-size:15px;line-height:1;padding:0 4px}
+.stu-pick-tg{position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:none;color:var(--muted);cursor:pointer;padding:6px}
+.stu-pick-in{position:absolute;z-index:30;left:0;top:calc(100% + 4px);width:min(420px,86vw);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px;box-shadow:0 8px 24px rgba(0,0,0,.14)}
+.stu-pick-in[hidden]{display:none}
+.stu-pick-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:2px 8px;max-height:260px;overflow:auto}.stu-pick-g label{display:flex;gap:6px;align-items:center;padding:4px 2px;cursor:pointer;white-space:nowrap}.stu-pick-g label[hidden]{display:none}.stu-pick-g input{width:16px;height:16px;accent-color:var(--accent-ink)}
+.date-tx{position:relative;display:inline-flex;align-items:center}.date-tx input[type=text]{padding-right:32px}
+.date-pop{position:absolute;right:4px;width:26px!important;height:26px;opacity:0;cursor:pointer;padding:0!important;border:0!important}
+.date-tx::after{content:"📅";position:absolute;right:8px;pointer-events:none;font-size:14px;opacity:.7}
+.date-hint{color:var(--muted);white-space:nowrap}.date-hint.bad{color:var(--bad)}
+.att-imp{margin-top:10px;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.sub-nm{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:1px 8px;font-size:12.5px;cursor:pointer;color:var(--ink);margin:2px 2px 0 0}
+.sub-nm:hover{border-color:var(--accent);background:var(--accent-soft)}.sub-nm.fx{border-color:var(--bad);color:var(--bad)}
 .abs-filt{display:flex;flex-direction:column;gap:6px;margin:0 0 10px;padding:8px 10px;border:1px solid var(--line);border-radius:10px}
 .doc-all{display:flex;gap:3px;justify-content:center;margin-top:4px;flex-wrap:wrap}.doc-all .btn{font-weight:500;font-size:11.5px;padding:2px 7px;min-height:0}
 .doc-t td.c,.doc-t th.c{text-align:center}.doc-ck{display:inline-flex;flex-direction:column;align-items:center;gap:1px;cursor:pointer}.doc-ck input{width:18px;height:18px;accent-color:var(--accent-ink)}
@@ -719,7 +733,7 @@ A.calWReset = () => { LOOK.calw = 0; saveLook(); render(); };
 A.lookAccent = el => { LOOK.accent = el.dataset.v; saveLook(); render(); };
 A.lookTone = el => { LOOK.tone = el.dataset.v; saveLook(); render(); };
 A.lookMode = el => { LOOK.mode = el.dataset.v; saveLook(); render(); };
-const APP_VER = "2026.11.16-9";
+const APP_VER = "2026.11.16-10";
 const LOGO_SVG = `<svg class="brand-logo" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" style="fill:var(--brand,#1F6E8C)"/><g transform="translate(256 258) scale(1.13) translate(-256 -258)"><rect x="140" y="112" width="232" height="292" rx="30" fill="#FFFFFF"/><rect x="140" y="112" width="44" height="292" rx="22" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><rect x="162" y="112" width="22" height="292" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><path d="M318 112 H352 V214 L335 198 L318 214 Z" fill="#F2B84B"/><path d="M212 196 L236 220 L284 168" fill="none" style="stroke:var(--accent-ink,#1F6E8C)" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/><rect x="212" y="262" width="124" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="306" width="96" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="350" width="112" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 26%, #fff)"/></g></svg>`;
 let storageOK = true;
 /* 학급 여러 개: 학급마다 따로 저장한다. 처음 학급(c1)은 예전 저장 위치를 그대로 쓴다 */
@@ -1103,7 +1117,7 @@ function render(){
 /* ───────── 오늘 ───────── */
 
 /* ───── 오늘 화면 '빠른 입력': 할 일·회의·제출·행사·상담·메모를 바로 넣는다 ───── */
-const QK = [["task","할 일"],["meet","회의"],["sub","제출"],["event","행사"],["counsel","상담"],["att","출결"],["memo","메모"]];
+const QK = [["task","할 일"],["meet","회의"],["sub","제출"],["event","행사"],["counsel","상담"],["att","출결"],["rec","학생 기록"],["memo","메모"]];
 function todayQuickCard(defDate, title){
   const k = ui.qk || "task", t = defDate || today(), st = sorted();
   const f = {
@@ -1129,6 +1143,9 @@ function todayQuickCard(defDate, title){
       <label class="f qk-f">다음 상담<input type="date" id="qkNext"></label>
       <textarea id="qkBody" rows="2" placeholder="상담 내용" style="flex-basis:100%"></textarea>` : `<div class="small muted">학생을 먼저 등록해 주세요.</div>`,
     att: attEntryFields("qa", "질병", t),
+    rec: st.length ? `${stuPickHtml("qr")}${dateTextHtml("qr", t, true)}
+      <label class="f qk-f">분류<select id="qrCat">${REC_CATS.map(c=>`<option>${c}</option>`).join("")}</select></label>
+      <input type="text" id="qrText" placeholder="관찰한 내용 (예: 모둠 활동에서 친구 의견을 정리해 발표함)" style="flex:3;min-width:220px" data-enter="qkSave">` : `<div class="small muted">학생을 먼저 등록해 주세요.</div>`,
     memo: `<input type="text" id="qkTitle" placeholder="메모 제목 (선택)" style="flex:1;min-width:180px">
       <label class="f qk-f">날짜<input type="date" id="qkDate" value="${t}"></label>
       <textarea id="qkBody" rows="2" placeholder="메모 내용" style="flex-basis:100%"></textarea>`
@@ -1136,7 +1153,7 @@ function todayQuickCard(defDate, title){
   return `<div class="card qk-card"><div class="spread" style="margin-bottom:10px"><h2>${title || "빠른 입력"}</h2><div class="seg">${QK.map(([v,l])=>`<button class="${k===v?"on":""}" data-act="qkKind" data-v="${v}">${l}</button>`).join("")}</div></div>
     <div class="row qk-row">${f}<button class="btn pri" data-act="qkSave">넣기</button></div></div>`;
 }
-A.qkKind = el => { ui.qk = el.dataset.v; render(); ($("#qkTitle") || $("#qkBody"))?.focus(); };
+A.qkKind = el => { ui.qk = el.dataset.v; render(); ($("#qkTitle") || $("#qaPickQ") || $("#qrPickQ") || $("#qkBody"))?.focus(); };
 A.qkSave = () => {
   const k = ui.qk || "task", v = fieldVal, title = v("qkTitle"), date = v("qkDate") || today();
   let msg = "", go = "";
@@ -1146,6 +1163,10 @@ A.qkSave = () => {
   else if(k==="event"){ if(!title) return $("#qkTitle").focus(); const type = v("qkType"); S.events.push({id:uid(), date, time:v("qkTime"), title, type, host:"", place:"우리 교실", note:"", checklist:defaultChecklist(type)}); msg = "행사를 넣었어요"; go = "학급 행사"; }
   else if(k==="counsel"){ const body = v("qkBody"); if(!body){ toast("상담 내용을 적어 주세요"); return $("#qkBody").focus(); }
     (S.counsels ||= []).push({...csBlank(v("qkSid")), date, who:v("qkWho"), how:v("qkHow"), topic:v("qkTopic"), content:body, next:v("qkNext")}); msg = `${sname(v("qkSid"))} 상담을 기록했어요`; go = "상담 기록"; }
+  else if(k==="rec"){ const sids = stuPickRead("qr"); if(!sids) return; const rg = dateRead("qr"); if(!rg) return; const text = ($("#qrText").value||"").trim();
+    if(!text){ toast("기록할 내용을 적어 주세요"); return $("#qrText").focus(); } const cat = $("#qrCat").value;
+    sids.forEach(sid => S.records.push({id:uid(), sid, date:rg[0], cat, text, when:"", subj:""}));
+    commit(); toast(`${sids.length===1?sname(sids[0]):sids.length+"명"} 학생 기록을 넣었어요 · 학생 기록에서 자세히 볼 수 있어요`); setTimeout(()=>$("#qrPickQ")?.focus(), 0); return; }
   else if(k==="att"){ const r = attSaveEntry("qa"); if(!r) return; toast(`${r.who}명 ${r.label} ${r.days}일을 넣었어요${r.over?` (기존 ${r.over}건 바꿈)`:""} · 출석 체크에서 자세히 볼 수 있어요`); return; }
   else if(k==="memo"){ const body = $("#qkBody").value; if(!title && !body.trim()) return $("#qkBody").focus(); S.memos.push({id:uid(), title: title || body.trim().split("\n")[0].slice(0,30), body, date, pinned:false, updated:Date.now()}); msg = "메모를 넣었어요"; go = "메모장"; }
   commit(); toast(`${msg} · ${go}에서 자세히 볼 수 있어요`);
@@ -1262,12 +1283,17 @@ A.dashReset = () => { delete LOOK.dash; try{ localStorage.setItem(LOOK_KEY, JSON
     dragK = null; mark(null); render(); });
   document.addEventListener("dragend", () => { if(!dragK) return; dragK = null; mark(null); document.querySelectorAll(".dw").forEach(w => { w.classList.remove("dragging"); w.draggable = false; }); });
 })();
+/* 오늘 제출 현황에서 이름 누르면 제출 처리(마감 지났으면 '늦게 제출'), 되돌리기 가능 */
+A.todaySub = el => { const a = S.assignments.find(x=>x.id===el.dataset.a), sid = el.dataset.s; if(!a) return; const prev = subSt(a, sid), st = a.due < today() ? "late" : "ok";
+  setSub(a, sid, st); ui.lastSub = {aid:a.id, sid, prev}; commit();
+  document.querySelectorAll(".toast").forEach(x=>x.remove()); const t = document.createElement("div"); t.className = "toast"; t.innerHTML = `${esc(sname(sid))} · ${esc(a.title)} ${SUB_ST[st]} <button class="toast-undo" data-act="undoSub">되돌리기</button>`; document.body.appendChild(t); setTimeout(()=>t.remove(), 5000); };
+A.undoSub = () => { const u = ui.lastSub; if(!u) return; const a = S.assignments.find(x=>x.id===u.aid); if(a){ setSub(a, u.sid, u.prev); commit(); } ui.lastSub = null; document.querySelectorAll(".toast").forEach(x=>x.remove()); toast("되돌렸어요"); };
 function todaySubmitCard(){
   const d = new Date();
   const asg = S.assignments.filter(a => a.due >= ymd(addDays(d,-7))).sort((a,b)=>a.due.localeCompare(b.due));
   return `<div class="card"><div class="spread"><h2>제출 현황</h2><a class="btn sm" href="#submit">제출 체크</a></div>
       ${asg.length ? asg.map(a => { const n = asgDone(a), tot = asgTargets(a).length||1; const miss = asgMiss(a);
-        const fx = asgFix(a); return `<div style="padding:8px 0;border-bottom:1px solid var(--line)"><div class="spread"><span style="font-weight:500">${esc(a.title)}</span><span class="small muted num">${n}/${asgTargets(a).length} · ${md(a.due)}</span></div><div class="bar ${n===tot?"ok":""}" style="margin:6px 0"><i style="width:${n/tot*100}%"></i></div>${miss.length?`<div class="small muted">미제출: ${miss.slice(0,8).map(s=>esc(s.name)).join(", ")}${miss.length>8?` 외 ${miss.length-8}명`:""}</div>`:""}${fx.length?`<div class="small" style="color:var(--bad)">수정 중: ${fx.map(s=>esc(s.name)).join(", ")}</div>`:""}</div>`; }).join("") : `<div class="empty">최근 과제가 없어요</div>`}
+        const fx = asgFix(a); return `<div style="padding:8px 0;border-bottom:1px solid var(--line)"><div class="spread"><span style="font-weight:500">${esc(a.title)}</span><span class="small muted num">${n}/${asgTargets(a).length} · ${md(a.due)}</span></div><div class="bar ${n===tot?"ok":""}" style="margin:6px 0"><i style="width:${n/tot*100}%"></i></div>${miss.length?`<div class="small muted">미제출 <span style="font-size:11px">(이름을 누르면 제출)</span><div>${miss.map(s=>`<button class="sub-nm" data-act="todaySub" data-a="${a.id}" data-s="${s.id}">${esc(s.name)}</button>`).join("")}</div></div>`:""}${fx.length?`<div class="small" style="color:var(--bad);margin-top:4px">수정 중 <div>${fx.map(s=>`<button class="sub-nm fx" data-act="todaySub" data-a="${a.id}" data-s="${s.id}">${esc(s.name)}</button>`).join("")}</div></div>`:""}</div>`; }).join("") : `<div class="empty">최근 과제가 없어요</div>`}
     </div>`;
 }
 function todayJobsCard(){
@@ -1564,7 +1590,7 @@ VIEWS.attendance = () => {
   return header("출석 체크", "날짜를 누르고 출석이 아닌 학생만 표시하세요. 표시하지 않은 학생은 출석으로 봅니다.",
     `<div class="seg"><button class="${ui.attView==="day"?"on":""}" data-act="attView" data-v="day">날짜별 입력</button><button class="${ui.attView==="month"?"on":""}" data-act="attView" data-v="month">월별 종합</button><button class="${ui.attView==="range"?"on":""}" data-act="attView" data-v="range">기간 종합</button><button class="${ui.attView==="absent"?"on":""}" data-act="attView" data-v="absent">결석계</button><button class="${ui.attView==="field"?"on":""}" data-act="attView" data-v="field">체험학습 대장</button></div>`) + `
   <div class="card">${ui.attView==="range" || ((ui.attView==="field" || ui.attView==="absent") && ui.fieldMode==="range") ? "" : `<div class="spread"><div class="row"><button class="btn" data-act="attMonth" data-n="-1" aria-label="이전 달">‹</button><h2 class="num" style="min-width:110px;text-align:center">${y}년 ${m}월</h2><button class="btn" data-act="attMonth" data-n="1" aria-label="다음 달">›</button><button class="btn sm ghost" data-act="attMonth" data-n="0">이번 달</button></div><div class="row">${legend}</div></div>`}
-  ${ui.attView==="day" ? `<div class="grid2" style="grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);align-items:start">${calHtml}
+  ${ui.attView==="day" ? attAddBox() + `<div class="grid2" style="grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);align-items:start">${calHtml}
     <div style="display:flex;flex-direction:column;gap:10px"><div class="spread"><h3>${md(sel)} ${HOLI[sel]?`<span class="pill bad">${HOLI[sel]}</span>`:""}</h3><span class="small muted">특이 ${Object.keys(recs).length}명 · 결석 ${Object.values(recs).filter(r=>r.kind==="결석").length}명 · 등교 ${S.students.length-Object.values(recs).filter(r=>r.kind==="결석").length}명</span></div>
     <div class="stu-att">${sorted().map(s => { const r = recs[s.id];
       return `<div class="sa ${r?"has":""}"><div class="spread"><span class="nm"><span class="muted num small">${s.no}</span> ${esc(s.name)}</span>${r?`<button class="btn sm ghost" data-act="attClear" data-s="${s.id}">출석으로</button>`:""}</div>
@@ -1645,30 +1671,88 @@ function attFieldRows(from, to, type = "field"){
   });
   return out.filter(r => (!from || r.end >= from) && (!to || r.start <= to)).sort((a,b)=>a.start.localeCompare(b.start) || (stu(a.sid)?.no??0)-(stu(b.sid)?.no??0));
 }
-/* 출결 직접 넣기: 학생(여러 명) + 기간 + 종류·사유 + 교시 + 내용. 출석 체크 종합 화면들과 빠른 입력이 같이 씀 */
+/* ── 학생 고르기 상자: 이름·번호를 바로 쳐도 되고(쉼표·띄어쓰기로 여러 명), ▾로 명단을 펼쳐 체크해도 돼요 ── */
+function stuPickHtml(p, ph = "이름·번호 입력 (예: 민준, 5)"){
+  return `<div class="stu-pick" id="${p}Pick"><div class="stu-pick-box" data-act="stuPickFocus" data-p="${p}"><span class="stu-pick-sel" id="${p}PickSel"></span>
+      <input type="text" id="${p}PickQ" placeholder="${ph}" autocomplete="off" data-in="stuPickQ" data-enter="stuPickEnter" data-p="${p}" aria-label="학생 이름 또는 번호">
+      <button type="button" class="stu-pick-tg" data-act="stuPickTg" data-p="${p}" aria-label="학생 명단 펼치기">▾</button></div>
+    <div class="stu-pick-in" hidden><div class="row" style="gap:6px;margin-bottom:6px"><button class="btn sm" type="button" data-act="stuPickAll" data-p="${p}" data-v="1">모두</button><button class="btn sm ghost" type="button" data-act="stuPickAll" data-p="${p}" data-v="0">모두 해제</button><span style="flex:1"></span><button class="btn sm ghost" type="button" data-act="stuPickTg" data-p="${p}">닫기</button></div>
+      <div class="stu-pick-g">${sorted().map(x=>`<label data-n="${x.no}" data-nm="${esc(x.name)}"><input type="checkbox" value="${x.id}" data-ch="stuPick" data-p="${p}"><span class="num muted">${x.no}</span> ${esc(x.name)}</label>`).join("")}</div></div></div>`;
+}
+const stuPicked = p => [...document.querySelectorAll(`#${p}Pick input[type=checkbox]:checked`)].map(x=>x.value);
+const attPicked = stuPicked;
+function stuPickPaint(p){ const box = document.getElementById(p+"PickSel"); if(!box) return; const ids = stuPicked(p);
+  box.innerHTML = ids.map(id=>`<span class="sp-chip">${esc(sname(id))}<button type="button" data-act="stuPickDel" data-p="${p}" data-id="${id}" aria-label="${esc(sname(id))} 빼기">×</button></span>`).join("");
+  const q = document.getElementById(p+"PickQ"); if(q) q.placeholder = ids.length ? "더 넣기" : "이름·번호 입력 (예: 민준, 5)"; }
+function stuPickOpen(p, on){ const el = document.querySelector(`#${p}Pick .stu-pick-in`); if(!el) return; if(on === undefined) on = el.hidden; el.hidden = !on; if(!on) stuPickFilter(p, ""); }
+function stuPickFilter(p, q){ q = (q||"").trim(); document.querySelectorAll(`#${p}Pick .stu-pick-g label`).forEach(l => { l.hidden = !!q && !(l.dataset.n === q || l.dataset.nm.includes(q)); }); }
+/* 글자 하나를 학생으로: 번호 → 정확한 이름 → 이름 일부(한 명일 때만) */
+function stuMatch(tok){ tok = (tok||"").replace(/번$/,"").trim(); if(!tok) return null; const st = sorted();
+  if(/^\d+$/.test(tok)) return st.find(x=>String(x.no)===tok) || null;
+  return st.find(x=>x.name===tok) || (() => { const c = st.filter(x=>x.name.includes(tok)); return c.length===1 ? c[0] : null; })(); }
+function stuPickSet(p, id, on = true){ const cb = document.querySelector(`#${p}Pick input[value="${id}"]`); if(cb) cb.checked = on; }
+/* 입력칸 글자 처리. all=true면 마지막 낱말까지 처리. 못 찾은 낱말은 칸에 남김 */
+function stuPickFlush(p, all){ const q = document.getElementById(p+"PickQ"); if(!q) return []; const raw = q.value, endsSep = /[,\s]$/.test(raw);
+  const toks = raw.split(/[,\s]+/).filter(Boolean); let last = (!all && !endsSep) ? toks.pop() : null; const left = [];
+  toks.forEach(t => { const m = stuMatch(t); if(m) stuPickSet(p, m.id); else left.push(t); });
+  if(all && left.length === 1 && !last){ const vis = [...document.querySelectorAll(`#${p}Pick .stu-pick-g label:not([hidden])`)]; if(vis.length === 1){ stuPickSet(p, vis[0].querySelector("input").value); left.pop(); } }
+  q.value = left.concat(last ? [last] : []).join(", ") + (left.length && !last ? ", " : ""); stuPickPaint(p); stuPickFilter(p, last || ""); return left; }
+IN.stuPickQ = el => { const p = el.dataset.p; stuPickFlush(p, false); const q = el.value.split(/[,\s]+/).pop(); stuPickOpen(p, !!q.trim()); stuPickFilter(p, q); };
+EN.stuPickEnter = el => { const p = el.dataset.p, left = stuPickFlush(p, true); if(left.length) toast(`'${left.join(", ")}' 학생을 못 찾았어요`); else { el.value = ""; stuPickOpen(p, false); } };
+CH.stuPick = el => stuPickPaint(el.dataset.p);
+A.stuPickTg = el => { stuPickOpen(el.dataset.p); };
+A.stuPickFocus = (el, e) => { if(e && e.target.closest("button")) return; document.getElementById(el.dataset.p+"PickQ")?.focus(); };
+A.stuPickAll = el => { document.querySelectorAll(`#${el.dataset.p}Pick input[type=checkbox]`).forEach(x => x.checked = el.dataset.v === "1"); stuPickPaint(el.dataset.p); };
+A.stuPickDel = el => { stuPickSet(el.dataset.p, el.dataset.id, false); stuPickPaint(el.dataset.p); };
+document.addEventListener("click", e => { if(e.target.closest(".stu-pick")) return; document.querySelectorAll(".stu-pick-in:not([hidden])").forEach(x => { x.hidden = true; }); }, true);
+/* 학생 고르기 결과: 입력칸에 남은 글자까지 처리. 못 찾으면 null */
+function stuPickRead(p){ const left = stuPickFlush(p, true); if(left.length){ toast(`'${left.join(", ")}' 학생을 못 찾았어요`); return null; } const ids = stuPicked(p); if(!ids.length){ toast("학생을 골라 주세요"); document.getElementById(p+"PickQ")?.focus(); return null; } return ids; }
+
+/* ── 날짜 글자로 쓰기: 오늘·내일·11/19·11.19·11월 19일·19일·2026-11-19, 기간은 ~ 또는 부터(…까지), "19부터 3일간" ── */
+function looseDate(t, ref){ t = (t||"").trim().replace(/까지$/,"").replace(/\(.\)|[월화수목금토일]요일$/g,"").trim(); if(!t) return "";
+  if(/^\d{5}(\.\d+)?$/.test(t) && +t > 30000 && +t < 80000){ const e = new Date(Date.UTC(1899,11,30) + Math.floor(+t)*86400000); return ymd(new Date(e.getUTCFullYear(), e.getUTCMonth(), e.getUTCDate())); }
+  const td = parse(today()); const rel = {"오늘":0,"내일":1,"모레":2,"어제":-1,"그제":-2,"그저께":-2}; if(t in rel) return ymd(addDays(td, rel[t]));
+  let y, m, d, x;
+  if((x = t.match(/^(\d{4})\s*[-./년]\s*(\d{1,2})\s*[-./월]\s*(\d{1,2})\s*일?\.?$/))) [y, m, d] = [+x[1], +x[2], +x[3]];
+  else if((x = t.match(/^(\d{1,2})\s*[-./월]\s*(\d{1,2})\s*일?\.?$/))) [m, d] = [+x[1], +x[2]];
+  else if((x = t.match(/^(\d{2})(\d{2})$/))) [m, d] = [+x[1], +x[2]];
+  else if((x = t.match(/^(\d{1,2})\s*일?$/))){ d = +x[1]; const r = ref ? parse(ref) : td; m = r.getMonth()+1; y = r.getFullYear(); }
+  else return null;
+  if(!y){ const r = ref ? parse(ref) : td, cands = [r.getFullYear()-1, r.getFullYear(), r.getFullYear()+1];
+    y = cands.sort((a,b)=>Math.abs(new Date(a,m-1,d)-r)-Math.abs(new Date(b,m-1,d)-r))[0];
+    if(ref && new Date(y,m-1,d) < parse(ref)) y = parse(ref).getFullYear() + (new Date(parse(ref).getFullYear(),m-1,d) < parse(ref) ? 1 : 0); }
+  const dt = new Date(y, m-1, d); if(m < 1 || m > 12 || dt.getMonth() !== m-1) return null; return ymd(dt); }
+function looseRange(t){ t = String(t||"").replace(/\(\s*\d+\s*일\s*(?:간)?\s*\)/g,"").trim(); if(!t) return null;
+  let parts = t.split(/\s*(?:~|〜|부터|에서)\s*/).filter(Boolean);
+  if(parts.length === 1 && !/^\d{4}-\d{1,2}-\d{1,2}$/.test(t) && /\s-\s|\d-\d/.test(t)){ const q = t.split(/\s*-\s*/); if(q.length === 2 && looseDate(q[0])) parts = q; }
+  const a = looseDate(parts[0]); if(!a) return null; if(parts.length === 1) return [a, a];
+  const n = parts[1].match(/^(\d+)\s*일\s*(?:간|동안)$/); if(n){ let k = Math.max(1, +n[1]), e = a; if(!isSchoolDay(a)) k++; while(--k > 0) e = schoolStep(e, 1) || e; return [a, e]; }
+  const b = looseDate(parts[1], a); if(!b) return null; return a <= b ? [a, b] : [b, a]; }
+const mdShort = d => `${Number(d.slice(5,7))}/${Number(d.slice(8))}`;
+function dateTextHtml(p, def, single){
+  return `<label class="f qk-f">날짜<span class="date-tx"><input type="text" id="${p}Date" value="${def ? mdShort(def) : ""}" placeholder="${single ? "예: 오늘, 11/19" : "예: 11/19, 19~23, 오늘"}" data-in="dateTx" data-p="${p}" data-single="${single?1:""}" style="width:${single?110:150}px" autocomplete="off"><input type="date" class="date-pop" tabindex="-1" aria-label="달력에서 고르기" data-ch="datePop" data-p="${p}"></span><span class="small date-hint" id="${p}DateHint">${def ? dateHint(def, def, single) : ""}</span></label>`;
+}
+function dateHint(a, b, single){ if(single || a === b) return md(a); const n = schoolDays(a, b); return `${md(a)} ~ ${md(b)} · 등교일 ${n}일`; }
+IN.dateTx = el => { const h = document.getElementById(el.dataset.p+"DateHint"), r = looseRange(el.value); if(!h) return;
+  h.classList.toggle("bad", !!el.value.trim() && !r); h.textContent = !el.value.trim() ? "" : !r ? "날짜를 못 알아봤어요" : el.dataset.single ? md(r[0]) : dateHint(r[0], r[1]); };
+CH.datePop = el => { if(!el.value) return; const t = document.getElementById(el.dataset.p+"Date"); const cur = looseRange(t.value);
+  t.value = (!t.dataset.single && cur && cur[0] < el.value && /~|부터/.test(t.value) === false && t.value.trim()) ? `${mdShort(cur[0])}~${mdShort(el.value)}` : mdShort(el.value); el.value = ""; IN.dateTx(t); };
+function dateRead(p){ const el = document.getElementById(p+"Date"), r = looseRange(el?.value); if(!r){ toast("날짜를 알아보지 못했어요 (예: 11/19, 19~23, 오늘)"); el?.focus(); return null; } return r; }
+
+/* 출결 직접 넣기: 학생(여러 명) + 날짜(기간) + 사유·종류 + 교시 + 내용. 출석 체크 화면들과 빠른 입력이 같이 씀 */
 function attEntryFields(p, defReason = "질병", defDate = today()){
-  const st = sorted(); if(!st.length) return `<div class="small muted">학생을 먼저 등록해 주세요.</div>`;
-  return `<details class="stu-pick" id="${p}Pick"><summary><span id="${p}PickN">학생 고르기</span></summary>
-      <div class="stu-pick-in"><div class="row" style="gap:6px;margin-bottom:6px"><button class="btn sm" type="button" data-act="attPickAll" data-p="${p}" data-v="1">모두</button><button class="btn sm ghost" type="button" data-act="attPickAll" data-p="${p}" data-v="0">모두 해제</button></div>
-      <div class="stu-pick-g">${st.map(x=>`<label><input type="checkbox" value="${x.id}" data-ch="attPick" data-p="${p}"><span class="num muted">${x.no}</span> ${esc(x.name)}</label>`).join("")}</div></div></details>
-    <label class="f qk-f">시작<input type="date" id="${p}From" value="${defDate}" data-ch="attAddFrom" data-p="${p}"></label>
-    <label class="f qk-f">끝<input type="date" id="${p}To" value="${defDate}"></label>
+  if(!sorted().length) return `<div class="small muted">학생을 먼저 등록해 주세요.</div>`;
+  return `${stuPickHtml(p)}${dateTextHtml(p, defDate)}
     <label class="f qk-f">사유<select id="${p}Reason">${REASONS.map(r=>`<option value="${r}" ${r===defReason?"selected":""}>${r==="체험학습"?"교외체험학습":r}</option>`).join("")}</select></label>
     <label class="f qk-f">종류<select id="${p}Kind">${KINDS.map(k=>`<option>${k}</option>`).join("")}</select></label>
-    <label class="f qk-f">교시<input type="text" id="${p}Per" placeholder="지각·조퇴·결과" inputmode="numeric" style="width:96px"></label>
-    <input type="text" id="${p}Note" placeholder="내용 (예: 독감, 가족 여행)" style="flex:2;min-width:160px">`;
+    <label class="f qk-f">교시<input type="text" id="${p}Per" placeholder="예: 2, 3·4" inputmode="numeric" style="width:90px"></label>
+    <input type="text" id="${p}Note" placeholder="내용 (예: 독감, 가족 여행)" style="flex:2;min-width:160px" data-enter="attEntEnter" data-p="${p}">`;
 }
-const attPicked = p => [...document.querySelectorAll(`#${p}Pick input[type=checkbox]:checked`)].map(x=>x.value);
-function attPickLabel(p){ const ids = attPicked(p), el = document.getElementById(p+"PickN"); if(!el) return;
-  el.textContent = !ids.length ? "학생 고르기" : ids.length <= 3 ? ids.map(sname).join(", ") : `${ids.slice(0,2).map(sname).join(", ")} 외 ${ids.length-2}명`; }
-CH.attPick = el => attPickLabel(el.dataset.p);
-A.attPickAll = el => { document.querySelectorAll(`#${el.dataset.p}Pick input[type=checkbox]`).forEach(x => x.checked = el.dataset.v === "1"); attPickLabel(el.dataset.p); };
-CH.attAddFrom = el => { const t = document.getElementById(el.dataset.p+"To"); if(t && (!t.value || t.value < el.value)) t.value = el.value; };
+EN.attEntEnter = el => el.dataset.p === "qa" ? A.qkSave() : A.attAddSave();
 /* 저장: 등교일마다 기록. 이미 있던 기록은 새 내용으로 바꿈. 돌려주는 값: {n:건수, days:등교일 수, over:덮어쓴 수} */
 function attSaveEntry(p){
-  const sids = attPicked(p), v = id => (document.getElementById(p+id)?.value || "").trim();
-  let from = v("From"), to = v("To") || from; if(!sids.length){ toast("학생을 골라 주세요"); document.getElementById(p+"Pick")?.setAttribute("open",""); return null; }
-  if(!from){ toast("날짜를 골라 주세요"); return null; } if(to < from) [from, to] = [to, from];
+  const v = id => (document.getElementById(p+id)?.value || "").trim();
+  const sids = stuPickRead(p); if(!sids) return null; const rg = dateRead(p); if(!rg) return null; const [from, to] = rg;
   const days = []; for(let d = parse(from); ymd(d) <= to; d = addDays(d,1)){ const k = ymd(d); if(isSchoolDay(k)) days.push(k); }
   if(!days.length){ if(from === to) days.push(from); else { toast("그 기간에 등교일이 없어요"); return null; } }
   const kind = v("Kind") || "결석", reason = v("Reason") || "질병", note = v("Note");
@@ -1680,13 +1764,67 @@ function attSaveEntry(p){
 }
 function attAddBox(){
   const v = ui.attView, defR = v === "field" ? "체험학습" : "질병";
-  const defD = v === "month" ? (ui.attDay && ui.attDay.slice(0,7) === ui.attMonth ? ui.attDay : today()) : today();
-  return `<details class="att-add" ${ui.attAddOpen?"open":""} data-tg="attAdd"><summary>＋ 출결 직접 넣기 <span class="small muted">학생을 골라 기간으로 한 번에 넣어요</span></summary>
-    <div class="row qk-row" style="margin-top:10px">${attEntryFields("aa", defR, defD)}<button class="btn pri" data-act="attAddSave">넣기</button></div></details>`;
+  const defD = (v === "month" || v === "day") ? (ui.attDay && ui.attDay.slice(0,7) === ui.attMonth ? ui.attDay : today()) : today();
+  return `<details class="att-add" ${ui.attAddOpen||ui.attImp?"open":""} data-tg="attAdd"><summary>＋ 출결 직접 넣기 <span class="small muted">학생을 골라 기간으로 한 번에 넣어요</span></summary>
+    <div class="row qk-row" style="margin-top:10px">${attEntryFields("aa", defR, defD)}<button class="btn pri" data-act="attAddSave">넣기</button></div>
+    <div class="row small" style="gap:8px;margin-top:10px;padding-top:10px;border-top:1px dashed var(--line);flex-wrap:wrap"><span class="muted">여러 건이면</span><button class="btn sm" data-act="attImpOpen">엑셀·표 파일로 한꺼번에 넣기</button><button class="btn sm ghost" data-act="attImpTpl">양식 받기</button><span class="muted">번호·이름, 날짜(기간), 사유, 종류, 교시, 내용 칸을 알아서 찾아요</span></div>
+    ${ui.attImp ? attImpCard() : ""}</details>`;
 }
 document.addEventListener("toggle", e => { if(e.target.dataset && e.target.dataset.tg === "attAdd") ui.attAddOpen = e.target.open; }, true);
 A.attAddSave = () => { const r = attSaveEntry("aa"); if(!r) return; ui.attAddOpen = true;
   toast(`${r.who}명 ${r.label} ${r.days}일을 넣었어요${r.over?` (기존 ${r.over}건은 새 내용으로 바꿈)`:""}`); };
+/* ── 출결 엑셀·표 파일로 넣기 ── */
+function attReasonKind(txt){ txt = String(txt||"");
+  const reason = /체험|교외|가정학습/.test(txt) ? "체험학습" : /미인정|무단/.test(txt) ? "미인정" : /질병|병결|병원|아파|감기|독감|장염|코로나/.test(txt) ? "질병" : /인정|공결|경조|출석인정/.test(txt) ? "인정" : /기타/.test(txt) ? "기타" : "";
+  const kind = /지각/.test(txt) ? "지각" : /조퇴/.test(txt) ? "조퇴" : /결과/.test(txt) ? "결과" : /결석/.test(txt) ? "결석" : "";
+  return {reason, kind}; }
+function attFromTables(tables, src){
+  const H = {no:/^(학생\s*)?번호$|^번$|^No\.?$/i, name:/이름|성명|학생명|^학생$/, date:/^(날짜|일자|일시|결석일|출결일|날짜\(기간\)|기간|결석\s*기간|체험\s*기간)$/, from:/시작|부터|^from$/i, to:/종료|끝|까지|^to$/i,
+    reason:/^사유$|사유\s*구분|결석\s*사유|^사유\(|출결\s*사유/, kind:/^종류$|출결\s*(종류|구분)|^구분$/, per:/교시/, note:/내용|비고|메모|상세|사유\s*내용|세부/};
+  let best = null;
+  tables.forEach(t => { for(let hi = 0; hi < Math.min(t.length, 8); hi++){ const head = (t[hi]||[]).map(x => String(x||"").replace(/\s+/g," ").trim()), cols = {};
+      head.forEach((h, c) => { if(!h) return; for(const k of ["no","name","from","to","per","kind","reason","date","note"]){ if(cols[k] === undefined && H[k].test(h) && !(k==="note" && cols.reason===c)){ cols[k] = c; break; } } });
+      if((cols.name !== undefined || cols.no !== undefined) && (cols.date !== undefined || cols.from !== undefined)){ const rows = t.slice(hi+1); if(!best || rows.length > best.rows.length) best = {cols, rows, head}; break; } } });
+  if(!best){ toast("표에서 '이름(또는 번호)'과 '날짜(또는 시작일)' 칸을 찾지 못했어요. 양식을 받아서 써 주세요"); return; }
+  const {cols} = best, get = (r, k) => cols[k] === undefined ? "" : String(r[cols[k]] ?? "").trim();
+  const out = [], miss = [];
+  best.rows.forEach(r => { if(!r || !r.some(x => String(x||"").trim())) return;
+    const nm = get(r,"name"), no = get(r,"no"); let st = null;
+    if(nm) st = sorted().find(x => x.name === nm) || null; if(!st && no) st = stuMatch(no.replace(/번$/,"")); if(!st && nm) st = stuMatch(nm);
+    const label = nm || no || "(이름 없음)";
+    let rg = null; if(cols.from !== undefined){ const a = looseRange(get(r,"from")), b = looseRange(get(r,"to")); if(a) rg = [a[0], b ? b[1] : a[1]]; if(rg && rg[1] < rg[0]) rg = [rg[1], rg[0]]; }
+    if(!rg && cols.date !== undefined) rg = looseRange(get(r,"date"));
+    if(!st){ miss.push(`${label} (명단에 없음)`); return; } if(!rg){ miss.push(`${label} (날짜 '${get(r,"date")||get(r,"from")}' 못 읽음)`); return; }
+    const rk = attReasonKind([get(r,"reason"), get(r,"kind")].join(" ")), rk2 = attReasonKind(get(r,"note"));
+    const reason = rk.reason || rk2.reason || "기타", kind = rk.kind || rk2.kind || "결석";
+    const periods = kind === "결석" ? [] : [...new Set((get(r,"per").match(/\d+/g) || []).map(Number).filter(n=>n>=1&&n<=8))].sort((a,b)=>a-b);
+    const days = []; for(let d = parse(rg[0]); ymd(d) <= rg[1]; d = addDays(d,1)){ const k = ymd(d); if(isSchoolDay(k)) days.push(k); } if(!days.length) days.push(rg[0]);
+    out.push({sid: st.id, from: rg[0], to: rg[1], reason, kind, periods, note: get(r,"note"), days}); });
+  ui.attImp = {rows: out, miss, src, keep: false, head: best.head, cols}; ui.attAddOpen = true; render();
+  if(!out.length) toast("넣을 수 있는 줄이 없어요. 아래 '못 넣은 줄'을 확인해 주세요");
+}
+function attImpCard(){ const I = ui.attImp, over = I.rows.reduce((a,r)=>a + r.days.filter(d=>S.attendance[d]?.[r.sid]).length, 0), nd = I.rows.reduce((a,r)=>a+r.days.length,0);
+  const nm = k => I.cols[k] === undefined ? `<span class="muted">없음</span>` : `'${esc(I.head[I.cols[k]])}'`;
+  return `<div class="att-imp"><div class="spread"><b>미리 보기 <span class="small muted">${esc(I.src)} · ${I.rows.length}건 · 등교일 ${nd}일</span></b><button class="btn sm ghost" data-act="attImpClose">닫기</button></div>
+    <div class="row small muted" style="gap:4px 12px;margin:6px 0">${[["이름","name"],["번호","no"],["날짜","date"],["시작","from"],["끝","to"],["사유","reason"],["종류","kind"],["교시","per"],["내용","note"]].filter(([,k])=>I.cols[k]!==undefined || ["name","date"].includes(k)).map(([l,k])=>`<span><b style="color:var(--ink)">${l}</b> ← ${nm(k)}</span>`).join("")}</div>
+    ${I.miss.length ? `<div class="small" style="color:var(--warn);margin-bottom:6px">못 넣은 줄 ${I.miss.length}개: ${esc(I.miss.slice(0,6).join(", "))}${I.miss.length>6?" …":""}</div>` : ""}
+    <div class="scroll" style="max-height:320px;overflow:auto"><table class="t"><thead><tr><th>번호</th><th>이름</th><th>기간</th><th class="r">등교일</th><th>구분</th><th>교시</th><th>내용</th></tr></thead><tbody>
+    ${I.rows.map(r=>`<tr><td class="num">${stu(r.sid)?.no??""}</td><td style="white-space:nowrap">${esc(sname(r.sid))}</td><td class="num" style="white-space:nowrap">${r.from===r.to?md(r.from):`${md(r.from)} ~ ${md(r.to)}`}</td><td class="r num">${r.days.length}</td><td style="white-space:nowrap"><i class="dot c-${r.reason}"></i> ${r.reason}${r.kind}</td><td class="num">${r.periods.join(",")}</td><td>${esc(r.note)}</td></tr>`).join("") || `<tr><td colspan="7" class="empty">넣을 줄이 없어요</td></tr>`}</tbody></table></div>
+    <div class="row" style="justify-content:space-between;margin-top:8px;flex-wrap:wrap;gap:8px">${over ? `<label class="row small" style="gap:6px"><input type="checkbox" ${I.keep?"checked":""} data-ch="attImpKeep">이미 기록된 ${over}건은 그대로 두기 (끄면 새 내용으로 바꿈)</label>` : `<span></span>`}
+      <div class="row"><button class="btn" data-act="attImpClose">취소</button><button class="btn pri" data-act="attImpApply" ${I.rows.length?"":"disabled"}>${I.rows.length}건 넣기</button></div></div></div>`; }
+CH.attImpKeep = el => { ui.attImp.keep = el.checked; };
+A.attImpClose = () => { ui.attImp = null; render(); };
+A.attImpApply = () => { const I = ui.attImp; let n = 0, skip = 0;
+  I.rows.forEach(r => r.days.forEach(d => { const day = S.attendance[d] ||= {}; if(day[r.sid] && I.keep){ skip++; return; } day[r.sid] = {kind:r.kind, reason:r.reason, note:r.note, periods:r.periods.slice()}; n++; }));
+  ui.attImp = null; commit(); toast(`출결 ${n}일분을 넣었어요${skip?` (이미 있던 ${skip}건은 그대로 둠)`:""}`); };
+A.attImpOpen = () => { const inp = document.createElement("input"); inp.type = "file"; inp.accept = ".xlsx,.xls,.csv,.tsv,.ods,.hwpx,.docx";
+  inp.onchange = async () => { const f = inp.files[0]; if(!f) return; try{ attFromTables(await readTablesFromFile(f), f.name); }catch(err){ toast(err && err.message && /[가-힣]/.test(err.message) ? err.message : "파일을 읽지 못했어요. 양식을 받아서 써 주세요"); } };
+  inp.click(); };
+A.attImpTpl = () => { const st = sorted(), a = st[0], b = st[1] || st[0];
+  exportSheets(`${clsName()}_출결입력_양식`, [["출결", [["번호","이름","날짜(기간)","사유","종류","교시","내용"],
+    [a?.no??1, a?.name??"김호수", "11/19~11/21", "질병", "결석", "", "독감"],
+    [b?.no??2, b?.name??"이평화", "11/24", "질병", "지각", "2", "병원 진료 후 등교"],
+    [a?.no??1, a?.name??"김호수", "2026-12-01~2026-12-03", "체험학습", "결석", "", "가족 여행"]]]]); };
 /* 서류 제출 체크: 체험학습은 신청서·보고서, 결석계는 결석계 */
 const DOCS = {field:[["app","신청서"],["rep","보고서"]], absent:[["doc","결석계"]]};
 const docKey = (type, r) => `${type}|${r.sid}|${r.start}`;
