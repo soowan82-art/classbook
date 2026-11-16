@@ -235,6 +235,7 @@ table.t{width:100%;border-collapse:collapse;font-size:13.5px}
 .date-tx{position:relative;display:inline-flex;align-items:center}.date-tx input[type=text]{padding-right:32px}
 .date-pop{position:absolute;right:4px;width:26px!important;height:26px;opacity:0;cursor:pointer;padding:0!important;border:0!important}
 .date-tx::after{content:"📅";position:absolute;right:8px;pointer-events:none;font-size:14px;opacity:.7}
+.date-rg{display:flex;flex-direction:column!important;align-items:flex-start!important;gap:3px}.date-rg>span:first-child{font-size:12.5px;color:var(--muted)}
 .date-hint{color:var(--muted);white-space:nowrap}.date-hint.bad{color:var(--bad)}
 .att-g{display:inline-flex;align-items:center;gap:4px;border:1px solid transparent;background:none;border-radius:6px;padding:2px 6px;margin:1px 2px 1px 0;font:inherit;color:inherit;cursor:pointer;text-align:left}
 .att-g:hover,.att-g.on{border-color:var(--accent);background:var(--accent-soft)}
@@ -255,6 +256,7 @@ table.t{width:100%;border-collapse:collapse;font-size:13.5px}
 .sub-nm.on{border-color:var(--accent);background:var(--accent);color:var(--on-accent)}
 .sub-nm{border:1px solid var(--miss-line);background:var(--miss-soft);border-radius:999px;padding:1px 8px;font-size:12.5px;cursor:pointer;color:var(--miss);margin:2px 2px 0 0}
 .sub-nm:hover{border-color:var(--accent);background:var(--accent-soft)}.sub-nm.fx{border-color:var(--fix-line);background:var(--fix-soft);color:var(--fix)}
+input[type=text],input[type=search],input:not([type]),textarea{ime-mode:active}
 .rng-f{display:flex;justify-content:space-between;gap:8px 16px;flex-wrap:wrap;margin:0 0 10px;padding:8px 10px;border:1px solid var(--line);border-radius:10px}
 .rng-ck{cursor:pointer}.rng-ck input{width:15px;height:15px;margin:0 2px 0 0;accent-color:var(--accent-ink)}
 .abs-filt{display:flex;flex-direction:column;gap:6px;margin:0 0 10px;padding:8px 10px;border:1px solid var(--line);border-radius:10px}
@@ -747,7 +749,8 @@ function lookCard(){
   return `<div class="card"><h2>화면 색</h2><div class="small muted" style="margin-bottom:10px">버튼·테두리·강조 색을 바꿔요. 이 기기에만 저장되고 모든 학급에 같이 적용돼요.</div>
     <div class="row" style="gap:8px">${Object.entries(ACCENTS).map(([k, a0]) => { const a = lookPal({...a0}); return `<button class="look-sw ${k===cur?"on":""}" data-act="lookAccent" data-v="${k}" style="--c:${a.l[0]};--cs:${a.l[1]}" aria-label="${a.name}"><i></i>${a.name}</button>`; }).join("")}</div>
     <div class="row" style="gap:8px;margin-top:12px"><span class="small muted">색감</span><div class="seg"><button class="${LOOK.tone!=="vivid"?"on":""}" data-act="lookTone" data-v="pastel">파스텔</button><button class="${LOOK.tone==="vivid"?"on":""}" data-act="lookTone" data-v="vivid">원색</button></div></div>
-    <div class="row" style="gap:8px;margin-top:12px"><span class="small muted">밝기</span><div class="seg"><button class="${mode==="auto"?"on":""}" data-act="lookMode" data-v="auto">기기 설정 따라</button><button class="${mode==="light"?"on":""}" data-act="lookMode" data-v="light">밝게</button><button class="${mode==="dark"?"on":""}" data-act="lookMode" data-v="dark">어둡게</button></div></div></div>`;
+    <div class="row" style="gap:8px;margin-top:12px"><span class="small muted">밝기</span><div class="seg"><button class="${mode==="auto"?"on":""}" data-act="lookMode" data-v="auto">기기 설정 따라</button><button class="${mode==="light"?"on":""}" data-act="lookMode" data-v="light">밝게</button><button class="${mode==="dark"?"on":""}" data-act="lookMode" data-v="dark">어둡게</button></div></div>
+    <label class="row small" style="gap:6px;margin-top:12px;cursor:pointer"><input type="checkbox" ${LOOK.noKoFix?"":"checked"} data-ch="koFixSet">영어로 잘못 친 글자 한글로 바꾸기 <span class="muted">(예: dkssud → 안녕, 진짜 영어 단어는 그대로)</span></label></div>`;
 }
 /* 달력 칸 너비 (이 기기에만 저장): 0 = 화면에 맞춤, 그 밖은 요일 칸 최소 너비(px). 넓히면 옆으로 밀어서 보고, 이름·내용이 다 보인다 */
 const calWCls = () => (LOOK.calw || 0) > 0 ? "cal-wide" : "";
@@ -761,7 +764,7 @@ A.calWReset = () => { LOOK.calw = 0; saveLook(); render(); };
 A.lookAccent = el => { LOOK.accent = el.dataset.v; saveLook(); render(); };
 A.lookTone = el => { LOOK.tone = el.dataset.v; saveLook(); render(); };
 A.lookMode = el => { LOOK.mode = el.dataset.v; saveLook(); render(); };
-const APP_VER = "2026.11.17-1";
+const APP_VER = "2026.11.17-4";
 const LOGO_SVG = `<svg class="brand-logo" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" style="fill:var(--brand,#1F6E8C)"/><g transform="translate(256 258) scale(1.13) translate(-256 -258)"><rect x="140" y="112" width="232" height="292" rx="30" fill="#FFFFFF"/><rect x="140" y="112" width="44" height="292" rx="22" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><rect x="162" y="112" width="22" height="292" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><path d="M318 112 H352 V214 L335 198 L318 214 Z" fill="#F2B84B"/><path d="M212 196 L236 220 L284 168" fill="none" style="stroke:var(--accent-ink,#1F6E8C)" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/><rect x="212" y="262" width="124" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="306" width="96" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="350" width="112" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 26%, #fff)"/></g></svg>`;
 let storageOK = true;
 /* 학급 여러 개: 학급마다 따로 저장한다. 처음 학급(c1)은 예전 저장 위치를 그대로 쓴다 */
@@ -1141,6 +1144,7 @@ function render(){
   if(r !== "today"){ try{ layoutize(r); }catch(err){ console.error("layout", err); } }
   AFTER[r] && AFTER[r]();
   try{ limFit(); }catch(e){}
+  koInputs(document);
   if(prevR === r){ const now = [...document.querySelectorAll("#main .lim-scroll, #main .sub-scroll, #main .scroll")]; keepSc.forEach(([i, c, t, l]) => { const el = now[i]; if(el && el.className === c){ el.scrollTop = t; el.scrollLeft = l; } }); $("#main").scrollTop = mainTop; }
   requestAnimationFrame(() => { limFit(); document.querySelectorAll("textarea.tt-memo-in").forEach(growTa); if(document.querySelector(".dash")) dashWatch(); });
   document.title = `${TITLE[r]} · ${clsName()} 학급일지`;
@@ -1246,6 +1250,45 @@ VIEWS.today = () => {
   return header(`${d.getMonth()+1}월 ${d.getDate()}일 ${WD[d.getDay()]}요일`, (HOLI[t] ? `<span class="holi">${HOLI[t]}</span>` : `${esc(clsName())} 오늘의 학급`) + schoolEvents(t).map(x=>` <span class="pill acc">${esc(x.name)}</span>`).join(""), showBtn("today")) + showCfgCard("today") + mEditBtn() + `<div class="dash">${cards}</div>`;
 };
 /* 카드 높이만큼만 줄을 차지하게(빈틈 없이 쌓기) */
+/* ── 영어로 잘못 친 한글 고치기: "dkssud" → "안녕". 영문 글자가 빠짐없이 완성된 한글 글자로만 바뀔 때만 바꿔요(진짜 영어 단어는 그대로).
+   띄어쓰기·Enter·칸을 벗어날 때 바꾸고, 알림의 '되돌리기'로 원래대로. 화면 설정에서 끌 수 있음 ── */
+const KO_MAP = {q:"ㅂ",w:"ㅈ",e:"ㄷ",r:"ㄱ",t:"ㅅ",y:"ㅛ",u:"ㅕ",i:"ㅑ",o:"ㅐ",p:"ㅔ",a:"ㅁ",s:"ㄴ",d:"ㅇ",f:"ㄹ",g:"ㅎ",h:"ㅗ",j:"ㅓ",k:"ㅏ",l:"ㅣ",z:"ㅋ",x:"ㅌ",c:"ㅊ",v:"ㅍ",b:"ㅠ",n:"ㅜ",m:"ㅡ",Q:"ㅃ",W:"ㅉ",E:"ㄸ",R:"ㄲ",T:"ㅆ",O:"ㅒ",P:"ㅖ"};
+const KO_CHO = "ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ", KO_JUNG = "ㅏㅐㅑㅒㅓㅔㅕㅖㅗㅘㅙㅚㅛㅜㅝㅞㅟㅠㅡㅢㅣ", KO_JONG = ["","ㄱ","ㄲ","ㄳ","ㄴ","ㄵ","ㄶ","ㄷ","ㄹ","ㄺ","ㄻ","ㄼ","ㄽ","ㄾ","ㄿ","ㅀ","ㅁ","ㅂ","ㅄ","ㅅ","ㅆ","ㅇ","ㅈ","ㅊ","ㅋ","ㅌ","ㅍ","ㅎ"];
+const KO_V2 = {"ㅗㅏ":"ㅘ","ㅗㅐ":"ㅙ","ㅗㅣ":"ㅚ","ㅜㅓ":"ㅝ","ㅜㅔ":"ㅞ","ㅜㅣ":"ㅟ","ㅡㅣ":"ㅢ"}, KO_J2 = {"ㄱㅅ":"ㄳ","ㄴㅈ":"ㄵ","ㄴㅎ":"ㄶ","ㄹㄱ":"ㄺ","ㄹㅁ":"ㄻ","ㄹㅂ":"ㄼ","ㄹㅅ":"ㄽ","ㄹㅌ":"ㄾ","ㄹㅍ":"ㄿ","ㄹㅎ":"ㅀ","ㅂㅅ":"ㅄ"};
+function enToKo(w){ if(!/^[a-zA-Z]{2,}$/.test(w)) return null;
+  const t = [...w].map(c => KO_MAP[c] || KO_MAP[c.toLowerCase()]), V = x => x && KO_JUNG.includes(x), C = x => x && KO_CHO.includes(x);
+  let out = "", i = 0;
+  while(i < t.length){ if(!C(t[i]) || !V(t[i+1])) return null; const cho = t[i]; let jung = t[i+1]; i += 2;
+    if(V(t[i]) && KO_V2[jung + t[i]]){ jung = KO_V2[jung + t[i]]; i++; }
+    let jong = "";
+    if(C(t[i]) && !V(t[i+1]) && KO_JONG.includes(t[i])){ jong = t[i]; i++; if(C(t[i]) && !V(t[i+1]) && KO_J2[jong + t[i]]){ jong = KO_J2[jong + t[i]]; i++; } }
+    else if(C(t[i]) && !V(t[i+1])) return null;
+    out += String.fromCharCode(0xAC00 + (KO_CHO.indexOf(cho)*21 + KO_JUNG.indexOf(jung))*28 + KO_JONG.indexOf(jong)); }
+  return out; }
+const koFixOn = el => !LOOK.noKoFix && el && el.matches && el.matches('input[type=text],input[type=search],input:not([type]),textarea') && !el.closest("[data-noko]");
+let koUndo = null;
+function koFixText(txt, onlyLast){ let changed = false;
+  const fixed = onlyLast ? txt.replace(/([a-zA-Z]+)$/, w => { const k = enToKo(w); if(k){ changed = true; return k; } return w; })
+    : txt.replace(/[a-zA-Z]+/g, w => { const k = enToKo(w); if(k){ changed = true; return k; } return w; });
+  return changed ? fixed : null; }
+function koFixEl(el, mode){ if(!koFixOn(el)) return false; const v = el.value, pos = el.selectionStart ?? v.length;
+  let nv = null, np = pos;
+  if(mode === "all"){ nv = koFixText(v, false); np = nv ? nv.length - (v.length - pos) : pos; }
+  else { const before = v.slice(0, pos), after = v.slice(pos), fb = koFixText(before, true); if(fb){ nv = fb + after; np = fb.length; } }
+  if(nv == null) return false;
+  koUndo = {el, v}; el.value = nv; try{ el.setSelectionRange(np, np); }catch(e){}
+  el.dispatchEvent(new Event("input", {bubbles:true}));
+  document.querySelectorAll(".toast.ko-t").forEach(x=>x.remove()); const t = document.createElement("div"); t.className = "toast ko-t"; t.innerHTML = `영어로 친 글자를 한글로 바꿨어요 <button class="toast-undo" data-act="koUndo">되돌리기</button>`; document.body.appendChild(t); setTimeout(()=>t.remove(), 3500);
+  return true; }
+A.koUndo = () => { if(koUndo && document.body.contains(koUndo.el)){ koUndo.el.value = koUndo.v; koUndo.el.dispatchEvent(new Event("input", {bubbles:true})); koUndo.el.focus(); } koUndo = null; document.querySelectorAll(".toast.ko-t").forEach(x=>x.remove()); };
+window.addEventListener("input", e => { if(e.inputType === "insertText" && e.data === " " && koFixOn(e.target)){ const el = e.target, p = el.selectionStart, v = el.value;
+  if(v[p-1] === " "){ const fb = koFixText(v.slice(0, p-1), true); if(fb){ koUndo = {el, v}; el.value = fb + " " + v.slice(p); el.setSelectionRange(fb.length+1, fb.length+1); document.querySelectorAll(".toast.ko-t").forEach(x=>x.remove()); const t = document.createElement("div"); t.className = "toast ko-t"; t.innerHTML = `영어로 친 글자를 한글로 바꿨어요 <button class="toast-undo" data-act="koUndo">되돌리기</button>`; document.body.appendChild(t); setTimeout(()=>t.remove(), 3500); } } } }, true);
+window.addEventListener("keydown", e => { if(e.key === "Enter" && !e.isComposing) koFixEl(e.target, "word"); }, true);
+window.addEventListener("focusout", e => { if(koFixOn(e.target) && /[a-zA-Z]/.test(e.target.value||"")){ if(koFixEl(e.target, "all")) e.target.dispatchEvent(new Event("change", {bubbles:true})); } }, true);
+CH.koFixSet = el => { LOOK.noKoFix = !el.checked; laySave(); };
+/* 글자 칸은 한국어 입력을 먼저 쓰도록 표시(브라우저·키보드가 지원할 때), 영어 자동 대문자·자동 수정은 끔 */
+function koInputs(root){ root.querySelectorAll('input[type=text]:not([data-ko]),input[type=search]:not([data-ko]),input:not([type]):not([data-ko]),textarea:not([data-ko])').forEach(el => { el.dataset.ko = 1; if(!el.lang) el.lang = "ko"; el.setAttribute("autocapitalize","off"); el.setAttribute("autocorrect","off"); if(!el.hasAttribute("spellcheck")) el.spellcheck = false; }); }
+new MutationObserver(() => koInputs(document)).observe(document.documentElement, {childList:true, subtree:true});
 /* 상자 안에서 N개까지만 보이고 나머지는 스크롤 (.lim-scroll[data-n] > .lim-item) */
 function limFit(){ document.querySelectorAll(".lim-scroll").forEach(b => { const n = Number(b.dataset.n) || 3, it = b.querySelectorAll(":scope > .lim-item");
   if(it.length <= n){ b.style.maxHeight = ""; b.classList.remove("has-more"); return; } const top = it[0].offsetTop, last = it[n-1]; b.style.maxHeight = (last.offsetTop + last.offsetHeight - top + 2) + "px"; b.classList.add("has-more"); }); }
@@ -1832,14 +1875,25 @@ function looseRange(t){ t = String(t||"").replace(/\(\s*\d+\s*일\s*(?:간)?\s*\
   const b = looseDate(parts[1], a); if(!b) return null; return a <= b ? [a, b] : [b, a]; }
 const mdShort = d => `${Number(d.slice(5,7))}/${Number(d.slice(8))}`;
 function dateTextHtml(p, def, single, def2){
-  return `<label class="f qk-f">날짜<span class="date-tx"><input type="text" id="${p}Date" value="${def ? mdShort(def) + (def2 && def2 !== def ? "~" + mdShort(def2) : "") : ""}" placeholder="${single ? "예: 오늘, 11/19" : "예: 11/19, 19~23, 오늘"}" data-in="dateTx" data-p="${p}" data-single="${single?1:""}" style="width:${single?110:150}px" autocomplete="off"><input type="date" class="date-pop" tabindex="-1" aria-label="달력에서 고르기" data-ch="datePop" data-p="${p}"></span><span class="small date-hint" id="${p}DateHint">${def ? dateHint(def, def2 || def, single) : ""}</span></label>`;
+  const one = (id, v, ph, w, end) => `<span class="date-tx"><input type="text" id="${p}${id}" value="${v ? mdShort(v) : ""}" placeholder="${ph}" data-in="dateTx" data-p="${p}" data-single="${single?1:""}" ${end?'data-end="1"':""} style="width:${w}px" autocomplete="off"><input type="date" class="date-pop" tabindex="-1" aria-label="달력에서 고르기" data-ch="datePop" data-p="${p}" data-to="${id}"></span>`;
+  if(single) return `<label class="f qk-f">날짜${one("Date", def, "예: 오늘, 11/19", 110)}<span class="small date-hint" id="${p}DateHint">${def ? md(def) : ""}</span></label>`;
+  return `<div class="f qk-f date-rg"><span>기간</span><div class="row" style="gap:4px;flex-wrap:nowrap;align-items:center">${one("Date", def, "시작 (예: 11/19)", 112)}<span class="muted">~</span>${one("Date2", def2 && def2 !== def ? def2 : "", "끝 (하루면 비움)", 122, 1)}</div><span class="small date-hint" id="${p}DateHint">${def ? dateHint(def, def2 || def) : ""}</span></div>`;
 }
-function dateHint(a, b, single){ if(single || a === b) return md(a); const n = schoolDays(a, b); return `${md(a)} ~ ${md(b)} · 등교일 ${n}일`; }
-IN.dateTx = el => { const h = document.getElementById(el.dataset.p+"DateHint"), r = looseRange(el.value); if(!h) return;
-  h.classList.toggle("bad", !!el.value.trim() && !r); h.textContent = !el.value.trim() ? "" : !r ? "날짜를 못 알아봤어요" : el.dataset.single ? md(r[0]) : dateHint(r[0], r[1]); };
-CH.datePop = el => { if(!el.value) return; const t = document.getElementById(el.dataset.p+"Date"); const cur = looseRange(t.value);
-  t.value = (!t.dataset.single && cur && cur[0] < el.value && /~|부터/.test(t.value) === false && t.value.trim()) ? `${mdShort(cur[0])}~${mdShort(el.value)}` : mdShort(el.value); el.value = ""; IN.dateTx(t); };
-function dateRead(p){ const el = document.getElementById(p+"Date"), r = looseRange(el?.value); if(!r){ toast("날짜를 알아보지 못했어요 (예: 11/19, 19~23, 오늘)"); el?.focus(); return null; } return r; }
+function dateHint(a, b, single){ if(single || a === b) return md(a) + (single ? "" : " · 하루"); const n = schoolDays(a, b); return `${md(a)} ~ ${md(b)} · 등교일 ${n}일`; }
+/* 기간 읽기: 시작 칸에 "19~23"처럼 써도 되고, 끝 칸에 날짜나 "3일간"을 써도 됨 */
+function dateRangeOf(p){ const a = document.getElementById(p+"Date"), b = document.getElementById(p+"Date2"); if(!a) return null;
+  const r = looseRange(a.value); if(!r) return null; if(!b || !b.value.trim()) return r;
+  const bt = b.value.trim(), n = bt.match(/^(\d+)\s*일\s*(?:간|동안)?$/);
+  if(n && !/[\/.\-월]/.test(bt) && /(간|동안)$/.test(bt)){ let k = Math.max(1, +n[1]), e = r[0]; if(!isSchoolDay(e)) k++; while(--k > 0) e = schoolStep(e, 1) || e; return [r[0], e]; }
+  const e = looseDate(bt, r[0]); if(!e) return null; return e < r[0] ? [e, r[0]] : [r[0], e]; }
+IN.dateTx = el => { const p = el.dataset.p, h = document.getElementById(p+"DateHint"); if(!h) return;
+  if(el.dataset.single){ const r = looseRange(el.value); h.classList.toggle("bad", !!el.value.trim() && !r); h.textContent = !el.value.trim() ? "" : !r ? "날짜를 못 알아봤어요" : md(r[0]); return; }
+  const a = document.getElementById(p+"Date"); if(!a.value.trim()){ h.classList.remove("bad"); h.textContent = ""; return; }
+  const r = dateRangeOf(p); h.classList.toggle("bad", !r); h.textContent = !r ? "날짜를 못 알아봤어요" : dateHint(r[0], r[1]); };
+CH.datePop = el => { if(!el.value) return; const t = document.getElementById(el.dataset.p + (el.dataset.to || "Date")); t.value = mdShort(el.value); el.value = "";
+  if(el.dataset.to === "Date"){ const e2 = document.getElementById(el.dataset.p+"Date2"); if(e2 && e2.value.trim()){ const r = dateRangeOf(el.dataset.p); if(!r) e2.value = ""; } }
+  IN.dateTx(t); };
+function dateRead(p){ const el = document.getElementById(p+"Date"), r = document.getElementById(p+"Date2") ? dateRangeOf(p) : looseRange(el?.value); if(!r){ toast("날짜를 알아보지 못했어요 (예: 11/19, 오늘, 끝 칸은 11/21 또는 3일간)"); el?.focus(); return null; } return r; }
 
 /* 출결 직접 넣기: 학생(여러 명) + 날짜(기간) + 사유·종류 + 교시 + 내용. 출석 체크 화면들과 빠른 입력이 같이 씀 */
 function attEntryFields(p, defReason = "질병", defDate = today()){
