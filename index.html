@@ -211,6 +211,9 @@ table.t{width:100%;border-collapse:collapse;font-size:13.5px}
 .lay-bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:flex-end;margin:-6px 0 10px}.dash .tt-day textarea.tt-memo-in{min-height:30px}
 @media (max-width:1200px){.dash:not(.dash6){grid-template-columns:repeat(2,minmax(0,1fr))}.dw[style*="--dw:3"]{grid-column:span 2}}
 @media (max-width:860px){.dash,.dash6{grid-template-columns:minmax(0,1fr)}.dw{grid-column:auto!important}.dw-bar{display:none}}
+.abs-filt{display:flex;flex-direction:column;gap:6px;margin:0 0 10px;padding:8px 10px;border:1px solid var(--line);border-radius:10px}
+.doc-t td.c,.doc-t th.c{text-align:center}.doc-ck{display:inline-flex;flex-direction:column;align-items:center;gap:1px;cursor:pointer}.doc-ck input{width:18px;height:18px;accent-color:var(--accent-ink)}
+.doc-t tr.doc-miss td:first-child{box-shadow:inset 3px 0 0 var(--bad)}
 .g-grp{font-size:12px;font-weight:700;color:var(--muted);padding:10px 4px 2px;display:flex;gap:6px;align-items:center}.g-grp .num{font-weight:500}
 .g-bulk{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;margin:12px 0 8px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--bg-soft,#f7f7f5)}
 .g-bulk.on{justify-content:space-between;border-color:var(--accent);background:var(--accent-soft);position:sticky;top:0;z-index:2}
@@ -711,7 +714,7 @@ A.calWReset = () => { LOOK.calw = 0; saveLook(); render(); };
 A.lookAccent = el => { LOOK.accent = el.dataset.v; saveLook(); render(); };
 A.lookTone = el => { LOOK.tone = el.dataset.v; saveLook(); render(); };
 A.lookMode = el => { LOOK.mode = el.dataset.v; saveLook(); render(); };
-const APP_VER = "2026.11.16-5";
+const APP_VER = "2026.11.16-7";
 const LOGO_SVG = `<svg class="brand-logo" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" style="fill:var(--brand,#1F6E8C)"/><g transform="translate(256 258) scale(1.13) translate(-256 -258)"><rect x="140" y="112" width="232" height="292" rx="30" fill="#FFFFFF"/><rect x="140" y="112" width="44" height="292" rx="22" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><rect x="162" y="112" width="22" height="292" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><path d="M318 112 H352 V214 L335 198 L318 214 Z" fill="#F2B84B"/><path d="M212 196 L236 220 L284 168" fill="none" style="stroke:var(--accent-ink,#1F6E8C)" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/><rect x="212" y="262" width="124" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="306" width="96" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="350" width="112" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 26%, #fff)"/></g></svg>`;
 let storageOK = true;
 /* 학급 여러 개: 학급마다 따로 저장한다. 처음 학급(c1)은 예전 저장 위치를 그대로 쓴다 */
@@ -1552,8 +1555,8 @@ VIEWS.attendance = () => {
     return `<button class="cell ${d.getMonth()!==m-1?"out":""} ${k===sel?"sel":""} ${k===today()?"isToday":""}" data-act="attDay" data-d="${k}"><span class="dn num ${d.getDay()===0||HOLI[k]?"sun":d.getDay()===6?"sat":""}">${d.getDate()}</span>${HOLI[k]?`<span class="small holi" style="font-size:11px">${HOLI[k]}</span>`:""}<span class="whos">${r.map(([sid,x],i)=>`<span class="who ${i>=3?"mx":""}"><i class="dot c-${x.reason}"></i>${esc(sname(sid))}</span>`).join("")}</span>${r.length>3?`<span class="who more muted">+${r.length-3}명</span>`:""}</button>`; }).join("")}</div></div></div>`;
   const legend = REASONS.map(r=>`<span class="row small muted" style="gap:4px"><i class="dot c-${r}"></i>${r==="체험학습"?"교외체험학습":r}</span>`).join("");
   return header("출석 체크", "날짜를 누르고 출석이 아닌 학생만 표시하세요. 표시하지 않은 학생은 출석으로 봅니다.",
-    `<div class="seg"><button class="${ui.attView==="day"?"on":""}" data-act="attView" data-v="day">날짜별 입력</button><button class="${ui.attView==="month"?"on":""}" data-act="attView" data-v="month">월별 종합</button><button class="${ui.attView==="range"?"on":""}" data-act="attView" data-v="range">기간 종합</button><button class="${ui.attView==="field"?"on":""}" data-act="attView" data-v="field">체험학습 대장</button></div>`) + `
-  <div class="card">${ui.attView==="range" || (ui.attView==="field" && ui.fieldMode==="range") ? "" : `<div class="spread"><div class="row"><button class="btn" data-act="attMonth" data-n="-1" aria-label="이전 달">‹</button><h2 class="num" style="min-width:110px;text-align:center">${y}년 ${m}월</h2><button class="btn" data-act="attMonth" data-n="1" aria-label="다음 달">›</button><button class="btn sm ghost" data-act="attMonth" data-n="0">이번 달</button></div><div class="row">${legend}</div></div>`}
+    `<div class="seg"><button class="${ui.attView==="day"?"on":""}" data-act="attView" data-v="day">날짜별 입력</button><button class="${ui.attView==="month"?"on":""}" data-act="attView" data-v="month">월별 종합</button><button class="${ui.attView==="range"?"on":""}" data-act="attView" data-v="range">기간 종합</button><button class="${ui.attView==="absent"?"on":""}" data-act="attView" data-v="absent">결석계</button><button class="${ui.attView==="field"?"on":""}" data-act="attView" data-v="field">체험학습 대장</button></div>`) + `
+  <div class="card">${ui.attView==="range" || ((ui.attView==="field" || ui.attView==="absent") && ui.fieldMode==="range") ? "" : `<div class="spread"><div class="row"><button class="btn" data-act="attMonth" data-n="-1" aria-label="이전 달">‹</button><h2 class="num" style="min-width:110px;text-align:center">${y}년 ${m}월</h2><button class="btn" data-act="attMonth" data-n="1" aria-label="다음 달">›</button><button class="btn sm ghost" data-act="attMonth" data-n="0">이번 달</button></div><div class="row">${legend}</div></div>`}
   ${ui.attView==="day" ? `<div class="grid2" style="grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);align-items:start">${calHtml}
     <div style="display:flex;flex-direction:column;gap:10px"><div class="spread"><h3>${md(sel)} ${HOLI[sel]?`<span class="pill bad">${HOLI[sel]}</span>`:""}</h3><span class="small muted">특이 ${Object.keys(recs).length}명 · 결석 ${Object.values(recs).filter(r=>r.kind==="결석").length}명 · 등교 ${S.students.length-Object.values(recs).filter(r=>r.kind==="결석").length}명</span></div>
     <div class="stu-att">${sorted().map(s => { const r = recs[s.id];
@@ -1562,7 +1565,7 @@ VIEWS.attendance = () => {
       ${r ? `<div class="chips">${KINDS.map(k=>`<button class="chip k-plain ${r.kind===k?"on":""}" data-act="attKind" data-s="${s.id}" data-k="${k}">${k}</button>`).join("")}</div>${r.kind!=="결석" ? `<div class="chips per-chips"><span class="small muted" style="align-self:center">${r.kind==="지각"?"몇 교시에 왔나요":r.kind==="조퇴"?"몇 교시부터 빠졌나요":"빠진 교시"}</span>${PERIODS.map(n=>`<button class="chip k-per ${(r.periods||[]).includes(n)?"on":""}" data-act="attPer" data-s="${s.id}" data-n="${n}" aria-pressed="${(r.periods||[]).includes(n)}">${n}</button>`).join("")}</div>` : ""}` : ""}
       ${r ? `<input type="text" value="${esc(r.note)}" placeholder="사유 메모" data-in="attNote" data-s="${s.id}" id="an-${s.id}">` : ""}
       ${r && r.kind==="결석" ? attRunBox(s.id) : ""}</div>`; }).join("")}</div></div></div>`
-  : ui.attView==="month" ? attMonthTable(y,m) : ui.attView==="range" ? attRangeTable() : attFieldTable(y,m)}</div>`;
+  : ui.attView==="month" ? attMonthTable(y,m) : ui.attView==="range" ? attRangeTable() : attFieldTable(y, m, ui.attView==="absent" ? "absent" : "field")}</div>`;
 };
 function attRunBox(sid){
   const run = attRun(sid, ui.attDay), n = run.length, i = run.indexOf(ui.attDay);
@@ -1618,20 +1621,29 @@ function attSumTable(rows, label, act, emptyLabel){
   ${list.length?`<tr><td></td><td><b>합계</b></td>${tot.map(v=>`<td class="r num"><b>${v||""}</b></td>`).join("")}<td></td></tr>`:""}</tbody></table></div>`;
 }
 /* 체험학습 대장: 학생별로 체험학습 날짜를 모아 이어진 등교일끼리 한 건으로 묶고, [from, to]와 겹치는 건만 */
-function attFieldRows(from, to){
+/* 대장 줄 만들기: type "field" = 교외체험학습, "absent" = 결석계(체험학습 아닌 결석·지각·조퇴·결과).
+   같은 학생·같은 사유의 결석이 등교일로 이어지면 한 건으로 묶고, [from, to]와 겹치는 건만 */
+function attFieldRows(from, to, type = "field"){
   const by = {};
-  Object.keys(S.attendance).sort().forEach(d => Object.entries(S.attendance[d]).forEach(([sid,r]) => { if(r.reason==="체험학습") (by[sid] ||= []).push({d, note:r.note, kind:r.kind||"결석"}); }));
+  Object.keys(S.attendance).sort().forEach(d => Object.entries(S.attendance[d]).forEach(([sid,r]) => {
+    if(type === "field" ? r.reason === "체험학습" : r.reason !== "체험학습") (by[sid] ||= []).push({d, note:r.note, kind:r.kind||"결석", reason:r.reason}); }));
   const out = [];
   Object.entries(by).forEach(([sid, arr]) => {
     let cur = null;
-    arr.forEach(({d,note,kind}) => {
-      if(kind!=="결석"){ out.push({sid, start:d, end:d, days:0, note:`${kind}${note?" · "+note:""}`}); cur = null; return; }
-      if(cur && schoolStep(cur.end, 1) === d){ cur.end = d; cur.days++; if(note && !cur.note) cur.note = note; return; }
-      cur = {sid, start:d, end:d, days:1, note}; out.push(cur);
+    arr.forEach(({d,note,kind,reason}) => {
+      if(kind!=="결석"){ out.push({sid, start:d, end:d, days:0, kind, reason, note: type === "field" ? `${kind}${note?" · "+note:""}` : (note||"")}); cur = null; return; }
+      if(cur && cur.reason === reason && schoolStep(cur.end, 1) === d){ cur.end = d; cur.days++; if(note && !cur.note) cur.note = note; return; }
+      cur = {sid, start:d, end:d, days:1, kind, reason, note}; out.push(cur);
     });
   });
   return out.filter(r => (!from || r.end >= from) && (!to || r.start <= to)).sort((a,b)=>a.start.localeCompare(b.start) || (stu(a.sid)?.no??0)-(stu(b.sid)?.no??0));
 }
+/* 서류 제출 체크: 체험학습은 신청서·보고서, 결석계는 결석계 */
+const DOCS = {field:[["app","신청서"],["rep","보고서"]], absent:[["doc","결석계"]]};
+const docKey = (type, r) => `${type}|${r.sid}|${r.start}`;
+const docOf = (type, r) => (S.attDocs || {})[docKey(type, r)] || {};
+const docsDone = (type, r) => DOCS[type].every(([k]) => docOf(type, r)[k]);
+CH.attDoc = el => { const key = el.dataset.key; S.attDocs ||= {}; const o = (S.attDocs[key] ||= {}); if(el.checked) o[el.dataset.d] = today(); else delete o[el.dataset.d]; if(!Object.keys(o).length) delete S.attDocs[key]; commit(); };
 /* 기간 고르기 (기간 종합·체험학습 대장이 같이 씀) */
 function attRangeBar(from, to){
   const t = today(), d = new Date(), mon = mondayOf(d);
@@ -1643,20 +1655,32 @@ function attRangeBar(from, to){
       <span class="small muted">수업일 ${schoolDays(from, to)}일</span>
       <span style="flex:1"></span>${P.map(([l,a,b])=>`<button class="chip ${a===from&&b===to?"on":""}" data-act="attRangeSet" data-a="${a}" data-b="${b}">${l}</button>`).join("")}</div>`;
 }
-function attFieldTable(y,m){
-  const fm = ui.fieldMode || "month";
+function attFieldTable(y, m, type = "field"){
+  const fm = ui.fieldMode || "month", F = type === "field", D = DOCS[type];
   let from, to, label;
   if(fm === "range"){ if(!ui.attFrom || !ui.attTo){ [ui.attFrom, ui.attTo] = attRangeDefault(); } from = ui.attFrom; to = ui.attTo; if(from > to) [from, to] = [to, from]; label = `${md(from)} ~ ${md(to)}`; }
   else { from = `${y}-${pad(m)}-01`; to = ymd(new Date(y, m, 0)); label = `${y}년 ${m}월`; }
-  const list = attFieldRows(from, to), days = list.reduce((a,r)=>a+(r.days||0),0), who = new Set(list.map(r=>r.sid)).size;
-  ui.fieldList = {list, label};
-  return `<div class="spread" style="margin:4px 0 10px;flex-wrap:wrap;gap:8px"><div class="seg"><button class="${fm==="month"?"on":""}" data-act="fieldMode" data-v="month">월별</button><button class="${fm==="range"?"on":""}" data-act="fieldMode" data-v="range">기간별</button></div>
+  const raw = attFieldRows(from, to, type), fr = F ? "" : (ui.absReason||""), fk = F ? "" : (ui.absKind||"");
+  const all = raw.filter(r => (!fr || r.reason === fr) && (!fk || r.kind === fk)), miss = all.filter(r => !docsDone(type, r));
+  const cnt = (k, v) => raw.filter(r => r[k] === v && (k === "reason" ? (!fk || r.kind === fk) : (!fr || r.reason === fr))).length;
+  const filt = F ? "" : `<div class="abs-filt"><div class="row" style="gap:6px;flex-wrap:wrap"><span class="small muted" style="width:34px">사유</span><button class="chip ${!fr?"on":""}" data-act="absFilt" data-k="reason" data-v="">전체</button>${REASONS.filter(x=>x!=="체험학습").map(x=>`<button class="chip ${fr===x?"on":""}" data-act="absFilt" data-k="reason" data-v="${x}"><i class="dot c-${x}"></i> ${x} <span class="num muted">${cnt("reason",x)}</span></button>`).join("")}</div>
+    <div class="row" style="gap:6px;flex-wrap:wrap"><span class="small muted" style="width:34px">종류</span><button class="chip ${!fk?"on":""}" data-act="absFilt" data-k="kind" data-v="">전체</button>${KINDS.map(x=>`<button class="chip ${fk===x?"on":""}" data-act="absFilt" data-k="kind" data-v="${x}">${x} <span class="num muted">${cnt("kind",x)}</span></button>`).join("")}</div></div>`;
+  const list = ui.docMissOnly ? miss : all, days = all.reduce((a,r)=>a+(r.days||0),0), who = new Set(all.map(r=>r.sid)).size;
+  ui.fieldList = {list, label: label + (F || (!fr && !fk) ? "" : "_" + (fr||"") + (fk||"")), type};
+  const what = F ? "교외체험학습" : (fr || fk) ? `${fr||""}${fk||(fr?" 결석·지각·조퇴·결과":"")}` : "결석·지각·조퇴·결과";
+  return `<div class="spread" style="margin:4px 0 10px;flex-wrap:wrap;gap:8px"><div class="row"><div class="seg"><button class="${fm==="month"?"on":""}" data-act="fieldMode" data-v="month">월별</button><button class="${fm==="range"?"on":""}" data-act="fieldMode" data-v="range">기간별</button></div>
+      <button class="chip ${ui.docMissOnly?"on":""}" data-act="docMissOnly">서류 안 낸 것만 ${miss.length}</button></div>
     <div class="row"><button class="btn sm" data-act="fieldExport" data-k="view">이 목록 내보내기</button><button class="btn sm ghost" data-act="fieldExport" data-k="year">학년도 전체 내보내기</button></div></div>
-  ${fm === "range" ? attRangeBar(from, to) : ""}
-  <div class="small muted" style="margin-bottom:8px">${label} 교외체험학습 ${list.length}건 · ${who}명 · 결석 처리 ${days}일 (이어진 등교일은 한 건으로 묶어요${fm==="range"?", 기간에 걸친 건은 전체 기간으로 보여요":""})</div>
-  <div class="scroll"><table class="t"><thead><tr><th>연번</th><th>번호</th><th>이름</th><th>기간</th><th class="r">일수</th><th>내용</th></tr></thead><tbody>
-  ${list.map((r,i)=>`<tr><td class="num muted">${i+1}</td><td class="num">${stu(r.sid)?.no??""}</td><td>${esc(sname(r.sid))}</td><td class="num">${r.start===r.end?md(r.start):`${md(r.start)} ~ ${md(r.end)}`}</td><td class="r num">${r.days||"-"}</td><td>${esc(r.note)}</td></tr>`).join("") || `<tr><td colspan="6" class="empty">${fm==="range"?"이 기간에":"이번 달"} 체험학습 기록이 없어요</td></tr>`}</tbody></table></div>`;
+  ${fm === "range" ? attRangeBar(from, to) : ""}${filt}
+  <div class="small muted" style="margin-bottom:8px">${label} ${what} ${all.length}건 · ${who}명 · 결석 ${days}일 · <b style="color:${miss.length?"var(--bad)":"var(--ok)"}">서류 ${miss.length ? `안 낸 것 ${miss.length}건` : "모두 받음"}</b> (이어진 등교일은 한 건으로 묶어요${fm==="range"?", 기간에 걸친 건은 전체 기간으로 보여요":""})</div>
+  <div class="scroll"><table class="t doc-t"><thead><tr><th>연번</th><th>번호</th><th>이름</th>${F?"":"<th>구분</th>"}<th>기간</th><th class="r">일수</th><th>내용</th>${D.map(([,l])=>`<th class="c">${l}</th>`).join("")}</tr></thead><tbody>
+  ${list.map((r,i)=>{ const o = docOf(type, r), key = docKey(type, r), done = docsDone(type, r);
+    return `<tr class="${done?"doc-done":"doc-miss"}"><td class="num muted">${i+1}</td><td class="num">${stu(r.sid)?.no??""}</td><td style="white-space:nowrap">${esc(sname(r.sid))}</td>${F?"":`<td style="white-space:nowrap"><i class="dot c-${r.reason}"></i> ${esc(r.reason)}${esc(r.kind)}</td>`}<td class="num" style="white-space:nowrap">${r.start===r.end?md(r.start):`${md(r.start)} ~ ${md(r.end)}`}</td><td class="r num">${r.days||"-"}</td><td>${esc(r.note)}</td>
+      ${D.map(([k,l])=>`<td class="c"><label class="doc-ck" title="${o[k]?`${md(o[k])} 받음`:"아직 안 냄"}"><input type="checkbox" ${o[k]?"checked":""} data-ch="attDoc" data-key="${esc(key)}" data-d="${k}" aria-label="${esc(sname(r.sid))} ${l} 받음">${o[k]?`<span class="small muted num">${Number(o[k].slice(5,7))}/${Number(o[k].slice(8))}</span>`:""}</label></td>`).join("")}</tr>`; }).join("")
+    || `<tr><td colspan="${7 + D.length + (F?0:1)}" class="empty">${ui.docMissOnly ? "서류를 안 낸 건이 없어요" : `${fm==="range"?"이 기간에":"이번 달"} ${F?"체험학습":what} 기록이 없어요`}</td></tr>`}</tbody></table></div>`;
 }
+A.absFilt = el => { const k = el.dataset.k === "reason" ? "absReason" : "absKind"; ui[k] = el.dataset.v; render(); };
+A.docMissOnly = () => { ui.docMissOnly = !ui.docMissOnly; render(); };
 A.fieldMode = el => { ui.fieldMode = el.dataset.v; render(); };
 A.attView = el => { ui.attView = el.dataset.v; render(); };
 A.attMonth = el => { const n = Number(el.dataset.n); if(n===0){ ui.attMonth = today().slice(0,7); ui.attDay = today(); } else { const [y,m] = ui.attMonth.split("-").map(Number); const d = new Date(y, m-1+n, 1); ui.attMonth = ymd(d).slice(0,7); ui.attDay = ymd(d); } render(); };
@@ -1709,10 +1733,11 @@ A.attExport = () => { const [y,m] = ui.attMonth.split("-").map(Number); const ro
   const sum = [["번호","이름",...ATT_COLS,"내용"], ...sorted().map(s=>{ const r = rows[s.id]; return [s.no, s.name, ...ATT_COLS.map(c=>r?r[c]||0:0), r?r.dates.join(", "):""]; })];
   const detail = [["날짜","번호","이름","구분","종류","교시","사유"]]; Object.keys(S.attendance).sort().filter(d=>d.startsWith(ui.attMonth)).forEach(d=>Object.entries(S.attendance[d]).forEach(([sid,r])=>detail.push([d, stu(sid)?.no??"", sname(sid), r.reason, r.kind, r.kind!=="결석"&&r.periods&&r.periods.length ? r.periods.join(",")+"교시" : "", r.note])));
   exportSheets(`${clsName()}_${y}년${m}월_출결`, [["월별 종합", sum], ["상세", detail]]); };
-A.fieldExport = el => { let list, name;
-  if(el.dataset.k === "view" && ui.fieldList){ list = ui.fieldList.list; name = `${clsName()}_교외체험학습대장_${ui.fieldList.label.replace(/\s+/g,"")}`; }
-  else { const [a, b] = termRange("all"); list = attFieldRows(a, b); name = `${clsName()}_${CAL().year}학년도_교외체험학습대장`; }
-  exportSheets(name, [["체험학습 대장", [["연번","번호","이름","시작일","종료일","일수","내용"], ...list.map((r,i)=>[i+1, stu(r.sid)?.no??"", sname(r.sid), r.start, r.end, r.days, r.note])]]]); };
+A.fieldExport = el => { const type = ui.attView === "absent" ? "absent" : "field", F = type === "field", D = DOCS[type], title = F ? "교외체험학습대장" : "결석계대장"; let list, name;
+  if(el.dataset.k === "view" && ui.fieldList && ui.fieldList.type === type){ list = ui.fieldList.list; name = `${clsName()}_${title}_${ui.fieldList.label.replace(/\s+/g,"")}`; }
+  else { const [a, b] = termRange("all"); list = attFieldRows(a, b, type); name = `${clsName()}_${CAL().year}학년도_${title}`; }
+  exportSheets(name, [[F ? "체험학습 대장" : "결석계 대장", [["연번","번호","이름",...(F?[]:["구분"]),"시작일","종료일","일수","내용",...D.map(([,l])=>l+" 받은 날")],
+    ...list.map((r,i)=>{ const o = docOf(type, r); return [i+1, stu(r.sid)?.no??"", sname(r.sid), ...(F?[]:[r.reason+r.kind]), r.start, r.end, r.days, r.note, ...D.map(([k])=>o[k]||"")]; })]]]); };
 
 /* ───────── 제출 체크 ───────── */
 VIEWS.submit = () => {
