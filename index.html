@@ -232,10 +232,15 @@ table.t{width:100%;border-collapse:collapse;font-size:13.5px}
 .att-pen.on{background:var(--accent-soft)}
 .att-ed-tr>td{background:var(--bg);padding:10px!important}.att-ed{border:1px solid var(--accent);border-radius:10px;padding:10px;background:var(--surface)}
 .att-imp{margin-top:10px;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
-.sub-scroll{max-height:460px;overflow-y:auto;overscroll-behavior:contain;margin-right:-6px;padding-right:6px}
+.lim-scroll{position:relative}.lim-more{text-align:center;margin-top:4px;font-size:11.5px}
+.sub-scroll{overflow-y:auto;overscroll-behavior:contain;margin-right:-6px;padding-right:6px}
 .sub-item{padding:8px 0;border-bottom:1px solid var(--line)}.sub-item:last-child{border-bottom:0}
 .sub-title{border:0;background:none;padding:0;font:inherit;font-weight:500;color:var(--ink);cursor:pointer;text-align:left}.sub-title:hover{color:var(--accent-ink);text-decoration:underline}
 .sub-all{border:0;background:none;color:var(--accent-ink);cursor:pointer;font-size:11.5px;text-decoration:underline;padding:0 2px}
+.evh{font-size:13px;color:var(--muted);font-weight:600;margin:4px 0 2px}.ev-scroll{overflow-y:auto;overscroll-behavior:contain}
+.ev-row{padding:7px 0;border-bottom:1px solid var(--line);gap:8px}.ev-row:last-child{border-bottom:0}
+.evq{margin-top:8px;padding:8px 10px;border:1px solid var(--accent);border-radius:10px;background:var(--accent-soft)}
+.sub-nm.on{border-color:var(--accent);background:var(--accent);color:var(--on-accent)}
 .sub-nm{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:1px 8px;font-size:12.5px;cursor:pointer;color:var(--ink);margin:2px 2px 0 0}
 .sub-nm:hover{border-color:var(--accent);background:var(--accent-soft)}.sub-nm.fx{border-color:var(--bad);color:var(--bad)}
 .abs-filt{display:flex;flex-direction:column;gap:6px;margin:0 0 10px;padding:8px 10px;border:1px solid var(--line);border-radius:10px}
@@ -742,7 +747,7 @@ A.calWReset = () => { LOOK.calw = 0; saveLook(); render(); };
 A.lookAccent = el => { LOOK.accent = el.dataset.v; saveLook(); render(); };
 A.lookTone = el => { LOOK.tone = el.dataset.v; saveLook(); render(); };
 A.lookMode = el => { LOOK.mode = el.dataset.v; saveLook(); render(); };
-const APP_VER = "2026.11.16-13";
+const APP_VER = "2026.11.16-14";
 const LOGO_SVG = `<svg class="brand-logo" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" style="fill:var(--brand,#1F6E8C)"/><g transform="translate(256 258) scale(1.13) translate(-256 -258)"><rect x="140" y="112" width="232" height="292" rx="30" fill="#FFFFFF"/><rect x="140" y="112" width="44" height="292" rx="22" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><rect x="162" y="112" width="22" height="292" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><path d="M318 112 H352 V214 L335 198 L318 214 Z" fill="#F2B84B"/><path d="M212 196 L236 220 L284 168" fill="none" style="stroke:var(--accent-ink,#1F6E8C)" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/><rect x="212" y="262" width="124" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="306" width="96" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="350" width="112" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 26%, #fff)"/></g></svg>`;
 let storageOK = true;
 /* 학급 여러 개: 학급마다 따로 저장한다. 처음 학급(c1)은 예전 저장 위치를 그대로 쓴다 */
@@ -1116,13 +1121,14 @@ function render(){
   const r = route();
   renderSide(r);
   let v; try{ v = VIEWS[r](); }catch(err){ console.error(err); v = `<div class="card"><h2>이 화면을 그리지 못했어요</h2><p class="small">${esc(err && err.message || String(err))}</p><p class="small muted">기록은 그대로 저장돼 있어요. 이 문구를 알려 주시면 고칠게요. 다른 메뉴는 그대로 쓸 수 있어요.</p></div>`; }
-  const keepSc = [...document.querySelectorAll("#main .sub-scroll, #main .scroll")].map((el, i) => [i, el.className, el.scrollTop, el.scrollLeft]);
+  const keepSc = [...document.querySelectorAll("#main .lim-scroll, #main .sub-scroll, #main .scroll")].map((el, i) => [i, el.className, el.scrollTop, el.scrollLeft]);
   const mainTop = $("#main").scrollTop, prevR = ui._lastRoute; ui._lastRoute = r;
   $("#main").innerHTML = `<div class="wrap">${archiveBanner()}${syncBanner()}${liveS?"":sampleBanner()}${v}</div>`;
   if(r !== "today"){ try{ layoutize(r); }catch(err){ console.error("layout", err); } }
   AFTER[r] && AFTER[r]();
-  if(prevR === r){ const now = [...document.querySelectorAll("#main .sub-scroll, #main .scroll")]; keepSc.forEach(([i, c, t, l]) => { const el = now[i]; if(el && el.className === c){ el.scrollTop = t; el.scrollLeft = l; } }); $("#main").scrollTop = mainTop; }
-  requestAnimationFrame(() => { document.querySelectorAll("textarea.tt-memo-in").forEach(growTa); if(document.querySelector(".dash")) dashWatch(); });
+  try{ limFit(); }catch(e){}
+  if(prevR === r){ const now = [...document.querySelectorAll("#main .lim-scroll, #main .sub-scroll, #main .scroll")]; keepSc.forEach(([i, c, t, l]) => { const el = now[i]; if(el && el.className === c){ el.scrollTop = t; el.scrollLeft = l; } }); $("#main").scrollTop = mainTop; }
+  requestAnimationFrame(() => { limFit(); document.querySelectorAll("textarea.tt-memo-in").forEach(growTa); if(document.querySelector(".dash")) dashWatch(); });
   document.title = `${TITLE[r]} · ${clsName()} 학급일지`;
 }
 
@@ -1226,7 +1232,11 @@ VIEWS.today = () => {
   return header(`${d.getMonth()+1}월 ${d.getDate()}일 ${WD[d.getDay()]}요일`, (HOLI[t] ? `<span class="holi">${HOLI[t]}</span>` : `${esc(clsName())} 오늘의 학급`) + schoolEvents(t).map(x=>` <span class="pill acc">${esc(x.name)}</span>`).join(""), showBtn("today")) + showCfgCard("today") + `<div class="dash">${cards}</div>`;
 };
 /* 카드 높이만큼만 줄을 차지하게(빈틈 없이 쌓기) */
-function dashFit(){ document.querySelectorAll(".dash > .dw").forEach(w => { const c = w.querySelector(":scope > :not(.dw-bar)"); if(!c) return; const h = c.getBoundingClientRect().height; w.style.gridRowEnd = `span ${Math.max(1, Math.ceil((h + 16) / 4))}`; }); }
+/* 상자 안에서 N개까지만 보이고 나머지는 스크롤 (.lim-scroll[data-n] > .lim-item) */
+function limFit(){ document.querySelectorAll(".lim-scroll").forEach(b => { const n = Number(b.dataset.n) || 3, it = b.querySelectorAll(":scope > .lim-item");
+  if(it.length <= n){ b.style.maxHeight = ""; b.classList.remove("has-more"); return; } const top = it[0].offsetTop, last = it[n-1]; b.style.maxHeight = (last.offsetTop + last.offsetHeight - top + 2) + "px"; b.classList.add("has-more"); }); }
+window.addEventListener("resize", () => { limFit(); });
+function dashFit(){ limFit(); document.querySelectorAll(".dash > .dw").forEach(w => { const c = w.querySelector(":scope > :not(.dw-bar)"); if(!c) return; const h = c.getBoundingClientRect().height; w.style.gridRowEnd = `span ${Math.max(1, Math.ceil((h + 16) / 4))}`; }); }
 const dashRO = window.ResizeObserver ? new ResizeObserver(() => dashFit()) : null;
 function dashWatch(){ dashFit(); if(dashRO){ dashRO.disconnect(); document.querySelectorAll(".dash > .dw > :not(.dw-bar)").forEach(c => dashRO.observe(c)); } }
 /* ───── 모든 화면: 카드를 끌어서 옮기기 · 넓이 바꾸기 · 숨기기 (배치는 이 기기에 화면마다 저장) ─────
@@ -1307,11 +1317,11 @@ function todaySubmitCard(){
   const asg = all.filter(a => open(a) || (ui.subShowDone && a.due >= recent)), nOpen = all.filter(open).length, nDone = all.filter(a => !open(a) && a.due >= recent).length;
   return `<div class="card"><div class="spread"><h2>제출 현황 <span class="small muted">${nOpen ? `덜 낸 과제 ${nOpen}개` : ""}</span></h2><a class="btn sm" href="#submit">제출 체크</a></div>
     ${nDone ? `<div class="row small" style="margin:2px 0 4px"><label class="row" style="gap:5px;cursor:pointer"><input type="checkbox" ${ui.subShowDone?"checked":""} data-ch="subShowDone">최근 다 낸 과제도 보기 (${nDone})</label></div>` : ""}
-    <div class="sub-scroll">${asg.length ? asg.map(a => { const n = asgDone(a), tot = asgTargets(a).length||1, miss = asgMiss(a), fx = asgFix(a), over = a.due < t;
-      return `<div class="sub-item"><div class="spread"><button class="sub-title" data-act="goSubmit" data-id="${a.id}" title="제출 체크에서 열기">${esc(a.title)}</button><span class="small muted num" style="white-space:nowrap">${n}/${asgTargets(a).length} · <span style="${over&&miss.length?"color:var(--bad)":""}">${md(a.due)}${over&&miss.length?" 지남":""}</span></span></div>
+    <div class="sub-scroll lim-scroll" data-n="3">${asg.length ? asg.map(a => { const n = asgDone(a), tot = asgTargets(a).length||1, miss = asgMiss(a), fx = asgFix(a), over = a.due < t;
+      return `<div class="sub-item lim-item"><div class="spread"><button class="sub-title" data-act="goSubmit" data-id="${a.id}" title="제출 체크에서 열기">${esc(a.title)}</button><span class="small muted num" style="white-space:nowrap">${n}/${asgTargets(a).length} · <span style="${over&&miss.length?"color:var(--bad)":""}">${md(a.due)}${over&&miss.length?" 지남":""}</span></span></div>
         <div class="bar ${n===tot?"ok":""}" style="margin:6px 0"><i style="width:${n/tot*100}%"></i></div>
         ${miss.length?`<div class="small muted">미제출 ${miss.length}명 <span style="font-size:11px">(이름을 누르면 ${over?"늦게 제출":"제출"})</span>${miss.length>1?` <button class="sub-all" data-act="todaySubAll" data-a="${a.id}">모두 ${over?"늦게 제출":"제출"}</button>`:""}<div>${miss.map(s=>`<button class="sub-nm" data-act="todaySub" data-a="${a.id}" data-s="${s.id}">${esc(s.name)}</button>`).join("")}</div></div>`:`<div class="small" style="color:var(--ok)">모두 냈어요</div>`}
-        ${fx.length?`<div class="small" style="color:var(--bad);margin-top:4px">수정 중 ${fx.length}명 <span style="font-size:11px">(이름을 누르면 통과 → ${over?"늦게 제출":"제출"})</span>${fx.length>1?` <button class="sub-all" data-act="todaySubAll" data-a="${a.id}" data-k="fix">모두 통과</button>`:""}<div>${fx.map(s=>`<button class="sub-nm fx" data-act="todaySub" data-a="${a.id}" data-s="${s.id}">${esc(s.name)}</button>`).join("")}</div></div>`:""}</div>`; }).join("") : `<div class="empty">덜 낸 과제가 없어요</div>`}</div></div>`;
+        ${fx.length?`<div class="small" style="color:var(--bad);margin-top:4px">수정 중 ${fx.length}명 <span style="font-size:11px">(이름을 누르면 통과 → ${over?"늦게 제출":"제출"})</span>${fx.length>1?` <button class="sub-all" data-act="todaySubAll" data-a="${a.id}" data-k="fix">모두 통과</button>`:""}<div>${fx.map(s=>`<button class="sub-nm fx" data-act="todaySub" data-a="${a.id}" data-s="${s.id}">${esc(s.name)}</button>`).join("")}</div></div>`:""}</div>`; }).join("") : `<div class="empty">덜 낸 과제가 없어요</div>`}</div>${asg.length > 3 ? `<div class="small muted lim-more">↕ 상자 안에서 스크롤하면 ${asg.length - 3}개 더 있어요</div>` : ""}</div>`;
 }
 CH.subShowDone = el => { ui.subShowDone = el.checked; render(); };
 A.todaySubAll = async el => { const a = S.assignments.find(x=>x.id===el.dataset.a); if(!a) return; const fixK = el.dataset.k === "fix", miss = fixK ? asgFix(a) : asgMiss(a), st = a.due < today() ? "late" : "ok";
@@ -3557,12 +3567,40 @@ A.epExport = () => { const rows = [["학기","과목","단원·영역","평가 �
   (S.evalPlans||[]).slice().sort((a,b)=>(a.term+(a.date||a.month)).localeCompare(b.term+(b.date||b.month))).forEach(p=>{ const s = planStatus(p); rows.push([termName(p.term), p.subj, p.unit, p.item, p.std, p.method, p.date || (p.month?`${Number(p.month.slice(5))}월`:""), PLAN_PILL[s.k][1], s.a?`${s.n}/${S.students.length}`:""]); });
   exportSheets(`${clsName()}_평가계획`, [["평가 계획", rows]]); };
 function evalTodayCard(){
-  const st = (S.evalPlans||[]).map(p=>({p, s:planStatus(p)})).filter(x=>x.s.k==="late"||x.s.k==="soon"||x.s.k==="doing"||x.s.k==="entry");
-  if(!st.length) return "";
-  const order = {late:0, entry:1, doing:1, soon:2};
-  return `<div class="card"><div class="spread"><h2>평가 확인</h2><a class="btn sm" href="#evalplan">평가 계획</a></div>
-    ${st.sort((a,b)=>order[a.s.k]-order[b.s.k]).slice(0,6).map(({p,s})=>`<div class="spread" style="padding:6px 0;border-bottom:1px solid var(--line)"><span>${subjChip(p.subj,"sm")} ${esc(p.item)}</span><span><span class="pill ${PLAN_PILL[s.k][0]}">${PLAN_PILL[s.k][1]}</span>${s.a?` <span class="small muted num">${s.n}/${S.students.length}</span>`:p.date?` <span class="small muted">${md(p.date)}</span>`:""}</span></div>`).join("")}</div>`;
+  const miss = a => sorted().filter(s => a.scores[s.id] === undefined || a.scores[s.id] === "");
+  const plans = (S.evalPlans||[]).map(p=>({p, s:planStatus(p)})).filter(x => !x.s.a && (x.s.k==="late" || x.s.k==="soon" || x.s.k==="entry"));
+  const order = {late:0, entry:1, soon:2}; plans.sort((a,b)=>order[a.s.k]-order[b.s.k] || (planDue(a.p)||"").localeCompare(planDue(b.p)||""));
+  const list = S.assessments.filter(a => miss(a).length).sort((a,b)=>(a.date||"").localeCompare(b.date||""));
+  const Q = ui.evQuick;
+  const editor = a => { if(!Q || Q.aid !== a.id) return ""; const s = stu(Q.sid); if(!s) return ""; const m = miss(a), left = m.length;
+    return `<div class="evq"><div class="spread"><b><span class="num muted">${s.no}</span> ${esc(s.name)}</b><span class="small muted">남은 학생 ${left}명</span></div>
+      <div class="row" style="gap:6px;margin-top:6px;flex-wrap:wrap">${a.mode === "level"
+        ? `<div class="lv">${a.levels.map(l=>`<button data-act="evqSet" data-v="${esc(l)}">${esc(l)}</button>`).join("")}</div>`
+        : `<input type="number" id="evqIn" class="scoreIn num" min="0" max="${a.max}" placeholder="점수" data-enter="evqScore" style="width:90px"> <span class="small muted">/ ${a.max}점</span><button class="btn sm pri" data-act="evqScore">넣기</button>`}
+        <span style="flex:1"></span><button class="btn sm ghost" data-act="evqSkip">건너뛰기</button><button class="btn sm ghost" data-act="evqClose">닫기</button></div></div>`; };
+  return `<div class="card"><div class="spread"><h2>평가 확인</h2><div class="row" style="gap:6px"><a class="btn sm ghost" href="#evalplan">평가 계획</a><a class="btn sm" href="#grades">성적 입력</a></div></div>
+    <h3 class="evh">아직 평가 안 한 항목 <span class="num muted">${plans.length}</span></h3>
+    <div class="lim-scroll ev-scroll" data-n="3">${plans.map(({p,s})=>`<div class="spread lim-item ev-row"><span>${subjChip(p.subj,"sm")} ${esc(p.item)}${p.method?` <span class="small muted">${esc(p.method)}</span>`:""}</span><span class="row" style="gap:6px;flex-wrap:nowrap"><span class="pill ${PLAN_PILL[s.k][0]}">${PLAN_PILL[s.k][1]}</span>${planDue(p)?`<span class="small muted num" style="white-space:nowrap">${md(planDue(p))}</span>`:""}<button class="btn sm" data-act="evqPlan" data-id="${p.id}">점수 넣기</button></span></div>`).join("") || `<div class="small muted" style="padding:6px 0">기한이 다가온 미평가 항목이 없어요</div>`}</div>
+    <h3 class="evh" style="margin-top:12px">평가했지만 안 넣은 학생 <span class="num muted">${list.length}</span></h3>
+    <div class="lim-scroll ev-scroll" data-n="3">${list.map(a => { const m = miss(a), n = S.students.length - m.length;
+      return `<div class="lim-item ev-row ev-a"><div class="spread"><span>${subjChip(a.subject,"sm")} ${esc(a.title)}</span><span class="small muted num" style="white-space:nowrap">${n}/${S.students.length}${a.date?` · ${md(a.date)}`:""}</span></div>
+        <div class="small muted" style="margin-top:4px">미입력 ${m.length}명 <span style="font-size:11px">(이름을 누르면 바로 입력)</span><div>${m.map(s=>`<button class="sub-nm ${Q&&Q.aid===a.id&&Q.sid===s.id?"on":""}" data-act="evqOpen" data-a="${a.id}" data-s="${s.id}">${esc(s.name)}</button>`).join("")}</div></div>${editor(a)}</div>`; }).join("") || `<div class="small muted" style="padding:6px 0">입력이 남은 평가가 없어요</div>`}</div></div>`;
 }
+const evqMiss = a => sorted().filter(s => a.scores[s.id] === undefined || a.scores[s.id] === "");
+function evqNext(a, after){ const m = evqMiss(a); if(!m.length) return null; const st = sorted(), i = st.findIndex(s=>s.id===after); return (m.find(s => st.indexOf(s) > i) || m[0]).id; }
+function evqFocus(){ setTimeout(() => { const el = document.getElementById("evqIn") || document.querySelector(".evq .lv button"); el?.focus(); document.querySelector(".evq")?.scrollIntoView({block:"nearest"}); }, 30); }
+A.evqOpen = el => { const Q = ui.evQuick; ui.evQuick = Q && Q.aid === el.dataset.a && Q.sid === el.dataset.s ? null : {aid: el.dataset.a, sid: el.dataset.s}; render(); evqFocus(); };
+A.evqPlan = el => { const p = S.evalPlans.find(x=>x.id===el.dataset.id); if(!p) return; let a = planAssess(p);
+  if(!a){ a = {id:uid(), subject:p.subj, title:planTitle(p), date: p.done || (p.date && p.date <= today() ? p.date : today()), kind:"perf", mode:"level", levels:LEVELS.slice(), max:100, scores:{}}; S.assessments.push(a); p.assessId = a.id; if(!p.done) p.done = a.date; }
+  ui.evQuick = {aid: a.id, sid: evqNext(a, null)}; commit(); evqFocus(); toast(`'${p.item}' 평가를 만들었어요. 학생별로 바로 넣으세요`); };
+function evqPut(v){ const Q = ui.evQuick, a = Q && S.assessments.find(x=>x.id===Q.aid); if(!a) return; a.scores[Q.sid] = v;
+  const nx = evqNext(a, Q.sid); ui.evQuick = nx ? {aid:a.id, sid:nx} : null; commit(); if(nx) evqFocus(); else toast(`'${a.title}' 모두 입력했어요`); }
+A.evqSet = el => evqPut(el.dataset.v);
+A.evqScore = () => { const Q = ui.evQuick, a = Q && S.assessments.find(x=>x.id===Q.aid), el = document.getElementById("evqIn"); if(!a || !el) return; if(el.value === ""){ el.focus(); return; }
+  const v = Number(el.value); if(!(v >= 0 && v <= a.max)){ toast(`0~${a.max}점 사이로 적어 주세요`); el.select(); return; } evqPut(v); };
+EN.evqScore = () => A.evqScore();
+A.evqSkip = () => { const Q = ui.evQuick, a = Q && S.assessments.find(x=>x.id===Q.aid); if(!a) return; const m = evqMiss(a), st = sorted(), i = st.findIndex(s=>s.id===Q.sid); const nx = m.find(s => st.indexOf(s) > i) || m[0]; ui.evQuick = nx ? {aid:a.id, sid:nx.id} : null; render(); evqFocus(); };
+A.evqClose = () => { ui.evQuick = null; render(); };
 
 /* ───────── 새 학년도 · 지난 기록 보기 ───────── */
 function viewingArchive(){ return !!liveS; }
