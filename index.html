@@ -206,9 +206,11 @@ table.t{width:100%;border-collapse:collapse;font-size:13.5px}
 .dw:hover .dw-bar,.dw.dragging .dw-bar{opacity:1}
 .dw-grip,.dw-size{font-size:11.5px;padding:2px 9px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--muted);cursor:grab;box-shadow:var(--shadow);font:inherit;font-size:11.5px}
 .dw-size{cursor:pointer}.dw.dragging{opacity:.45}.dw.drop-b > .card{box-shadow:-4px 0 0 0 var(--accent)}.dw.drop-a > .card{box-shadow:4px 0 0 0 var(--accent)}
-.dash .stat{height:100%}.dash .tt-day textarea.tt-memo-in{min-height:30px}
-@media (max-width:1200px){.dash{grid-template-columns:repeat(2,minmax(0,1fr))}.dw[style*="--dw:3"]{grid-column:span 2}}
-@media (max-width:860px){.dash{grid-template-columns:1fr}.dw{grid-column:auto!important}.dw-bar{display:none}}
+.dash .stat{height:100%}
+.dash6{grid-template-columns:repeat(12,minmax(0,1fr))}.dw-fixed{margin-bottom:12px}.dw > .card{margin-bottom:0!important}
+.lay-bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:flex-end;margin:-6px 0 10px}.dash .tt-day textarea.tt-memo-in{min-height:30px}
+@media (max-width:1200px){.dash:not(.dash6){grid-template-columns:repeat(2,minmax(0,1fr))}.dw[style*="--dw:3"]{grid-column:span 2}}
+@media (max-width:860px){.dash,.dash6{grid-template-columns:minmax(0,1fr)}.dw{grid-column:auto!important}.dw-bar{display:none}}
 .g-grp{font-size:12px;font-weight:700;color:var(--muted);padding:10px 4px 2px;display:flex;gap:6px;align-items:center}.g-grp .num{font-weight:500}
 .g-bulk{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;margin:12px 0 8px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--bg-soft,#f7f7f5)}
 .g-bulk.on{justify-content:space-between;border-color:var(--accent);background:var(--accent-soft);position:sticky;top:0;z-index:2}
@@ -628,6 +630,7 @@ label.f .combo select{flex:1}
   .wrap{padding:60px 12px 50px}
   .card{padding:14px}
   input,select,textarea{font-size:16px}  /* 휴대폰에서 입력할 때 화면이 확대되지 않게 */
+  #qkTitle{min-width:0!important;flex:1 1 100%!important}
 }
 @media (max-width:480px){
   .week{grid-template-columns:1fr}
@@ -708,7 +711,7 @@ A.calWReset = () => { LOOK.calw = 0; saveLook(); render(); };
 A.lookAccent = el => { LOOK.accent = el.dataset.v; saveLook(); render(); };
 A.lookTone = el => { LOOK.tone = el.dataset.v; saveLook(); render(); };
 A.lookMode = el => { LOOK.mode = el.dataset.v; saveLook(); render(); };
-const APP_VER = "2026.11.16-3";
+const APP_VER = "2026.11.16-5";
 const LOGO_SVG = `<svg class="brand-logo" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" style="fill:var(--brand,#1F6E8C)"/><g transform="translate(256 258) scale(1.13) translate(-256 -258)"><rect x="140" y="112" width="232" height="292" rx="30" fill="#FFFFFF"/><rect x="140" y="112" width="44" height="292" rx="22" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><rect x="162" y="112" width="22" height="292" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><path d="M318 112 H352 V214 L335 198 L318 214 Z" fill="#F2B84B"/><path d="M212 196 L236 220 L284 168" fill="none" style="stroke:var(--accent-ink,#1F6E8C)" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/><rect x="212" y="262" width="124" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="306" width="96" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="350" width="112" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 26%, #fff)"/></g></svg>`;
 let storageOK = true;
 /* 학급 여러 개: 학급마다 따로 저장한다. 처음 학급(c1)은 예전 저장 위치를 그대로 쓴다 */
@@ -1083,6 +1086,7 @@ function render(){
   renderSide(r);
   let v; try{ v = VIEWS[r](); }catch(err){ console.error(err); v = `<div class="card"><h2>이 화면을 그리지 못했어요</h2><p class="small">${esc(err && err.message || String(err))}</p><p class="small muted">기록은 그대로 저장돼 있어요. 이 문구를 알려 주시면 고칠게요. 다른 메뉴는 그대로 쓸 수 있어요.</p></div>`; }
   $("#main").innerHTML = `<div class="wrap">${archiveBanner()}${syncBanner()}${liveS?"":sampleBanner()}${v}</div>`;
+  if(r !== "today"){ try{ layoutize(r); }catch(err){ console.error("layout", err); } }
   AFTER[r] && AFTER[r]();
   requestAnimationFrame(() => { document.querySelectorAll("textarea.tt-memo-in").forEach(growTa); if(document.querySelector(".dash")) dashWatch(); });
   document.title = `${TITLE[r]} · ${clsName()} 학급일지`;
@@ -1179,9 +1183,57 @@ VIEWS.today = () => {
   return header(`${d.getMonth()+1}월 ${d.getDate()}일 ${WD[d.getDay()]}요일`, (HOLI[t] ? `<span class="holi">${HOLI[t]}</span>` : `${esc(clsName())} 오늘의 학급`) + schoolEvents(t).map(x=>` <span class="pill acc">${esc(x.name)}</span>`).join(""), showBtn("today")) + showCfgCard("today") + `<div class="dash">${cards}</div>`;
 };
 /* 카드 높이만큼만 줄을 차지하게(빈틈 없이 쌓기) */
-function dashFit(){ document.querySelectorAll(".dash > .dw").forEach(w => { const c = w.querySelector(":scope > .card"); if(!c) return; const h = c.getBoundingClientRect().height; w.style.gridRowEnd = `span ${Math.max(1, Math.ceil((h + 16) / 4))}`; }); }
+function dashFit(){ document.querySelectorAll(".dash > .dw").forEach(w => { const c = w.querySelector(":scope > :not(.dw-bar)"); if(!c) return; const h = c.getBoundingClientRect().height; w.style.gridRowEnd = `span ${Math.max(1, Math.ceil((h + 16) / 4))}`; }); }
 const dashRO = window.ResizeObserver ? new ResizeObserver(() => dashFit()) : null;
-function dashWatch(){ dashFit(); if(dashRO){ dashRO.disconnect(); document.querySelectorAll(".dash > .dw > .card").forEach(c => dashRO.observe(c)); } }
+function dashWatch(){ dashFit(); if(dashRO){ dashRO.disconnect(); document.querySelectorAll(".dash > .dw > :not(.dw-bar)").forEach(c => dashRO.observe(c)); } }
+/* ───── 모든 화면: 카드를 끌어서 옮기기 · 넓이 바꾸기 · 숨기기 (배치는 이 기기에 화면마다 저장) ─────
+   그려진 화면에서 카드(.card)를 찾아 6칸 판 위에 다시 놓는다. 처음 넓이는 원래 화면에서 차지하던 폭에 맞춘다 */
+const LAY_W = [3,4,6,8,12];   // 12칸 판: 1/4 · 1/3 · 1/2 · 2/3 · 전체
+const layGet = r => ((LOOK.lay ||= {})[r] ||= {order:[], w:{}, hide:[]});
+function laySave(){ try{ localStorage.setItem(LOOK_KEY, JSON.stringify(LOOK)); }catch(e){} }
+function layoutize(r){
+  const wrap = document.querySelector("#main .wrap"); if(!wrap) return;
+  const head = wrap.querySelector(":scope > .head"); if(!head) return;
+  const top = []; for(let n = head.nextElementSibling; n; n = n.nextElementSibling) top.push(n);
+  const isCard = el => el.classList.contains("card");
+  const isLayout = el => !isCard(el) && !el.classList.contains("dash") && el.children.length > 0 && el.tagName === "DIV" && [...el.children].every(c => isCard(c) || isLayout(c));
+  const leaves = []; const walk = el => { if(isLayout(el)) [...el.children].forEach(walk); else leaves.push(el); };
+  top.forEach(walk);
+  const cards = leaves.filter(isCard); if(cards.length < 2) return;
+  const W = wrap.getBoundingClientRect().width || 1;
+  const seen = {};
+  const items = leaves.map((el, i) => { const fixed = !isCard(el), rc = el.getBoundingClientRect();
+    const span = fixed ? 12 : LAY_W.reduce((b, v) => Math.abs(v - 12 * rc.width / W) < Math.abs(b - 12 * rc.width / W) ? v : b, 12);
+    let k = "";
+    const sp = el.parentElement && el.parentElement.classList.contains("split") ? [...el.parentElement.children].indexOf(el) : -1;
+    if(!fixed && sp > 0) k = "오른쪽 칸" + (sp > 1 ? sp : "");   // 왼쪽 목록에서 고른 것을 보여 주는 칸은 제목이 바뀌므로 자리로 기억
+    else if(!fixed){ const h = el.querySelector("h2,h3"); k = h ? h.textContent.replace(/[0-9·()/]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 14) : ""; if(!k) k = "카드"; seen[k] = (seen[k] || 0) + 1; if(seen[k] > 1) k += "#" + seen[k]; }
+    return {el, i, fixed, span, k, y: Math.round(rc.top), name: (el.querySelector("h2,h3")?.textContent || "카드").trim().slice(0, 20)}; });
+  // 원래 같은 줄에 나란히 있던 카드들은 합쳐서 12칸이 되게 맞춘다
+  const rows = {}; items.filter(x => !x.fixed).forEach(x => (rows[x.y] ||= []).push(x));
+  Object.values(rows).forEach(g => { if(g.length < 2) return; const sum = g.reduce((a, x) => a + x.span, 0); if(sum !== 12){ const rest = 12 - g.slice(0, -1).reduce((a, x) => a + x.span, 0); if(rest >= 2) g[g.length - 1].span = rest; } });
+  const L = layGet(r), hide = new Set(L.hide || []);
+  // 순서: 저장한 순서를 따르고, 처음 보는 카드는 원래 자리에. 고정 줄(탭·안내 등)은 원래 자리 그대로
+  const mov = items.filter(x => !x.fixed), saved = (L.order || []).filter(k => mov.some(x => x.k === k));
+  const ordered = saved.map(k => mov.find(x => x.k === k));
+  mov.filter(x => !saved.includes(x.k)).forEach(x => { const before = mov.slice(0, mov.indexOf(x)).map(y => y.k); let pos = 0; ordered.forEach((y, j) => { if(before.includes(y.k)) pos = j + 1; }); ordered.splice(pos, 0, x); });
+  const seq = []; let mi = 0; items.forEach(x => seq.push(x.fixed ? x : ordered[mi++]));
+  top.forEach(n => n.remove());
+  const dash = document.createElement("div"); dash.className = "dash dash6"; dash.dataset.view = r;
+  const hidden = [];
+  seq.forEach(x => { if(!x.fixed && hide.has(x.k)){ hidden.push(x); return; }
+    const w = document.createElement("div"); w.className = "dw" + (x.fixed ? " dw-fixed" : ""); w.dataset.k = x.k || ""; const span = x.fixed ? 12 : (L.w && L.w[x.k]) || x.span; w.style.setProperty("--dw", span);
+    if(!x.fixed) w.innerHTML = `<div class="dw-bar"><span class="dw-grip" data-grip title="끌어서 옮기기">⠿ 옮기기</span><button class="dw-size" data-act="layW" data-k="${esc(x.k)}" title="넓이 바꾸기">↔ 넓이</button><button class="dw-size" data-act="layHide" data-k="${esc(x.k)}" title="이 카드 숨기기">✕ 숨기기</button></div>`;
+    w.appendChild(x.el); dash.appendChild(w); });
+  if(hidden.length || (L.order||[]).length || Object.keys(L.w||{}).length){ const bar = document.createElement("div"); bar.className = "lay-bar small";
+    bar.innerHTML = (hidden.length ? `<span class="muted">숨긴 카드</span> ${hidden.map(x => `<button class="chip" data-act="layShow" data-k="${esc(x.k)}" title="다시 보이기">${esc(x.name)} ＋</button>`).join("")}` : "") + `<button class="btn sm ghost" data-act="layReset" title="이 화면 배치를 처음대로">처음 배치로</button>`;
+    wrap.appendChild(bar); }
+  wrap.appendChild(dash);
+}
+A.layW = el => { const r = route(), L = layGet(r), w = el.closest(".dw"), cur = Number(getComputedStyle(w).getPropertyValue("--dw")) || 12; L.w = L.w || {}; const i = LAY_W.findIndex(v => v > cur); L.w[el.dataset.k] = i < 0 ? LAY_W[0] : LAY_W[i]; laySave(); render(); };
+A.layHide = el => { const L = layGet(route()); L.hide = [...new Set([...(L.hide||[]), el.dataset.k])]; laySave(); render(); toast("카드를 숨겼어요. 위의 '숨긴 카드'에서 다시 보이게 할 수 있어요"); };
+A.layShow = el => { const L = layGet(route()); L.hide = (L.hide||[]).filter(k => k !== el.dataset.k); laySave(); render(); };
+A.layReset = () => { delete (LOOK.lay||{})[route()]; laySave(); render(); toast("처음 배치로 돌렸어요"); };
 A.dwSize = el => { const L = dashLayout(), k = el.dataset.k, w = {...((LOOK.dash||{}).w||{})}; w[k] = L.w(k) % 3 + 1; saveDash(L.order, w); render(); };
 A.dashReset = () => { delete LOOK.dash; try{ localStorage.setItem(LOOK_KEY, JSON.stringify(LOOK)); }catch(e){} render(); toast("처음 배치로 돌렸어요"); };
 /* 끌어서 옮기기: 카드 위 '⠿ 옮기기'를 잡고 다른 카드 위에 놓으면 그 앞(왼쪽 절반)이나 뒤(오른쪽 절반)로 */
@@ -1190,9 +1242,13 @@ A.dashReset = () => { delete LOOK.dash; try{ localStorage.setItem(LOOK_KEY, JSON
   document.addEventListener("mouseup", () => document.querySelectorAll(".dw[draggable=true]").forEach(w => { if(!dragK) w.draggable = false; }));
   document.addEventListener("dragstart", e => { const w = e.target.closest && e.target.closest(".dw"); if(!w || !w.draggable) return; dragK = w.dataset.k; w.classList.add("dragging"); try{ e.dataTransfer.setData("text/plain", dragK); e.dataTransfer.effectAllowed = "move"; }catch(_){} });
   const mark = (w, after) => { document.querySelectorAll(".dw.drop-b,.dw.drop-a").forEach(x => x.classList.remove("drop-b","drop-a")); if(w) w.classList.add(after ? "drop-a" : "drop-b"); };
-  document.addEventListener("dragover", e => { if(!dragK) return; const w = e.target.closest && e.target.closest(".dw"); if(!w || w.dataset.k === dragK){ mark(null); return; } e.preventDefault(); const r = w.getBoundingClientRect(); mark(w, e.clientX > r.left + r.width/2); });
+  document.addEventListener("dragover", e => { if(!dragK) return; const m = document.querySelector("#main"); if(m){ if(e.clientY < 90) m.scrollBy(0, -18); else if(e.clientY > innerHeight - 90) m.scrollBy(0, 18); } e.preventDefault(); const w = e.target.closest && e.target.closest(".dw"); if(!w || w.dataset.k === dragK){ mark(null); return; } e.preventDefault(); const r = w.getBoundingClientRect(); mark(w, e.clientX > r.left + r.width/2); });
   document.addEventListener("drop", e => { if(!dragK) return; const w = e.target.closest && e.target.closest(".dw"); e.preventDefault();
-    if(w && w.dataset.k !== dragK){ const r = w.getBoundingClientRect(), after = e.clientX > r.left + r.width/2, L = dashLayout(), o = L.order.filter(k => k !== dragK); let i = o.indexOf(w.dataset.k); if(after) i++; o.splice(i, 0, dragK); saveDash(o); }
+    if(w && w.dataset.k !== dragK && !w.classList.contains("dw-fixed")){ const r = w.getBoundingClientRect(), after = e.clientX > r.left + r.width/2, view = w.parentElement.dataset.view;
+      const cur = view ? [...w.parentElement.querySelectorAll(":scope > .dw:not(.dw-fixed)")].map(x => x.dataset.k) : dashLayout().order;
+      if(view){ const L = layGet(view); const hid = (L.hide||[]).filter(k => !cur.includes(k)); cur.push(...hid); }
+      const o = cur.filter(k => k !== dragK); let i = o.indexOf(w.dataset.k); if(after) i++; o.splice(i, 0, dragK);
+      if(view){ layGet(view).order = o; laySave(); } else saveDash(o); }
     dragK = null; mark(null); render(); });
   document.addEventListener("dragend", () => { if(!dragK) return; dragK = null; mark(null); document.querySelectorAll(".dw").forEach(w => { w.classList.remove("dragging"); w.draggable = false; }); });
 })();
