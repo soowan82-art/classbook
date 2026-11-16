@@ -251,9 +251,12 @@ table.t{width:100%;border-collapse:collapse;font-size:13.5px}
 .ev-row{padding:7px 0;border-bottom:1px solid var(--line);gap:8px}.ev-row:last-child{border-bottom:0}
 .evq{margin-top:8px;padding:8px 10px;border:1px solid var(--accent);border-radius:10px;background:var(--accent-soft)}
 .asg-pen{font-size:12px;font-weight:500;vertical-align:middle;margin-left:4px}
+.rec-ed{background:var(--accent-soft);border-radius:10px;padding:8px!important}.rec-ed .dt input,.rec-ed .dt select{width:100%;font-size:13px}
 .sub-nm.on{border-color:var(--accent);background:var(--accent);color:var(--on-accent)}
 .sub-nm{border:1px solid var(--miss-line);background:var(--miss-soft);border-radius:999px;padding:1px 8px;font-size:12.5px;cursor:pointer;color:var(--miss);margin:2px 2px 0 0}
 .sub-nm:hover{border-color:var(--accent);background:var(--accent-soft)}.sub-nm.fx{border-color:var(--fix-line);background:var(--fix-soft);color:var(--fix)}
+.rng-f{display:flex;justify-content:space-between;gap:8px 16px;flex-wrap:wrap;margin:0 0 10px;padding:8px 10px;border:1px solid var(--line);border-radius:10px}
+.rng-ck{cursor:pointer}.rng-ck input{width:15px;height:15px;margin:0 2px 0 0;accent-color:var(--accent-ink)}
 .abs-filt{display:flex;flex-direction:column;gap:6px;margin:0 0 10px;padding:8px 10px;border:1px solid var(--line);border-radius:10px}
 .doc-all{display:flex;gap:3px;justify-content:center;margin-top:4px;flex-wrap:wrap}.doc-all .btn{font-weight:500;font-size:11.5px;padding:2px 7px;min-height:0}
 .doc-t td.c,.doc-t th.c{text-align:center}.doc-ck{display:inline-flex;flex-direction:column;align-items:center;gap:1px;cursor:pointer}.doc-ck input{width:18px;height:18px;accent-color:var(--accent-ink)}
@@ -758,7 +761,7 @@ A.calWReset = () => { LOOK.calw = 0; saveLook(); render(); };
 A.lookAccent = el => { LOOK.accent = el.dataset.v; saveLook(); render(); };
 A.lookTone = el => { LOOK.tone = el.dataset.v; saveLook(); render(); };
 A.lookMode = el => { LOOK.mode = el.dataset.v; saveLook(); render(); };
-const APP_VER = "2026.11.16-21";
+const APP_VER = "2026.11.17-1";
 const LOGO_SVG = `<svg class="brand-logo" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" style="fill:var(--brand,#1F6E8C)"/><g transform="translate(256 258) scale(1.13) translate(-256 -258)"><rect x="140" y="112" width="232" height="292" rx="30" fill="#FFFFFF"/><rect x="140" y="112" width="44" height="292" rx="22" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><rect x="162" y="112" width="22" height="292" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><path d="M318 112 H352 V214 L335 198 L318 214 Z" fill="#F2B84B"/><path d="M212 196 L236 220 L284 168" fill="none" style="stroke:var(--accent-ink,#1F6E8C)" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/><rect x="212" y="262" width="124" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="306" width="96" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="350" width="112" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 26%, #fff)"/></g></svg>`;
 let storageOK = true;
 /* 학급 여러 개: 학급마다 따로 저장한다. 처음 학급(c1)은 예전 저장 위치를 그대로 쓴다 */
@@ -1684,9 +1687,9 @@ function attRunBox(sid){
 }
 function attMonthRows(y,m){ return attRangeRows(`${y}-${pad(m)}-01`, ymd(new Date(y, m, 0))); }
 /* 기간(시작일~끝일) 학생별 출결 합계와 내용 */
-function attRangeRows(from, to){
+function attRangeRows(from, to, reasons){
   const rows = {}, oneMonth = from.slice(0,7) === to.slice(0,7);
-  Object.entries(S.attendance).filter(([d])=>d >= from && d <= to).forEach(([d,obj]) => Object.entries(obj).forEach(([sid,r]) => {
+  Object.entries(S.attendance).filter(([d])=>d >= from && d <= to).forEach(([d,obj]) => Object.entries(obj).forEach(([sid,r]) => { if(reasons && !reasons.includes(r.reason)) return;
     const o = rows[sid] ||= {체험학습:0, 질병결석:0, 인정결석:0, 미인정결석:0, 기타결석:0, 지각:0, 조퇴:0, 결과:0, dates:[]};
     if(r.kind==="결석") (r.reason==="체험학습" ? o.체험학습++ : o[r.reason+"결석"]++); else o[r.kind]++;
     (o._ent ||= []).push({d, r});
@@ -1699,7 +1702,7 @@ function attRangeRows(from, to){
       if(a.r.kind==="결석") while(j+1 < L.length){ const b = L[j+1]; if(b.r.kind==="결석" && b.r.reason===a.r.reason && (b.r.note||"")===(a.r.note||"") && schoolStep(L[j].d, 1)===b.d) j++; else break; }
       const day = x => oneMonth ? `${Number(x.slice(8))}일` : `${Number(x.slice(5,7))}/${Number(x.slice(8))}`, note = a.r.note ? `(${a.r.note})` : "";
       o.dates.push(j > i ? `${day(a.d)}~${day(L[j].d)} ${attLabel(a.r)}${note} ${j-i+1}일` : `${day(a.d)} ${attLabel(a.r)}${note}`);
-      (o.groups ||= []).push({days: L.slice(i, j+1).map(x=>x.d), label: o.dates[o.dates.length-1], reason: a.r.reason});
+      (o.groups ||= []).push({days: L.slice(i, j+1).map(x=>x.d), label: o.dates[o.dates.length-1], reason: a.r.reason, kind: a.r.kind||"결석", note: a.r.note||"", periods: a.r.periods||[]});
       i = j;
     }
   });
@@ -1709,19 +1712,39 @@ const ATT_COLS = ["체험학습","질병결석","인정결석","미인정결석"
 function attMonthTable(y,m){ return attSumTable(attMonthRows(y,m), `${y}년 ${m}월`, "attExport", "이번 달"); }
 /* 기간 종합: 시작일~끝일을 골라 그 기간 출결을 모아 본다 */
 function attRangeDefault(){ const c = CAL(), t = today(); return t < c.t2[0] ? [termRange("1")[0], t] : [termRange("2")[0], t]; }
+/* 기간 종합: 사유 체크(기본 전체) + 학생순/날짜순 */
+const rangeReasons = () => ui.rangeR || REASONS.slice();
 function attRangeTable(){
   if(!ui.attFrom || !ui.attTo){ [ui.attFrom, ui.attTo] = attRangeDefault(); }
   let from = ui.attFrom, to = ui.attTo; if(from > to) [from, to] = [to, from];
+  const RS = rangeReasons(), all = RS.length === REASONS.length, rows = attRangeRows(from, to, RS), byDate = ui.rangeSort === "date";
+  const cnt = {}; Object.values(S.attendance).length && Object.entries(S.attendance).filter(([d])=>d>=from&&d<=to).forEach(([,o])=>Object.values(o).forEach(r=>{ cnt[r.reason]=(cnt[r.reason]||0)+1; }));
+  const label = `${md(from)} ~ ${md(to)}${all?"":` · ${RS.map(r=>r==="체험학습"?"체험학습":r).join("·")||"사유 없음"}`}`;
   return attRangeBar(from, to) + `
-    <div class="row" style="margin-bottom:6px">${REASONS.map(r=>`<span class="row small muted" style="gap:4px"><i class="dot c-${r}"></i>${r==="체험학습"?"교외체험학습":r}</span>`).join("")}</div>
-    ${attSumTable(attRangeRows(from, to), `${md(from)} ~ ${md(to)}`, "attExportRange", "이 기간")}`;
+    <div class="rng-f"><div class="row" style="gap:6px;flex-wrap:wrap;align-items:center"><span class="small muted">사유</span>
+      ${REASONS.map(r=>`<label class="chip rng-ck ${RS.includes(r)?"on":""}"><input type="checkbox" ${RS.includes(r)?"checked":""} data-ch="rangeR" data-r="${r}"><i class="dot c-${r}"></i> ${r==="체험학습"?"교외체험학습":r} <span class="num muted">${cnt[r]||0}</span></label>`).join("")}
+      <button class="btn sm" data-act="rangeRAll" data-v="1">전체 체크</button><button class="btn sm ghost" data-act="rangeRAll" data-v="0">전체 해제</button></div>
+      <div class="row" style="gap:6px;align-items:center"><span class="small muted">보기</span><div class="seg"><button class="${byDate?"":"on"}" data-act="rangeSort" data-v="stu">학생순</button><button class="${byDate?"on":""}" data-act="rangeSort" data-v="date">날짜순</button></div></div></div>
+    ${!RS.length ? `<div class="empty">사유를 하나 이상 체크해 주세요</div>` : byDate ? attDateTable(rows, label) : attSumTable(rows, label, "attExportRange", "이 기간")}`;
 }
+function attDateTable(rows, label){
+  const L = []; Object.entries(rows).forEach(([sid, o]) => (o.groups||[]).forEach(g => L.push({sid, ...g})));
+  L.sort((a,b)=>a.days[0].localeCompare(b.days[0]) || (stu(a.sid)?.no??0)-(stu(b.sid)?.no??0));
+  return `<div class="spread" style="margin:4px 0 10px"><span class="small muted">${label} · ${L.length}건 · ${Object.keys(rows).length}명 (날짜순)</span><button class="btn sm" data-act="attExportRange">내보내기</button></div>
+  <div class="scroll"><table class="t"><thead><tr><th>날짜</th><th>번호</th><th>이름</th><th>구분</th><th class="r">일수</th><th>교시</th><th>내용</th><th class="c">고치기</th></tr></thead><tbody>
+  ${L.map(g=>{ const a = g.days[0], b = g.days[g.days.length-1];
+    return `<tr><td class="num" style="white-space:nowrap">${a===b?md(a):`${md(a)} ~ ${md(b)}`}</td><td class="num">${stu(g.sid)?.no??""}</td><td style="white-space:nowrap">${esc(sname(g.sid))}</td><td style="white-space:nowrap"><i class="dot c-${g.reason}"></i> ${g.reason==="체험학습"?"체험학습":g.reason}${g.kind}</td><td class="r num">${g.kind==="결석"?g.days.length:"-"}</td><td class="num">${g.kind!=="결석"&&g.periods.length?g.periods.join(",")+"교시":""}</td><td>${esc(g.note)}</td><td class="c"><button class="btn sm ghost att-pen ${attEditOn(g.sid, g.days)?"on":""}" data-act="attEdit" data-s="${g.sid}" data-days="${g.days.join(",")}" aria-label="${esc(sname(g.sid))} 기록 고치기">✎</button></td></tr>${attEditOn(g.sid, g.days) ? `<tr class="att-ed-tr"><td colspan="8">${attEditor()}</td></tr>` : ""}`; }).join("") || `<tr><td colspan="8" class="empty">이 기간에 출결 특이사항이 없어요</td></tr>`}
+  ${attEditOn("__new") ? `<tr class="att-ed-tr"><td colspan="8">${attEditor()}</td></tr>` : ""}</tbody></table></div>`;
+}
+CH.rangeR = el => { const RS = new Set(rangeReasons()); el.checked ? RS.add(el.dataset.r) : RS.delete(el.dataset.r); ui.rangeR = REASONS.filter(r=>RS.has(r)); render(); };
+A.rangeRAll = el => { ui.rangeR = el.dataset.v === "1" ? REASONS.slice() : []; render(); };
+A.rangeSort = el => { ui.rangeSort = el.dataset.v; render(); };
 CH.attFrom = el => { ui.attFrom = el.value; render(); };
 CH.attTo = el => { ui.attTo = el.value; render(); };
 A.attRangeSet = el => { ui.attFrom = el.dataset.a; ui.attTo = el.dataset.b; render(); };
-A.attExportRange = () => { let from = ui.attFrom, to = ui.attTo; if(from > to) [from, to] = [to, from]; const rows = attRangeRows(from, to);
+A.attExportRange = () => { let from = ui.attFrom, to = ui.attTo; if(from > to) [from, to] = [to, from]; const RS = ui.attView === "range" ? rangeReasons() : REASONS; const rows = attRangeRows(from, to, RS);
   const sum = [["번호","이름",...ATT_COLS,"내용"], ...sorted().map(s=>{ const r = rows[s.id]; return [s.no, s.name, ...ATT_COLS.map(c=>r?r[c]||0:0), r?r.dates.join(", "):""]; })];
-  const detail = [["날짜","번호","이름","구분","종류","교시","사유"]]; Object.keys(S.attendance).sort().filter(d=>d>=from && d<=to).forEach(d=>Object.entries(S.attendance[d]).forEach(([sid,r])=>detail.push([d, stu(sid)?.no??"", sname(sid), r.reason, r.kind, r.kind!=="결석"&&r.periods&&r.periods.length ? r.periods.join(",")+"교시" : "", r.note])));
+  const detail = [["날짜","번호","이름","구분","종류","교시","사유"]]; Object.keys(S.attendance).sort().filter(d=>d>=from && d<=to).forEach(d=>Object.entries(S.attendance[d]).sort((x,y)=>(stu(x[0])?.no??0)-(stu(y[0])?.no??0)).filter(([,r])=>RS.includes(r.reason)).forEach(([sid,r])=>detail.push([d, stu(sid)?.no??"", sname(sid), r.reason, r.kind, r.kind!=="결석"&&r.periods&&r.periods.length ? r.periods.join(",")+"교시" : "", r.note])));
   exportSheets(`${clsName()}_${from}~${to}_출결`, [["기간 종합", sum], ["상세", detail]]); };
 function attSumTable(rows, label, act, emptyLabel){
   const list = sorted().filter(s=>rows[s.id]);
@@ -2165,7 +2188,7 @@ VIEWS.records = () => {
         </div><div class="row" style="justify-content:flex-end;margin-top:10px"><button class="btn pri" data-act="addRec">기록 저장</button></div></div>
       <div class="card"><div class="spread"><h2>${sid==="all"?"전체 기록":esc(sname(sid))+" 기록"} <span class="small muted">${list.length}</span></h2>
         <div class="chips">${["전체",...REC_CATS].map(c=>`<button class="chip k-plain ${ui.recCat===c?"on":""}" data-act="recCat" data-c="${c}">${c}</button>`).join("")}</div></div>
-        <div class="tl">${list.map(r=>`<div class="it"><div class="dt num">${r.date.replace(/-/g,". ")}<div style="margin-top:4px"><span class="pill ${recPill(r.cat)}">${r.cat}</span></div></div><div>${sid==="all"?`<div style="font-weight:600;margin-bottom:2px">${esc(sname(r.sid))}</div>`:""}<div class="tx">${r.when?`<span class="pill" style="margin-right:6px">${esc(whenLabel(r))}</span>`:""}${esc(r.text)}</div></div><button class="x" data-act="delRec" data-id="${r.id}" aria-label="삭제">×</button></div>`).join("") || `<div class="empty">기록이 없어요</div>`}</div></div>
+        <div class="tl">${list.map(r=> ui.recEdit===r.id ? `<div class="it rec-ed"><div class="dt"><input type="date" id="reDate" value="${r.date}"><select id="reCat" style="margin-top:4px">${REC_CATS.map(c=>`<option ${c===r.cat?"selected":""}>${c}</option>`).join("")}</select></div><div>${sid==="all"?`<div style="font-weight:600;margin-bottom:2px">${esc(sname(r.sid))}</div>`:""}<textarea id="reText" rows="3" style="width:100%" data-enter="recEdSave">${esc(r.text)}</textarea><div class="row" style="gap:6px;margin-top:6px;justify-content:flex-end"><button class="btn sm ghost" data-act="edCancel" data-k="recEdit">취소</button><button class="btn sm pri" data-act="recEdSave">저장</button></div></div><span></span></div>` : `<div class="it"><div class="dt num">${r.date.replace(/-/g,". ")}<div style="margin-top:4px"><span class="pill ${recPill(r.cat)}">${r.cat}</span></div></div><div>${sid==="all"?`<div style="font-weight:600;margin-bottom:2px">${esc(sname(r.sid))}</div>`:""}<div class="tx">${r.when?`<span class="pill" style="margin-right:6px">${esc(whenLabel(r))}</span>`:""}${esc(r.text)}</div></div><div class="row" style="gap:2px;align-items:flex-start"><button class="x" data-act="recEdOpen" data-id="${r.id}" aria-label="고치기" title="고치기">✎</button><button class="x" data-act="delRec" data-id="${r.id}" aria-label="삭제">×</button></div></div>`).join("") || `<div class="empty">기록이 없어요</div>`}</div></div>
     </div>
   </div>`;
 };
@@ -2234,7 +2257,7 @@ VIEWS.grades = () => {
       <button class="btn pri" data-act="addGrade">평가 추가</button>
       <div class="list" style="margin-top:4px">${groups.length ? groups.map(g=>`<div class="g-grp">${esc(g.label)} <span class="num">${g.items.length}</span></div>` + g.items.map(x=>`<div class="li ${x.id===ui.gradeSel?"on":""}" data-act="gradeSel" data-id="${x.id}"><div><div class="t1">${aKind(x)==="test"?`<span class="pill" style="font-size:11px;padding:0 6px">${esc(x.testType||"단원평가")}</span> `:""}${esc(x.title)}</div><div class="small muted">${ui.gGroup==="month"?esc(x.subject)+" · ":""}${x.date?md(x.date):""}${aKind(x)==="test"?` · ${x.max}점 만점`:""}</div></div><span class="small muted num">${S.students.filter(s=>x.scores[s.id]!==undefined&&x.scores[s.id]!=="").length}/${S.students.length}</span></div>`).join("")).join("") : `<div class="empty">${tab==="perf"?"수행평가":"단원·형성평가"}를 추가해 보세요</div>`}</div>
     </div>
-    <div class="card">${a ? `<div class="spread"><div><h2>${esc(a.subject)} · ${esc(a.title)}</h2><div class="row" style="margin-top:6px">${summary}</div></div>
+    <div class="card">${a ? `<div class="spread"><div>${ui.gEdit===a.id ? `<div class="row" style="gap:6px;flex-wrap:wrap"><input type="text" id="geSub" list="gSubList" value="${esc(a.subject)}" style="width:110px" aria-label="과목"><input type="text" id="geTitle" value="${esc(a.title)}" data-enter="gEdSave" style="flex:1;min-width:200px;font-weight:600" aria-label="평가 이름"><button class="btn sm pri" data-act="gEdSave">저장</button><button class="btn sm ghost" data-act="edCancel" data-k="gEdit">취소</button></div>${subjDL}` : `<h2>${esc(a.subject)} · ${esc(a.title)} <button class="btn sm ghost asg-pen" data-act="gEdOpen" aria-label="평가 이름 고치기">✎ 고치기</button></h2>`}<div class="row" style="margin-top:6px">${summary}</div></div>
       <div class="row">${aKind(a)==="test"?`<select data-ch="gType" aria-label="평가 종류">${TEST_TYPES.map(x=>`<option ${(a.testType||"단원평가")===x?"selected":""}>${x}</option>`).join("")}</select>`:""}${a.mode==="score"?`<label class="f" style="flex-direction:row;align-items:center;gap:6px">만점<input type="number" class="scoreIn" style="width:76px" value="${a.max}" data-ch="gMax" min="1"></label>`:""}<input type="date" value="${a.date}" data-ch="gDate"><label class="row small g-rt-tg" style="gap:5px"><input type="checkbox" ${a.retakeOn?"checked":""} data-ch="gRetakeOn">재시험 있음</label><button class="btn sm danger" data-act="delGrade">평가 삭제</button></div></div>
       ${a.retakeOn ? `<div class="banner g-rt-info" style="margin-top:10px"><div class="small">재시험 볼 학생은 <b>재시험</b> 칸의 '＋ 재시험'을 누르고, 결과를 넣으세요. 처음 결과와 재시험 중 <b>더 나은 쪽이 최종</b>이 돼요. 재시험 대상 <b class="num">${Object.keys(a.retake||{}).length}명</b> · 결과 입력 <b class="num">${Object.values(a.retake||{}).filter(hasV).length}명</b></div></div>` : ""}
       ${gBulkBar(a)}
@@ -2287,6 +2310,10 @@ A.gRetakeLv = el => { const a = S.assessments.find(x=>x.id===ui.gradeSel), sid =
 CH.gRetakeSc = el => { const a = S.assessments.find(x=>x.id===ui.gradeSel), sid = el.dataset.s; a.retake[sid] = el.value === "" ? "" : Math.max(0, Math.min(a.max, Number(el.value))); commit(); };
 A.gLevel = el => { const a = S.assessments.find(x=>x.id===ui.gradeSel); a.scores[el.dataset.s] === el.dataset.l ? delete a.scores[el.dataset.s] : a.scores[el.dataset.s] = el.dataset.l; commit(); };
 CH.gScore = el => { const a = S.assessments.find(x=>x.id===ui.gradeSel); if(el.value===""){ delete a.scores[el.dataset.s]; } else { let v = Math.max(0, Math.min(a.max, Number(el.value))); a.scores[el.dataset.s] = v; } commit(); };
+A.gEdOpen = () => { ui.gEdit = ui.gradeSel; render(); setTimeout(()=>$("#geTitle")?.focus(), 20); };
+A.gEdSave = () => { const a = S.assessments.find(x=>x.id===ui.gEdit); if(!a) return; const t = $("#geTitle").value.trim(), sb = $("#geSub").value.trim(); if(!t){ toast("평가 이름을 적어 주세요"); return $("#geTitle").focus(); } a.title = t; if(sb) a.subject = sb; ui.gEdit = null; commit(); toast("평가를 고쳤어요"); };
+EN.gEdSave = () => A.gEdSave();
+A.edCancel = el => { ui[el.dataset.k] = null; render(); };
 CH.gMax = el => { const a = S.assessments.find(x=>x.id===ui.gradeSel); a.max = Math.max(1, Number(el.value)||100); commit(); };
 CH.gDate = el => { const a = S.assessments.find(x=>x.id===ui.gradeSel); a.date = el.value||a.date; commit(); };
 A.delGrade = async () => { if(await ask("이 평가와 입력한 성적을 삭제할까요?","삭제",true)){ S.assessments = S.assessments.filter(x=>x.id!==ui.gradeSel); ui.gradeSel=null; commit(); } };
@@ -2308,10 +2335,10 @@ VIEWS.budget = () => {
   ${b ? `<div class="grid2" style="grid-template-columns:minmax(0,1fr) minmax(0,1.6fr);align-items:start">
     <div class="card"><div class="spread"><h2>항목별 한도</h2><button class="btn sm danger" data-act="delBudget">예산 삭제</button></div>
       <div style="display:flex;flex-direction:column;gap:12px">${b.cats.map((c,i)=>{ const lim = b.total*c.pct/100, sp = spentOf(b,c.name), r = lim ? sp/lim : 0;
-        return `<div><div class="spread"><span><b>${esc(c.name)}</b> <span class="muted small">${c.pct}%</span></span><span class="small num ${sp>lim?"":"muted"}" style="${sp>lim?"color:var(--bad);font-weight:600":""}">${sp>lim?"한도 초과 ":"잔여 "}${won(Math.abs(lim-sp))}</span></div><div class="bar ${r>1?"bad":r>.85?"warn":""}" style="margin:5px 0"><i style="width:${Math.min(100,r*100)}%"></i></div><div class="spread small muted num"><span>사용 ${won(sp)} / 한도 ${won(lim)}</span><span><button class="btn sm ghost" data-act="catPct" data-i="${i}">한도 변경</button><button class="x" data-act="delCat" data-i="${i}" aria-label="항목 삭제">×</button></span></div></div>`; }).join("")}
+        return `<div><div class="spread"><span><b>${esc(c.name)}</b> <span class="muted small">${c.pct}%</span></span><span class="small num ${sp>lim?"":"muted"}" style="${sp>lim?"color:var(--bad);font-weight:600":""}">${sp>lim?"한도 초과 ":"잔여 "}${won(Math.abs(lim-sp))}</span></div><div class="bar ${r>1?"bad":r>.85?"warn":""}" style="margin:5px 0"><i style="width:${Math.min(100,r*100)}%"></i></div><div class="spread small muted num"><span>사용 ${won(sp)} / 한도 ${won(lim)}</span><span><button class="btn sm ghost" data-act="catPct" data-i="${i}">고치기</button><button class="x" data-act="delCat" data-i="${i}" aria-label="항목 삭제">×</button></span></div></div>`; }).join("")}
       <div class="small muted num">한도 합계 ${b.cats.reduce((s,c)=>s+Number(c.pct),0)}% ${b.cats.reduce((s,c)=>s+Number(c.pct),0)!==100?"· 100%가 아니에요":""}</div>
       <div class="row"><input type="text" id="catName" placeholder="새 항목" style="flex:1"><input type="number" id="catPct" placeholder="%" style="width:70px" min="0" max="100"><button class="btn sm" data-act="addCat">추가</button></div></div></div>
-    <div class="card"><div class="spread"><h2>${esc(b.name)} 지출 내역</h2><button class="btn sm" data-act="budExport">내보내기</button></div>
+    <div class="card"><div class="spread">${ui.budEdit===b.id ? `<div class="row" style="gap:6px;flex-wrap:wrap;flex:1"><input type="text" id="beName" value="${esc(b.name)}" style="flex:1;min-width:150px;font-weight:600" aria-label="예산명" data-enter="budEdSave"><label class="row small" style="gap:4px">총 금액<input type="number" id="beTotal" value="${b.total}" min="0" style="width:130px" data-enter="budEdSave"></label><button class="btn sm pri" data-act="budEdSave">저장</button><button class="btn sm ghost" data-act="edCancel" data-k="budEdit">취소</button></div>` : `<h2>${esc(b.name)} 지출 내역 <button class="btn sm ghost asg-pen" data-act="budEdOpen" title="예산명·총 금액 고치기">✎ 고치기</button></h2><button class="btn sm" data-act="budExport">내보내기</button>`}</div>
       <div class="form" style="grid-template-columns:130px 1fr 1.4fr 110px auto;margin-bottom:12px">
         <label class="f">날짜<input type="date" id="exDate" value="${today()}"></label>
         <label class="f">항목<select id="exCat">${b.cats.map(c=>`<option>${esc(c.name)}</option>`).join("")}<option>미분류</option></select></label>
@@ -2320,19 +2347,31 @@ VIEWS.budget = () => {
         <button class="btn pri" data-act="addEx">추가</button>
       </div>
       <div class="scroll"><table class="t"><thead><tr><th>날짜</th><th>항목</th><th>사용 목적</th><th class="r">금액</th><th></th></tr></thead><tbody>
-      ${b.expenses.slice().sort((x,y)=>y.date.localeCompare(x.date)).map(e=>`<tr><td class="num">${e.date.replace(/-/g,". ")}</td><td><span class="pill">${esc(e.cat)}</span></td><td>${esc(e.purpose)}${e.note?` <span class="small muted">${esc(e.note)}</span>`:""}</td><td class="r num">${won(e.amount)}</td><td class="r"><button class="x" data-act="delEx" data-id="${e.id}" aria-label="삭제">×</button></td></tr>`).join("") || `<tr><td colspan="5" class="empty">지출 내역이 없어요</td></tr>`}
+      ${b.expenses.slice().sort((x,y)=>y.date.localeCompare(x.date)).map(e=> ui.exEdit===e.id ? `<tr class="ex-ed"><td><input type="date" id="eeDate" value="${e.date}" style="width:130px"></td><td><select id="eeCat">${[...new Set(b.cats.map(c=>c.name).concat(["미분류", e.cat]))].map(c=>`<option ${c===e.cat?"selected":""}>${esc(c)}</option>`).join("")}</select></td><td><input type="text" id="eePurpose" value="${esc(e.purpose)}" style="width:100%" data-enter="exEdSave"></td><td class="r"><input type="number" id="eeAmt" value="${e.amount}" min="0" style="width:100px" data-enter="exEdSave"></td><td class="r" style="white-space:nowrap"><button class="btn sm pri" data-act="exEdSave">저장</button> <button class="btn sm ghost" data-act="edCancel" data-k="exEdit">취소</button></td></tr>` : `<tr><td class="num">${e.date.replace(/-/g,". ")}</td><td><span class="pill">${esc(e.cat)}</span></td><td>${esc(e.purpose)}${e.note?` <span class="small muted">${esc(e.note)}</span>`:""}</td><td class="r num">${won(e.amount)}</td><td class="r" style="white-space:nowrap"><button class="x" data-act="exEdOpen" data-id="${e.id}" aria-label="고치기" title="고치기">✎</button><button class="x" data-act="delEx" data-id="${e.id}" aria-label="삭제">×</button></td></tr>`).join("") || `<tr><td colspan="5" class="empty">지출 내역이 없어요</td></tr>`}
       </tbody></table></div></div>
   </div>` : `<div class="card empty">위에서 예산을 만들어 보세요</div>`}`;
 };
+A.recEdOpen = el => { ui.recEdit = el.dataset.id; render(); setTimeout(()=>{ const t = $("#reText"); t?.focus(); t && t.setSelectionRange(t.value.length, t.value.length); }, 20); };
+A.recEdSave = () => { const r = S.records.find(x=>x.id===ui.recEdit); if(!r) return; const t = $("#reText").value.trim(); if(!t){ toast("내용을 적어 주세요"); return $("#reText").focus(); }
+  r.text = t; r.cat = $("#reCat").value; if($("#reDate").value) r.date = $("#reDate").value; ui.recEdit = null; commit(); toast("기록을 고쳤어요"); };
+EN.recEdSave = () => A.recEdSave();
 A.budSel = el => { ui.budgetSel = el.dataset.id; render(); };
+A.budEdOpen = () => { ui.budEdit = ui.budgetSel; render(); setTimeout(()=>$("#beName")?.focus(), 20); };
+A.budEdSave = () => { const b = S.budgets.find(x=>x.id===ui.budEdit); if(!b) return; const n = $("#beName").value.trim(), t = Number($("#beTotal").value); if(!n){ toast("예산명을 적어 주세요"); return; } if(!(t > 0)){ toast("총 금액을 적어 주세요"); return; } b.name = n; b.total = t; ui.budEdit = null; commit(); toast("예산을 고쳤어요"); };
+EN.budEdSave = () => A.budEdSave();
+A.exEdOpen = el => { ui.exEdit = el.dataset.id; render(); setTimeout(()=>$("#eePurpose")?.focus(), 20); };
+A.exEdSave = () => { const b = S.budgets.find(x=>x.id===ui.budgetSel), e = b && b.expenses.find(x=>x.id===ui.exEdit); if(!e) return; const amt = Number($("#eeAmt").value);
+  if(!(amt >= 0) || $("#eeAmt").value === ""){ toast("금액을 적어 주세요"); return $("#eeAmt").focus(); }
+  e.date = $("#eeDate").value || e.date; e.cat = $("#eeCat").value; e.purpose = $("#eePurpose").value.trim(); e.amount = amt; ui.exEdit = null; commit(); toast("지출 내역을 고쳤어요"); };
+EN.exEdSave = () => A.exEdSave();
 A.addBudget = () => { const n = $("#bName").value.trim(), t = Number($("#bTotal").value); if(!n || !t){ toast("예산명과 총 금액을 적어 주세요"); return; } const b = {id:uid(), name:n, total:t, cats:[{name:"간식비",pct:15},{name:"학습자료",pct:85}], expenses:[]}; S.budgets.push(b); ui.budgetSel = b.id; commit(); };
 A.delBudget = async () => { const b = S.budgets.find(x=>x.id===ui.budgetSel); if(await ask(`'${esc(b.name)}' 예산과 지출 내역을 모두 삭제할까요?`,"삭제",true)){ S.budgets = S.budgets.filter(x=>x.id!==b.id); ui.budgetSel=null; commit(); } };
 A.addCat = () => { const b = S.budgets.find(x=>x.id===ui.budgetSel), n = $("#catName").value.trim(), p = Number($("#catPct").value); if(!n){ $("#catName").focus(); return; } b.cats.push({name:n, pct:Math.max(0,Math.min(100,p||0))}); commit(); };
 A.delCat = async el => { const b = S.budgets.find(x=>x.id===ui.budgetSel); const c = b.cats[el.dataset.i]; if(await ask(`'${esc(c.name)}' 항목을 지울까요? 지출 내역은 남아요.`,"지우기",true)){ b.cats.splice(el.dataset.i,1); commit(); } };
 A.catPct = el => { const b = S.budgets.find(x=>x.id===ui.budgetSel), c = b.cats[el.dataset.i];
   const bg = document.createElement("div"); bg.className = "modal-bg";
-  bg.innerHTML = `<div class="modal"><h3>${esc(c.name)} 한도</h3><label class="f">총 예산 대비 %<input type="number" id="pctIn" min="0" max="100" value="${c.pct}"></label><div class="row" style="justify-content:flex-end"><button class="btn" data-k="0">취소</button><button class="btn pri" data-k="1">저장</button></div></div>`;
-  bg.addEventListener("click", e => { const k = e.target.dataset.k; if(k==="1"){ c.pct = Math.max(0,Math.min(100,Number(bg.querySelector("#pctIn").value)||0)); bg.remove(); commit(); } else if(k==="0"||e.target===bg) bg.remove(); });
+  bg.innerHTML = `<div class="modal"><h3>${esc(c.name)} 고치기</h3><label class="f">항목 이름<input type="text" id="catNmIn" value="${esc(c.name)}"></label><label class="f">총 예산 대비 %<input type="number" id="pctIn" min="0" max="100" value="${c.pct}"></label><div class="row" style="justify-content:flex-end"><button class="btn" data-k="0">취소</button><button class="btn pri" data-k="1">저장</button></div></div>`;
+  bg.addEventListener("click", e => { const k = e.target.dataset.k; if(k==="1"){ c.pct = Math.max(0,Math.min(100,Number(bg.querySelector("#pctIn").value)||0)); const nn = bg.querySelector("#catNmIn").value.trim(); if(nn && nn !== c.name){ b.expenses.forEach(x => { if(x.cat === c.name) x.cat = nn; }); c.name = nn; } bg.remove(); commit(); } else if(k==="0"||e.target===bg) bg.remove(); });
   document.body.appendChild(bg); bg.querySelector("#pctIn").select(); };
 A.addEx = () => { const b = S.budgets.find(x=>x.id===ui.budgetSel), amt = Number($("#exAmt").value), p = $("#exPurpose").value.trim(); if(!amt || !p){ toast("사용 목적과 금액을 적어 주세요"); return; }
   const cat = $("#exCat").value; b.expenses.push({id:uid(), date:$("#exDate").value||today(), cat, purpose:p, amount:amt, note:""});
@@ -5093,7 +5132,7 @@ window.addEventListener("unhandledrejection", e => { const m = String(e.reason &
 document.addEventListener("click", e => { const t = e.target.closest("[data-act]"); if(t && !t.disabled){ const f = A[t.dataset.act]; if(f){ e.preventDefault(); try{ const r = f(t, e); if(r && r.catch) r.catch(err => showErr(t.dataset.act, err)); }catch(err){ showErr(t.dataset.act, err); } } }
   if(!e.target.closest("#side") && !e.target.closest(".menu-btn")) $("#side").classList.remove("open"); });
 document.addEventListener("keydown", e => {
-  if(e.key==="Enter" && !e.isComposing){ const t = e.target.closest("[data-enter]"); if(t){ e.preventDefault(); EN[t.dataset.enter](t); return; } }
+  if(e.key==="Enter" && !e.isComposing){ const t = e.target.closest("[data-enter]"); if(t && !(t.tagName === "TEXTAREA" && e.shiftKey)){ e.preventDefault(); EN[t.dataset.enter](t, e); return; } }
   if((e.key==="Enter"||e.key===" ") && e.target.matches(".bud[data-act]")){ e.preventDefault(); A[e.target.dataset.act](e.target); }
   if(e.key==="Escape"){ ui.seatPick = null; document.querySelector(".modal-bg")?.remove(); }
 });
