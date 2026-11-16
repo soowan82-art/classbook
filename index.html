@@ -250,6 +250,7 @@ table.t{width:100%;border-collapse:collapse;font-size:13.5px}
 .evh{font-size:13px;color:var(--muted);font-weight:600;margin:4px 0 2px}.ev-scroll{overflow-y:auto;overscroll-behavior:contain}
 .ev-row{padding:7px 0;border-bottom:1px solid var(--line);gap:8px}.ev-row:last-child{border-bottom:0}
 .evq{margin-top:8px;padding:8px 10px;border:1px solid var(--accent);border-radius:10px;background:var(--accent-soft)}
+.asg-pen{font-size:12px;font-weight:500;vertical-align:middle;margin-left:4px}
 .sub-nm.on{border-color:var(--accent);background:var(--accent);color:var(--on-accent)}
 .sub-nm{border:1px solid var(--miss-line);background:var(--miss-soft);border-radius:999px;padding:1px 8px;font-size:12.5px;cursor:pointer;color:var(--miss);margin:2px 2px 0 0}
 .sub-nm:hover{border-color:var(--accent);background:var(--accent-soft)}.sub-nm.fx{border-color:var(--fix-line);background:var(--fix-soft);color:var(--fix)}
@@ -757,7 +758,7 @@ A.calWReset = () => { LOOK.calw = 0; saveLook(); render(); };
 A.lookAccent = el => { LOOK.accent = el.dataset.v; saveLook(); render(); };
 A.lookTone = el => { LOOK.tone = el.dataset.v; saveLook(); render(); };
 A.lookMode = el => { LOOK.mode = el.dataset.v; saveLook(); render(); };
-const APP_VER = "2026.11.16-20";
+const APP_VER = "2026.11.16-21";
 const LOGO_SVG = `<svg class="brand-logo" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" style="fill:var(--brand,#1F6E8C)"/><g transform="translate(256 258) scale(1.13) translate(-256 -258)"><rect x="140" y="112" width="232" height="292" rx="30" fill="#FFFFFF"/><rect x="140" y="112" width="44" height="292" rx="22" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><rect x="162" y="112" width="22" height="292" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><path d="M318 112 H352 V214 L335 198 L318 214 Z" fill="#F2B84B"/><path d="M212 196 L236 220 L284 168" fill="none" style="stroke:var(--accent-ink,#1F6E8C)" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/><rect x="212" y="262" width="124" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="306" width="96" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="350" width="112" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 26%, #fff)"/></g></svg>`;
 let storageOK = true;
 /* 학급 여러 개: 학급마다 따로 저장한다. 처음 학급(c1)은 예전 저장 위치를 그대로 쓴다 */
@@ -2062,7 +2063,7 @@ VIEWS.submit = () => {
       <button class="btn pri" data-act="addAsg">과제 추가</button>
       <div class="list">${list.map(x=>{ const n = asgDone(x), tot = asgTargets(x).length || 1; return `<div class="li ${x.id===ui.submitSel?"on":""}" data-act="selAsg" data-id="${x.id}" style="flex-direction:column;align-items:stretch;gap:5px"><div class="spread"><span class="t1">${esc(x.title)}</span><span class="small muted num">${n}/${asgTargets(x).length}</span></div><div class="bar ${n===asgTargets(x).length?"ok":""}"><i style="width:${n/tot*100}%"></i></div><span class="small muted">마감 ${md(x.due)}${Object.keys(x.exempt||{}).length?` · 제외 ${sorted().filter(s=>isEx(x,s.id)).length}명`:""}</span></div>`; }).join("") || `<div class="empty">과제를 추가해 보세요</div>`}</div>
     </div>
-    <div class="card">${a ? `<div class="spread"><div><h2>${esc(a.title)}</h2><div class="small muted">마감 ${md(a.due)} · 대상 ${asgTargets(a).length}명 · 제출 ${asgDone(a)}명${asgLate(a).length?`(늦게 ${asgLate(a).length})`:""}${asgFix(a).length?` · 수정 중 ${asgFix(a).length}명`:""} · 미제출 ${miss.length}명${exN?` · 제외 ${exN}명`:""}</div></div>
+    <div class="card">${a ? `<div class="spread"><div>${ui.asgEdit===a.id ? `<div class="row asg-ed" style="gap:6px;margin-bottom:6px;flex-wrap:wrap"><input type="text" id="aeTitle" value="${esc(a.title)}" data-enter="asgEdSave" style="flex:1;min-width:200px;font-size:16px;font-weight:600" aria-label="과제 이름"><input type="date" id="aeDue" value="${a.due}" aria-label="마감일"><button class="btn sm pri" data-act="asgEdSave">저장</button><button class="btn sm ghost" data-act="asgEdCancel">취소</button></div>` : `<h2>${esc(a.title)} <button class="btn sm ghost asg-pen" data-act="asgEdit" title="과제 이름·마감일 고치기" aria-label="과제 이름 고치기">✎ 고치기</button></h2>`}<div class="small muted">마감 ${md(a.due)} · 대상 ${asgTargets(a).length}명 · 제출 ${asgDone(a)}명${asgLate(a).length?`(늦게 ${asgLate(a).length})`:""}${asgFix(a).length?` · 수정 중 ${asgFix(a).length}명`:""} · 미제출 ${miss.length}명${exN?` · 제외 ${exN}명`:""}</div></div>
       <div class="row"><button class="btn sm ${exMode?"pri":""}" data-act="exMode">${exMode?"제외 고르기 끝":"제외할 학생 고르기"}</button>${exMode?"":`<button class="btn sm" data-act="asgAll" data-v="1">모두 제출</button><button class="btn sm" data-act="asgAll" data-v="0">모두 해제</button>`}<button class="btn sm danger" data-act="delAsg">과제 삭제</button></div></div>
       ${exMode ? "" : `<div class="row sub-stamp" style="gap:8px;margin-bottom:10px"><span class="small muted">누르면 표시할 것</span><div class="seg">${Object.entries(SUB_ST).map(([k,l])=>`<button class="${(ui.subStamp||"ok")===k?"on":""} st-${k}" data-act="subStamp" data-v="${k}">${l}</button>`).join("")}</div><span class="small muted">같은 표시를 한 번 더 누르면 미제출로 돌아가요</span></div>`}
       <div class="tiles ${exMode?"ex-mode":""}" style="margin-bottom:14px">${sorted().map(s=>{ const ex = isEx(a,s.id), st = ex ? "" : subSt(a, s.id);
@@ -2075,6 +2076,11 @@ VIEWS.submit = () => {
 function isEx(a, id){ return !!(a.exempt && a.exempt[id]); }
 function asgTargets(a){ return sorted().filter(s=>!isEx(a,s.id)); }
 /* 제출 상태: "" 미제출 · ok 제출 · late 늦게 제출 · fix 제출했지만 수정 중(통과 못함) */
+A.asgEdit = () => { ui.asgEdit = ui.submitSel; render(); setTimeout(()=>{ const el = document.getElementById("aeTitle"); el?.focus(); el?.select(); }, 20); };
+A.asgEdCancel = () => { ui.asgEdit = null; render(); };
+A.asgEdSave = () => { const a = S.assignments.find(x=>x.id===ui.asgEdit); if(!a) return; const t = ($("#aeTitle").value||"").trim(), d = $("#aeDue").value;
+  if(!t){ toast("과제 이름을 적어 주세요"); return $("#aeTitle").focus(); } a.title = t; if(d) a.due = d; ui.asgEdit = null; commit(); toast("과제를 고쳤어요"); };
+EN.asgEdSave = () => A.asgEdSave();
 const SUB_ST = {ok:"제출", late:"늦게 제출", fix:"수정 중"};
 function subSt(a, sid){ const v = a.submitted[sid]; return v === true ? "ok" : (v === "late" || v === "fix") ? v : ""; }
 const subDone = (a, sid) => { const x = subSt(a, sid); return x === "ok" || x === "late"; };
