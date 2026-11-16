@@ -29,7 +29,7 @@
   --warn:#B7700B; --warn-soft:#FBF1E1;
   --bad:#C93C3C; --bad-soft:#FBEAEA;
   --violet:#6D55C7; --violet-soft:#EFEBFA;
-  --fix:#D5736A; --fix-soft:#FDF1EF; --fix-line:#F0BDB6; --miss:#5E7091; --miss-soft:#F0F3F8; --miss-line:#CCD5E3;
+  --fix:#7A68C4; --fix-soft:#F3F0FB; --fix-line:#D2C9EE; --miss:#5E7091; --miss-soft:#F0F3F8; --miss-line:#CCD5E3;
   --shadow:0 1px 2px rgba(16,24,40,.05);
   --font-display:"IBM Plex Sans KR","Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
   --font-body:"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
@@ -40,7 +40,7 @@
     --bg:#11161C; --surface:#182029; --ink:#E7ECF1; --muted:#97A3B2; --line:#28323D;
     --accent:#7FB8C9; --accent-soft:#1C3038; --accent-ink:#A6D3E0; --on-accent:#0F1E24;
     --ok:#4CC08A; --ok-soft:#163327; --warn:#E3A44A; --warn-soft:#3A2C14;
-    --bad:#EE7777; --bad-soft:#3D1E1E; --violet:#A895F0; --violet-soft:#2A2442; --fix:#EFA197; --fix-soft:#38241F; --fix-line:#6A4039; --miss:#A3B4D0; --miss-soft:#1E2532; --miss-line:#3B475B;
+    --bad:#EE7777; --bad-soft:#3D1E1E; --violet:#A895F0; --violet-soft:#2A2442; --fix:#B7A9F0; --fix-soft:#262236; --fix-line:#4A4170; --miss:#A3B4D0; --miss-soft:#1E2532; --miss-line:#3B475B;
     --shadow:none; color-scheme:dark;
   }
 }
@@ -48,7 +48,7 @@
   --bg:#11161C; --surface:#182029; --ink:#E7ECF1; --muted:#97A3B2; --line:#28323D;
   --accent:#7FB8C9; --accent-soft:#1C3038; --accent-ink:#A6D3E0; --on-accent:#0F1E24;
   --ok:#4CC08A; --ok-soft:#163327; --warn:#E3A44A; --warn-soft:#3A2C14;
-  --bad:#EE7777; --bad-soft:#3D1E1E; --violet:#A895F0; --violet-soft:#2A2442; --fix:#EFA197; --fix-soft:#38241F; --fix-line:#6A4039; --miss:#A3B4D0; --miss-soft:#1E2532; --miss-line:#3B475B;
+  --bad:#EE7777; --bad-soft:#3D1E1E; --violet:#A895F0; --violet-soft:#2A2442; --fix:#B7A9F0; --fix-soft:#262236; --fix-line:#4A4170; --miss:#A3B4D0; --miss-soft:#1E2532; --miss-line:#3B475B;
   --shadow:none; color-scheme:dark;
 }
 *{box-sizing:border-box}
@@ -505,7 +505,7 @@ label.f .combo select{flex:1}
 .miss-chips{display:flex;gap:5px;flex-wrap:wrap}
 .mchip{border:1px solid var(--miss-line);background:var(--miss-soft);border-radius:7px;padding:3px 9px;font-size:12.5px;cursor:pointer;color:var(--miss)}
 .mchip:hover{border-color:var(--ok);background:var(--ok-soft);color:var(--ok)}
-.mchip.late{border-color:color-mix(in srgb,var(--bad) 40%,transparent);color:var(--bad);background:var(--bad-soft)}
+.mchip.late{border-color:var(--miss);color:var(--miss);background:var(--miss-soft);font-weight:600}
 @media (max-width:480px){.miss-row{grid-template-columns:1fr}}
 .sub-line{display:flex;gap:6px;align-items:center;margin-bottom:6px}
 .sub-line .sub-row{margin-bottom:0;flex:1}
@@ -757,7 +757,7 @@ A.calWReset = () => { LOOK.calw = 0; saveLook(); render(); };
 A.lookAccent = el => { LOOK.accent = el.dataset.v; saveLook(); render(); };
 A.lookTone = el => { LOOK.tone = el.dataset.v; saveLook(); render(); };
 A.lookMode = el => { LOOK.mode = el.dataset.v; saveLook(); render(); };
-const APP_VER = "2026.11.16-18";
+const APP_VER = "2026.11.16-19";
 const LOGO_SVG = `<svg class="brand-logo" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" style="fill:var(--brand,#1F6E8C)"/><g transform="translate(256 258) scale(1.13) translate(-256 -258)"><rect x="140" y="112" width="232" height="292" rx="30" fill="#FFFFFF"/><rect x="140" y="112" width="44" height="292" rx="22" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><rect x="162" y="112" width="22" height="292" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><path d="M318 112 H352 V214 L335 198 L318 214 Z" fill="#F2B84B"/><path d="M212 196 L236 220 L284 168" fill="none" style="stroke:var(--accent-ink,#1F6E8C)" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/><rect x="212" y="262" width="124" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="306" width="96" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="350" width="112" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 26%, #fff)"/></g></svg>`;
 let storageOK = true;
 /* 학급 여러 개: 학급마다 따로 저장한다. 처음 학급(c1)은 예전 저장 위치를 그대로 쓴다 */
