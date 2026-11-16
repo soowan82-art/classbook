@@ -755,7 +755,7 @@ A.calWReset = () => { LOOK.calw = 0; saveLook(); render(); };
 A.lookAccent = el => { LOOK.accent = el.dataset.v; saveLook(); render(); };
 A.lookTone = el => { LOOK.tone = el.dataset.v; saveLook(); render(); };
 A.lookMode = el => { LOOK.mode = el.dataset.v; saveLook(); render(); };
-const APP_VER = "2026.11.16-16";
+const APP_VER = "2026.11.16-17";
 const LOGO_SVG = `<svg class="brand-logo" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" style="fill:var(--brand,#1F6E8C)"/><g transform="translate(256 258) scale(1.13) translate(-256 -258)"><rect x="140" y="112" width="232" height="292" rx="30" fill="#FFFFFF"/><rect x="140" y="112" width="44" height="292" rx="22" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><rect x="162" y="112" width="22" height="292" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><path d="M318 112 H352 V214 L335 198 L318 214 Z" fill="#F2B84B"/><path d="M212 196 L236 220 L284 168" fill="none" style="stroke:var(--accent-ink,#1F6E8C)" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/><rect x="212" y="262" width="124" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="306" width="96" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="350" width="112" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 26%, #fff)"/></g></svg>`;
 let storageOK = true;
 /* 학급 여러 개: 학급마다 따로 저장한다. 처음 학급(c1)은 예전 저장 위치를 그대로 쓴다 */
@@ -1346,7 +1346,7 @@ A.dashReset = () => { delete LOOK.dash; try{ localStorage.setItem(LOOK_KEY, JSON
   document.addEventListener("dragend", () => { if(!dragK) return; dragK = null; mark(null); document.querySelectorAll(".dw").forEach(w => { w.classList.remove("dragging"); w.draggable = false; }); });
 })();
 /* 오늘 제출 현황에서 이름 누르면 제출 처리(마감 지났으면 '늦게 제출'), 되돌리기 가능 */
-A.todaySub = el => { const a = S.assignments.find(x=>x.id===el.dataset.a), sid = el.dataset.s; if(!a) return; const prev = subSt(a, sid), st = a.due < today() ? "late" : "ok";
+A.todaySub = el => { const a = S.assignments.find(x=>x.id===el.dataset.a), sid = el.dataset.s; if(!a) return; const prev = subSt(a, sid), st = "ok";
   setSub(a, sid, st); ui.lastSub = {aid:a.id, sid, prev}; commit();
   document.querySelectorAll(".toast").forEach(x=>x.remove()); const t = document.createElement("div"); t.className = "toast"; t.innerHTML = `${esc(sname(sid))} · ${esc(a.title)} ${SUB_ST[st]} <button class="toast-undo" data-act="undoSub">되돌리기</button>`; document.body.appendChild(t); setTimeout(()=>t.remove(), 5000); };
 A.undoSub = () => { const u = ui.lastSub; if(!u) return; const a = S.assignments.find(x=>x.id===u.aid); if(a){ if(u.many) u.many.forEach(([sid, pv]) => setSub(a, sid, pv)); else setSub(a, u.sid, u.prev); commit(); } ui.lastSub = null; document.querySelectorAll(".toast").forEach(x=>x.remove()); toast("되돌렸어요"); };
@@ -1360,11 +1360,11 @@ function todaySubmitCard(){
     <div class="sub-scroll lim-scroll" data-n="3">${asg.length ? asg.map(a => { const n = asgDone(a), tot = asgTargets(a).length||1, miss = asgMiss(a), fx = asgFix(a), over = a.due < t;
       return `<div class="sub-item lim-item"><div class="spread"><button class="sub-title" data-act="goSubmit" data-id="${a.id}" title="제출 체크에서 열기">${esc(a.title)}</button><span class="small muted num" style="white-space:nowrap">${n}/${asgTargets(a).length} · <span style="${over&&miss.length?"color:var(--bad)":""}">${md(a.due)}${over&&miss.length?" 지남":""}</span></span></div>
         <div class="bar ${n===tot?"ok":""}" style="margin:6px 0"><i style="width:${n/tot*100}%"></i></div>
-        ${miss.length?`<div class="small muted">미제출 ${miss.length}명 <span style="font-size:11px">(이름을 누르면 ${over?"늦게 제출":"제출"})</span>${miss.length>1?` <button class="sub-all" data-act="todaySubAll" data-a="${a.id}">모두 ${over?"늦게 제출":"제출"}</button>`:""}<div>${miss.map(s=>`<button class="sub-nm" data-act="todaySub" data-a="${a.id}" data-s="${s.id}">${esc(s.name)}</button>`).join("")}</div></div>`:`<div class="small" style="color:var(--ok)">모두 냈어요</div>`}
-        ${fx.length?`<div class="small" style="color:var(--bad);margin-top:4px">수정 중 ${fx.length}명 <span style="font-size:11px">(이름을 누르면 통과 → ${over?"늦게 제출":"제출"})</span>${fx.length>1?` <button class="sub-all" data-act="todaySubAll" data-a="${a.id}" data-k="fix">모두 통과</button>`:""}<div>${fx.map(s=>`<button class="sub-nm fx" data-act="todaySub" data-a="${a.id}" data-s="${s.id}">${esc(s.name)}</button>`).join("")}</div></div>`:""}</div>`; }).join("") : `<div class="empty">덜 낸 과제가 없어요</div>`}</div>${asg.length > 3 ? `<div class="small muted lim-more">↕ 상자 안에서 스크롤하면 ${asg.length - 3}개 더 있어요</div>` : ""}</div>`;
+        ${miss.length?`<div class="small muted">미제출 ${miss.length}명 <span style="font-size:11px">(이름을 누르면 제출)</span>${miss.length>1?` <button class="sub-all" data-act="todaySubAll" data-a="${a.id}">모두 제출</button>`:""}<div>${miss.map(s=>`<button class="sub-nm" data-act="todaySub" data-a="${a.id}" data-s="${s.id}">${esc(s.name)}</button>`).join("")}</div></div>`:`<div class="small" style="color:var(--ok)">모두 냈어요</div>`}
+        ${fx.length?`<div class="small" style="color:var(--bad);margin-top:4px">수정 중 ${fx.length}명 <span style="font-size:11px">(이름을 누르면 통과 → 제출)</span>${fx.length>1?` <button class="sub-all" data-act="todaySubAll" data-a="${a.id}" data-k="fix">모두 통과</button>`:""}<div>${fx.map(s=>`<button class="sub-nm fx" data-act="todaySub" data-a="${a.id}" data-s="${s.id}">${esc(s.name)}</button>`).join("")}</div></div>`:""}</div>`; }).join("") : `<div class="empty">덜 낸 과제가 없어요</div>`}</div>${asg.length > 3 ? `<div class="small muted lim-more">↕ 상자 안에서 스크롤하면 ${asg.length - 3}개 더 있어요</div>` : ""}</div>`;
 }
 CH.subShowDone = el => { ui.subShowDone = el.checked; render(); };
-A.todaySubAll = async el => { const a = S.assignments.find(x=>x.id===el.dataset.a); if(!a) return; const fixK = el.dataset.k === "fix", miss = fixK ? asgFix(a) : asgMiss(a), st = a.due < today() ? "late" : "ok";
+A.todaySubAll = async el => { const a = S.assignments.find(x=>x.id===el.dataset.a); if(!a) return; const fixK = el.dataset.k === "fix", miss = fixK ? asgFix(a) : asgMiss(a), st = "ok";
   if(!await ask(`'${esc(a.title)}' ${fixK?"수정 중":"미제출"} ${miss.length}명을 모두 ${SUB_ST[st]}로 바꿀까요?`, "모두 바꾸기")) return;
   const prev = miss.map(s => [s.id, subSt(a, s.id)]); miss.forEach(s => setSub(a, s.id, st)); ui.lastSub = {aid:a.id, many:prev}; commit();
   document.querySelectorAll(".toast").forEach(x=>x.remove()); const tt = document.createElement("div"); tt.className = "toast"; tt.innerHTML = `${esc(a.title)} ${miss.length}명 ${SUB_ST[st]} <button class="toast-undo" data-act="undoSub">되돌리기</button>`; document.body.appendChild(tt); setTimeout(()=>tt.remove(), 5000); };
@@ -2062,7 +2062,7 @@ VIEWS.submit = () => {
     </div>
     <div class="card">${a ? `<div class="spread"><div><h2>${esc(a.title)}</h2><div class="small muted">마감 ${md(a.due)} · 대상 ${asgTargets(a).length}명 · 제출 ${asgDone(a)}명${asgLate(a).length?`(늦게 ${asgLate(a).length})`:""}${asgFix(a).length?` · 수정 중 ${asgFix(a).length}명`:""} · 미제출 ${miss.length}명${exN?` · 제외 ${exN}명`:""}</div></div>
       <div class="row"><button class="btn sm ${exMode?"pri":""}" data-act="exMode">${exMode?"제외 고르기 끝":"제외할 학생 고르기"}</button>${exMode?"":`<button class="btn sm" data-act="asgAll" data-v="1">모두 제출</button><button class="btn sm" data-act="asgAll" data-v="0">모두 해제</button>`}<button class="btn sm danger" data-act="delAsg">과제 삭제</button></div></div>
-      ${exMode ? "" : `<div class="row sub-stamp" style="gap:8px;margin-bottom:10px"><span class="small muted">누르면 표시할 것</span><div class="seg">${Object.entries(SUB_ST).map(([k,l])=>`<button class="${(ui.subStamp||"ok")===k?"on":""} st-${k}" data-act="subStamp" data-v="${k}">${l}</button>`).join("")}</div><span class="small muted">같은 표시를 한 번 더 누르면 미제출로 돌아가요${a.due < today() ? " · 마감이 지나서 제출은 늦게 제출로 표시돼요" : ""}</span></div>`}
+      ${exMode ? "" : `<div class="row sub-stamp" style="gap:8px;margin-bottom:10px"><span class="small muted">누르면 표시할 것</span><div class="seg">${Object.entries(SUB_ST).map(([k,l])=>`<button class="${(ui.subStamp||"ok")===k?"on":""} st-${k}" data-act="subStamp" data-v="${k}">${l}</button>`).join("")}</div><span class="small muted">같은 표시를 한 번 더 누르면 미제출로 돌아가요</span></div>`}
       <div class="tiles ${exMode?"ex-mode":""}" style="margin-bottom:14px">${sorted().map(s=>{ const ex = isEx(a,s.id), st = ex ? "" : subSt(a, s.id);
         return `<button class="tile ${st==="ok"?"on":""} ${st==="late"?"on sub-late":""} ${st==="fix"?"sub-fix":""} ${ex?"ex":""}" data-act="${exMode?"asgEx":"asgToggle"}" data-s="${s.id}" ${!exMode&&ex?"disabled":""} aria-pressed="${exMode?ex:!!st}"><span class="no num">${s.no}번${ex?" · 제외":st&&st!=="ok"?` · ${SUB_ST[st]}`:""}</span><span>${esc(s.name)}</span></button>`; }).join("")}</div>
       <div class="banner" style="background:var(--bg);border-color:var(--line);flex-direction:column;align-items:stretch;gap:6px"><div class="spread"><div><b style="color:var(--ink)">미제출</b> <span id="missTxt">${miss.length ? miss.map(s=>`${s.no} ${esc(s.name)}`).join(", ") : "없어요"}</span></div>${miss.length||asgFix(a).length?`<button class="btn sm" data-act="copyMiss">명단 복사</button>`:""}</div>
@@ -2087,9 +2087,9 @@ A.selAsg = el => { ui.submitSel = el.dataset.id; ui.exMode = false; render(); };
 A.exMode = () => { ui.exMode = !ui.exMode; render(); };
 function setEx(a, sid, on){ a.exempt ||= {}; if(on){ a.exempt[sid] = true; delete a.submitted[sid]; } else delete a.exempt[sid]; }
 A.asgEx = el => { const a = S.assignments.find(x=>x.id===ui.submitSel); setEx(a, el.dataset.s, !isEx(a, el.dataset.s)); commit(); };
-A.asgToggle = el => { const a = S.assignments.find(x=>x.id===ui.submitSel), sid = el.dataset.s; if(isEx(a, sid)) return; let k = ui.subStamp || "ok"; if(k === "ok" && a.due < today()) k = "late"; const cur = subSt(a, sid); setSub(a, sid, cur === k || (k === "late" && cur === "ok") ? "" : k); commit(); };
+A.asgToggle = el => { const a = S.assignments.find(x=>x.id===ui.submitSel), sid = el.dataset.s; if(isEx(a, sid)) return; const k = ui.subStamp || "ok"; setSub(a, sid, subSt(a, sid) === k ? "" : k); commit(); };
 A.subStamp = el => { ui.subStamp = el.dataset.v; render(); };
-A.asgAll = el => { const a = S.assignments.find(x=>x.id===ui.submitSel); if(el.dataset.v!=="1"){ a.submitted = {}; commit(); return; } const st = a.due < today() ? "late" : "ok"; asgTargets(a).forEach(s => { if(!subDone(a, s.id)) setSub(a, s.id, st); }); commit(); if(st === "late") toast("마감이 지나서 아직 안 낸 학생은 '늦게 제출'로 표시했어요"); };
+A.asgAll = el => { const a = S.assignments.find(x=>x.id===ui.submitSel); if(el.dataset.v!=="1"){ a.submitted = {}; commit(); return; } asgTargets(a).forEach(s => { if(!subDone(a, s.id)) setSub(a, s.id, "ok"); }); commit(); };
 A.delAsg = async () => { if(await ask("이 과제와 제출 기록을 삭제할까요?","삭제",true)){ S.assignments = S.assignments.filter(x=>x.id!==ui.submitSel); ui.submitSel=null; commit(); } };
 function submitByStudent(list, modeSeg){
   const st = sorted();
@@ -2101,7 +2101,7 @@ function submitByStudent(list, modeSeg){
   const done = mineList.length - mine.length;
   const missRows = st.map(x=>({x, m:missOf(x.id)})).filter(r=>r.m.length);
   const overview = `<div class="card"><div class="spread"><h2>미제출·수정 중 한눈에 보기 <span class="small muted">${missRows.length}명</span></h2><div class="row"><span class="small muted">과제 이름을 누르면 바로 제출로 바뀌어요</span>${missRows.length?`<button class="btn sm" data-act="copyMissAll">전체 명단 복사</button>`:""}</div></div>
-    ${list.length ? (missRows.length ? `<div class="miss-all">${missRows.map(({x,m})=>`<div class="miss-row ${x.id===s.id?"on":""}"><button class="miss-nm" data-act="submitStu" data-id="${x.id}"><span class="muted small num">${x.no}</span> ${esc(x.name)} <span class="pill ${m.length>=3?"bad":"warn"} num">${m.length}</span></button><div class="miss-chips">${m.map(a=>{ const fx = subSt(a, x.id)==="fix"; return `<button class="mchip ${a.due<t?"late":""} ${fx?"fix":""}" data-act="quickSubmit" data-a="${a.id}" data-s="${x.id}" title="눌러서 ${a.due<t?"늦게 제출":"제출"}로 바꾸기">${esc(a.title)}${fx?" · 수정 중":a.due<t?" · 마감 지남":""}</button>`; }).join("")}</div></div>`).join("")}</div>` : `<div class="empty">모든 학생이 해당 과제를 다 냈어요</div>`) : `<div class="empty">아직 과제가 없어요</div>`}</div>`;
+    ${list.length ? (missRows.length ? `<div class="miss-all">${missRows.map(({x,m})=>`<div class="miss-row ${x.id===s.id?"on":""}"><button class="miss-nm" data-act="submitStu" data-id="${x.id}"><span class="muted small num">${x.no}</span> ${esc(x.name)} <span class="pill ${m.length>=3?"bad":"warn"} num">${m.length}</span></button><div class="miss-chips">${m.map(a=>{ const fx = subSt(a, x.id)==="fix"; return `<button class="mchip ${a.due<t?"late":""} ${fx?"fix":""}" data-act="quickSubmit" data-a="${a.id}" data-s="${x.id}" title="눌러서 제출로 바꾸기">${esc(a.title)}${fx?" · 수정 중":a.due<t?" · 마감 지남":""}</button>`; }).join("")}</div></div>`).join("")}</div>` : `<div class="empty">모든 학생이 해당 과제를 다 냈어요</div>`) : `<div class="empty">아직 과제가 없어요</div>`}</div>`;
   return header("제출 체크", "위에서 학생별 미제출 과제를 한눈에 보고, 아래에서 한 학생씩 자세히 체크해요. 해당 없는 과제는 '제외'를 누르세요.", modeSeg) + overview + `
   <div class="split">
     <div class="card" style="padding:12px"><div class="list">
@@ -2117,7 +2117,7 @@ function submitByStudent(list, modeSeg){
   </div>`;
 }
 A.submitMode = el => { ui.submitMode = el.dataset.v; ui.exMode = false; render(); };
-A.quickSubmit = el => { const a = S.assignments.find(x=>x.id===el.dataset.a); if(!a || isEx(a, el.dataset.s)) return; const st = a.due < today() ? "late" : "ok"; setSub(a, el.dataset.s, st); commit(); toast(`${sname(el.dataset.s)} · ${a.title} ${SUB_ST[st]}`); };
+A.quickSubmit = el => { const a = S.assignments.find(x=>x.id===el.dataset.a); if(!a || isEx(a, el.dataset.s)) return; const st = "ok"; setSub(a, el.dataset.s, st); commit(); toast(`${sname(el.dataset.s)} · ${a.title} ${SUB_ST[st]}`); };
 A.copyMissAll = async () => { const list = S.assignments.slice().sort((a,b)=>b.due.localeCompare(a.due));
   const txt = sorted().map(x=>{ const m = list.filter(a=>!isEx(a,x.id) && !subDone(a, x.id)); return m.length ? `${x.no} ${x.name}: ${m.map(a=>a.title + (subSt(a,x.id)==="fix" ? "(수정 중)" : "")).join(", ")}` : ""; }).filter(Boolean).join("\n");
   try{ await navigator.clipboard.writeText(txt); toast("미제출 명단을 복사했어요"); }catch(e){ toast("복사가 막혀 있어요"); } };
@@ -2125,7 +2125,7 @@ A.submitStu = el => { ui.submitStu = el.dataset.id; render(); };
 A.stuToggle = el => { const a = S.assignments.find(x=>x.id===el.dataset.a), sid = ui.submitStu; if(isEx(a, sid)) return; setSub(a, sid, subDone(a, sid) ? "" : (a.due < today() ? "late" : "ok")); commit(); };
 CH.stuSt = el => { const a = S.assignments.find(x=>x.id===el.dataset.a); if(isEx(a, ui.submitStu)) return; setSub(a, ui.submitStu, el.value); commit(); };
 A.stuEx = el => { const a = S.assignments.find(x=>x.id===el.dataset.a); setEx(a, ui.submitStu, !isEx(a, ui.submitStu)); commit(); };
-A.stuAll = el => { S.assignments.forEach(a=>{ if(isEx(a, ui.submitStu)) return; if(el.dataset.v==="1"){ if(!subDone(a, ui.submitStu)) setSub(a, ui.submitStu, a.due < today() ? "late" : "ok"); } else delete a.submitted[ui.submitStu]; }); commit(); };
+A.stuAll = el => { S.assignments.forEach(a=>{ if(isEx(a, ui.submitStu)) return; if(el.dataset.v==="1"){ if(!subDone(a, ui.submitStu)) setSub(a, ui.submitStu, "ok"); } else delete a.submitted[ui.submitStu]; }); commit(); };
 A.stuNext = () => { const st = sorted(), i = st.findIndex(x=>x.id===ui.submitStu); ui.submitStu = st[(i+1)%st.length].id; render(); };
 A.copyMiss = async () => { const a = S.assignments.find(x=>x.id===ui.submitSel), f = asgFix(a), m = asgMiss(a);
   const txt = [m.length ? `미제출: ${m.map(s=>`${s.no} ${s.name}`).join(", ")}` : "", f.length ? `수정 중: ${f.map(s=>`${s.no} ${s.name}`).join(", ")}` : ""].filter(Boolean).join("\n");
