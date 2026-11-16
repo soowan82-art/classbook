@@ -200,6 +200,15 @@ table.t{width:100%;border-collapse:collapse;font-size:13.5px}
 .mchip.fix{border-color:var(--bad);border-style:dashed;color:var(--bad)}.sub-sel{width:auto;padding:4px 6px;font-size:12.5px}
 .lv-rt button{font-size:12px;padding:4px 7px}.g-rt-c{white-space:nowrap}.g-rt-info{background:var(--accent-soft);border-color:var(--accent)}
 .up-card{margin-top:16px}.up-g{padding:6px 0;border-top:1px solid var(--line)}.up-g:first-of-type{border-top:0}.up-h{font-size:13px;margin:2px 0 4px;color:var(--muted)}.up-h b{color:var(--ink)}
+.dash{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));column-gap:16px;row-gap:0;grid-auto-rows:4px;grid-auto-flow:row dense;align-items:start}
+.dw{grid-column:span var(--dw,1);position:relative;min-width:0;margin-bottom:16px}.dw > .card{margin:0}
+.dw-bar{position:absolute;top:-11px;left:50%;transform:translateX(-50%);display:flex;gap:4px;opacity:0;transition:opacity .15s;z-index:3}
+.dw:hover .dw-bar,.dw.dragging .dw-bar{opacity:1}
+.dw-grip,.dw-size{font-size:11.5px;padding:2px 9px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--muted);cursor:grab;box-shadow:var(--shadow);font:inherit;font-size:11.5px}
+.dw-size{cursor:pointer}.dw.dragging{opacity:.45}.dw.drop-b > .card{box-shadow:-4px 0 0 0 var(--accent)}.dw.drop-a > .card{box-shadow:4px 0 0 0 var(--accent)}
+.dash .stat{height:100%}.dash .tt-day textarea.tt-memo-in{min-height:30px}
+@media (max-width:1200px){.dash{grid-template-columns:repeat(2,minmax(0,1fr))}.dw[style*="--dw:3"]{grid-column:span 2}}
+@media (max-width:860px){.dash{grid-template-columns:1fr}.dw{grid-column:auto!important}.dw-bar{display:none}}
 .g-grp{font-size:12px;font-weight:700;color:var(--muted);padding:10px 4px 2px;display:flex;gap:6px;align-items:center}.g-grp .num{font-weight:500}
 .g-bulk{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;margin:12px 0 8px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--bg-soft,#f7f7f5)}
 .g-bulk.on{justify-content:space-between;border-color:var(--accent);background:var(--accent-soft);position:sticky;top:0;z-index:2}
@@ -699,7 +708,7 @@ A.calWReset = () => { LOOK.calw = 0; saveLook(); render(); };
 A.lookAccent = el => { LOOK.accent = el.dataset.v; saveLook(); render(); };
 A.lookTone = el => { LOOK.tone = el.dataset.v; saveLook(); render(); };
 A.lookMode = el => { LOOK.mode = el.dataset.v; saveLook(); render(); };
-const APP_VER = "2026.11.16-1";
+const APP_VER = "2026.11.16-3";
 const LOGO_SVG = `<svg class="brand-logo" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" style="fill:var(--brand,#1F6E8C)"/><g transform="translate(256 258) scale(1.13) translate(-256 -258)"><rect x="140" y="112" width="232" height="292" rx="30" fill="#FFFFFF"/><rect x="140" y="112" width="44" height="292" rx="22" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><rect x="162" y="112" width="22" height="292" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><path d="M318 112 H352 V214 L335 198 L318 214 Z" fill="#F2B84B"/><path d="M212 196 L236 220 L284 168" fill="none" style="stroke:var(--accent-ink,#1F6E8C)" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/><rect x="212" y="262" width="124" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="306" width="96" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="350" width="112" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 26%, #fff)"/></g></svg>`;
 let storageOK = true;
 /* 학급 여러 개: 학급마다 따로 저장한다. 처음 학급(c1)은 예전 저장 위치를 그대로 쓴다 */
@@ -1075,7 +1084,7 @@ function render(){
   let v; try{ v = VIEWS[r](); }catch(err){ console.error(err); v = `<div class="card"><h2>이 화면을 그리지 못했어요</h2><p class="small">${esc(err && err.message || String(err))}</p><p class="small muted">기록은 그대로 저장돼 있어요. 이 문구를 알려 주시면 고칠게요. 다른 메뉴는 그대로 쓸 수 있어요.</p></div>`; }
   $("#main").innerHTML = `<div class="wrap">${archiveBanner()}${syncBanner()}${liveS?"":sampleBanner()}${v}</div>`;
   AFTER[r] && AFTER[r]();
-  requestAnimationFrame(() => document.querySelectorAll("textarea.tt-memo-in").forEach(growTa));
+  requestAnimationFrame(() => { document.querySelectorAll("textarea.tt-memo-in").forEach(growTa); if(document.querySelector(".dash")) dashWatch(); });
   document.title = `${TITLE[r]} · ${clsName()} 학급일지`;
 }
 
@@ -1129,38 +1138,64 @@ A.qkSave = () => {
   setTimeout(() => ($("#qkTitle") || $("#qkBody"))?.focus(), 0);
 };
 EN.qkSave = () => A.qkSave();
+/* 오늘: 카드 판(대시보드). 카드는 끌어서 옮기고, 넓이(1~3칸)를 바꿀 수 있어요. 배치는 이 기기에 저장 */
+const DASH_DEF = [["tt",1],["quick",2],["sched",1],["todo",1],["memo",1],["submit",1],["tasks",1],["eval",2],["event",1],["counsel",1],["jobs",1],["roll",1],["attn",1],["budget",1]];
+function dashLayout(){ const L = LOOK.dash || {}, keys = DASH_DEF.map(x=>x[0]);
+  const order = (L.order||[]).filter(k=>keys.includes(k)); keys.forEach(k=>{ if(!order.includes(k)) order.push(k); });
+  return {order, w: k => (L.w && L.w[k]) || DASH_DEF.find(x=>x[0]===k)[1]}; }
+function saveDash(order, w){ LOOK.dash = {order, w: w || (LOOK.dash||{}).w || {}}; try{ localStorage.setItem(LOOK_KEY, JSON.stringify(LOOK)); }catch(e){} }
 VIEWS.today = () => {
   const t = today(), d = new Date();
   const todos = dayTodos(t, true);
   const att = Object.entries(S.attendance[t] || {});
   const ev = S.events.filter(e => e.date >= t).sort((a,b)=>a.date.localeCompare(b.date)).slice(0,3);
-  const asg = S.assignments.filter(a => a.due >= ymd(addDays(d,-7))).sort((a,b)=>a.due.localeCompare(b.due));
   const b = S.budgets[0];
   const spent = b ? b.expenses.reduce((s,e)=>s+Number(e.amount||0),0) : 0;
   const on = x => shown("today", x);
-  return header(`${d.getMonth()+1}월 ${d.getDate()}일 ${WD[d.getDay()]}요일`, (HOLI[t] ? `<span class="holi">${HOLI[t]}</span>` : `${esc(clsName())} 오늘의 학급`) + schoolEvents(t).map(x=>` <span class="pill acc">${esc(x.name)}</span>`).join(""), showBtn("today")) + showCfgCard("today") + (on("tt") ? ttDayCard(t, true) : "") + `
-  ${on("quick") ? todayQuickCard() : ""}
-  ${["roll","attn","budget"].some(on) ? `<div class="grid3">
-    ${on("roll") ? `<div class="card stat"><span class="l">재적</span><span class="v num">${S.students.length}명</span><span class="small muted">남 ${S.students.filter(s=>s.gender==="남").length} · 여 ${S.students.filter(s=>s.gender==="여").length}</span></div>` : ""}
-    ${on("attn") ? `<div class="card stat"><span class="l">오늘 출결 특이사항</span><span class="v num">${att.length}건</span><span class="small muted">${att.length ? att.map(([sid,r])=>`${esc(sname(sid))} ${attLabel(r)}`).join(", ") : "모두 출석"}</span></div>` : ""}
-    ${on("budget") ? `<div class="card stat"><span class="l">${b ? esc(b.name)+" 잔액" : "예산"}</span><span class="v num">${b ? won(b.total - spent) : "-"}</span><span class="small muted">${b ? `총 ${won(b.total)} 중 ${Math.round(spent/b.total*100)}% 사용` : "예산 관리에서 만들 수 있어요"}</span></div>` : ""}
-  </div>` : ""}
-  ${on("eval") ? evalTodayCard() : ""}
-  <div class="grid2">
-    ${on("todo") ? `<div class="card"><div class="spread"><h2>오늘 할 일</h2><a class="btn sm" href="#diary">다이어리</a></div>
+  const tg = diaryTags(t, true), memos = (S.memos||[]).filter(m=>m.date===t);
+  const W = {
+    tt: () => ttDayCard(t, true) || `<div class="card"><h2>오늘 시간표</h2><div class="empty">${esc(HOLI[t] || "오늘은 수업이 없어요")}</div></div>`,
+    quick: () => todayQuickCard(),
+    sched: () => `<div class="card"><div class="spread"><h2>오늘 일정</h2><a class="btn sm" href="#diary" data-act="diaryOpenDay" data-d="${t}">다이어리</a></div><div class="tags" style="padding:0">${tg || `<div class="empty">오늘 일정과 기록이 없어요</div>`}</div></div>`,
+    todo: () => `<div class="card"><div class="spread"><h2>오늘 할 일</h2><a class="btn sm" href="#tasks">업무 관리</a></div>
       <ul class="todos" style="padding:0">${todos.map(x=>todoLi(t,x)).join("") || `<li class="empty">오늘 마감인 할 일이 없어요</li>`}</ul>
-      <input type="text" class="add" style="border:1px solid var(--line);border-radius:8px;margin-top:8px" placeholder="할 일 추가 후 Enter · 업무 관리에도 들어가요" data-enter="addTodo" data-date="${t}" id="todayAdd">
-    </div>` : ""}
-    ${on("event") ? `<div class="card"><div class="spread"><h2>다가오는 행사</h2><a class="btn sm" href="#events">전체 보기</a></div>
-      ${ev.length ? ev.map(e => `<div class="spread" style="padding:8px 0;border-bottom:1px solid var(--line)"><div><div style="font-weight:600">${esc(e.title)}</div><div class="small muted">${md(e.date)}${e.time?" "+esc(e.time):""} · ${esc(e.type)}${e.host?" · "+esc(e.host):""}</div></div><div class="row"><span class="pill ${e.date===t?"bad":"acc"}">${dday(e.date)}</span>${e.checklist.length?`<span class="pill">준비 ${e.checklist.filter(c=>c.done).length}/${e.checklist.length}</span>`:""}</div></div>`).join("") : `<div class="empty">예정된 행사가 없어요</div>`}
-    </div>` : ""}
-  </div>
-  <div class="grid2">${on("tasks") ? tasksTodayCard() : ""}${on("counsel") ? counselTodayCard() : ""}</div>
-  <div class="grid2">
-    ${on("submit") ? todaySubmitCard() : ""}
-    ${on("jobs") ? todayJobsCard() : ""}
-    </div>`;
+      <input type="text" class="add" style="border:1px solid var(--line);border-radius:8px;margin-top:8px" placeholder="할 일 추가 후 Enter" data-enter="addTodo" data-date="${t}" id="todayAdd"></div>`,
+    memo: () => `<div class="card"><div class="spread"><h2>오늘 메모</h2><span class="small muted" id="dmSaved"></span></div><textarea rows="5" data-in="dayMemo" data-date="${t}" placeholder="수업 메모, 전달 사항 등">${esc((S.dayMemo||{})[t]||"")}</textarea>
+      ${memos.length ? `<div style="margin-top:8px">${memos.map(m=>`<button class="dtag memo-tag" data-act="goMemo" data-id="${m.id}"><span class="dtag-k">메모</span><span class="dtag-b"><b>${esc(m.title||"제목 없음")}</b></span></button>`).join("")}</div>` : ""}</div>`,
+    submit: () => todaySubmitCard(),
+    tasks: () => tasksTodayCard(),
+    eval: () => evalTodayCard(),
+    event: () => `<div class="card"><div class="spread"><h2>다가오는 행사</h2><a class="btn sm" href="#events">전체 보기</a></div>
+      ${ev.length ? ev.map(e => `<div class="spread" style="padding:8px 0;border-bottom:1px solid var(--line)"><div><div style="font-weight:600">${esc(e.title)}</div><div class="small muted">${md(e.date)}${e.time?" "+esc(e.time):""} · ${esc(e.type)}</div></div></div>`).join("") : `<div class="empty">예정된 행사가 없어요</div>`}</div>`,
+    counsel: () => counselTodayCard(),
+    jobs: () => todayJobsCard(),
+    roll: () => `<div class="card stat"><span class="l">재적</span><span class="v num">${S.students.length}명</span><span class="small muted">남 ${S.students.filter(s=>s.gender==="남").length} · 여 ${S.students.filter(s=>s.gender==="여").length}</span></div>`,
+    attn: () => `<div class="card stat"><span class="l">오늘 출결 특이사항</span><span class="v num">${att.length}건</span><span class="small muted">${att.length ? att.map(([sid,r])=>`${esc(sname(sid))} ${attLabel(r)}`).join(", ") : "모두 출석"}</span></div>`,
+    budget: () => `<div class="card stat"><span class="l">${b ? esc(b.name)+" 잔액" : "예산"}</span><span class="v num">${b ? won(b.total - spent) : "-"}</span><span class="small muted">${b ? `총 ${won(b.total)} 중 ${Math.round(spent/b.total*100)}% 사용` : "예산 관리에서 만들 수 있어요"}</span></div>`
+  };
+  const L = dashLayout();
+  const cards = L.order.filter(on).map(k => { let h = ""; try{ h = W[k](); }catch(e){ console.error(k, e); } if(!h) return ""; const w = L.w(k);
+    return `<div class="dw dw-${k}" data-k="${k}" style="--dw:${w}"><div class="dw-bar"><span class="dw-grip" data-grip title="끌어서 옮기기">⠿ 옮기기</span><button class="dw-size" data-act="dwSize" data-k="${k}" title="넓이 바꾸기">↔ ${w}칸</button></div>${h}</div>`; }).join("");
+  return header(`${d.getMonth()+1}월 ${d.getDate()}일 ${WD[d.getDay()]}요일`, (HOLI[t] ? `<span class="holi">${HOLI[t]}</span>` : `${esc(clsName())} 오늘의 학급`) + schoolEvents(t).map(x=>` <span class="pill acc">${esc(x.name)}</span>`).join(""), showBtn("today")) + showCfgCard("today") + `<div class="dash">${cards}</div>`;
 };
+/* 카드 높이만큼만 줄을 차지하게(빈틈 없이 쌓기) */
+function dashFit(){ document.querySelectorAll(".dash > .dw").forEach(w => { const c = w.querySelector(":scope > .card"); if(!c) return; const h = c.getBoundingClientRect().height; w.style.gridRowEnd = `span ${Math.max(1, Math.ceil((h + 16) / 4))}`; }); }
+const dashRO = window.ResizeObserver ? new ResizeObserver(() => dashFit()) : null;
+function dashWatch(){ dashFit(); if(dashRO){ dashRO.disconnect(); document.querySelectorAll(".dash > .dw > .card").forEach(c => dashRO.observe(c)); } }
+A.dwSize = el => { const L = dashLayout(), k = el.dataset.k, w = {...((LOOK.dash||{}).w||{})}; w[k] = L.w(k) % 3 + 1; saveDash(L.order, w); render(); };
+A.dashReset = () => { delete LOOK.dash; try{ localStorage.setItem(LOOK_KEY, JSON.stringify(LOOK)); }catch(e){} render(); toast("처음 배치로 돌렸어요"); };
+/* 끌어서 옮기기: 카드 위 '⠿ 옮기기'를 잡고 다른 카드 위에 놓으면 그 앞(왼쪽 절반)이나 뒤(오른쪽 절반)로 */
+(() => { let dragK = null;
+  document.addEventListener("mousedown", e => { const g = e.target.closest && e.target.closest("[data-grip]"); if(g){ const w = g.closest(".dw"); if(w) w.draggable = true; } });
+  document.addEventListener("mouseup", () => document.querySelectorAll(".dw[draggable=true]").forEach(w => { if(!dragK) w.draggable = false; }));
+  document.addEventListener("dragstart", e => { const w = e.target.closest && e.target.closest(".dw"); if(!w || !w.draggable) return; dragK = w.dataset.k; w.classList.add("dragging"); try{ e.dataTransfer.setData("text/plain", dragK); e.dataTransfer.effectAllowed = "move"; }catch(_){} });
+  const mark = (w, after) => { document.querySelectorAll(".dw.drop-b,.dw.drop-a").forEach(x => x.classList.remove("drop-b","drop-a")); if(w) w.classList.add(after ? "drop-a" : "drop-b"); };
+  document.addEventListener("dragover", e => { if(!dragK) return; const w = e.target.closest && e.target.closest(".dw"); if(!w || w.dataset.k === dragK){ mark(null); return; } e.preventDefault(); const r = w.getBoundingClientRect(); mark(w, e.clientX > r.left + r.width/2); });
+  document.addEventListener("drop", e => { if(!dragK) return; const w = e.target.closest && e.target.closest(".dw"); e.preventDefault();
+    if(w && w.dataset.k !== dragK){ const r = w.getBoundingClientRect(), after = e.clientX > r.left + r.width/2, L = dashLayout(), o = L.order.filter(k => k !== dragK); let i = o.indexOf(w.dataset.k); if(after) i++; o.splice(i, 0, dragK); saveDash(o); }
+    dragK = null; mark(null); render(); });
+  document.addEventListener("dragend", () => { if(!dragK) return; dragK = null; mark(null); document.querySelectorAll(".dw").forEach(w => { w.classList.remove("dragging"); w.draggable = false; }); });
+})();
 function todaySubmitCard(){
   const d = new Date();
   const asg = S.assignments.filter(a => a.due >= ymd(addDays(d,-7))).sort((a,b)=>a.due.localeCompare(b.due));
@@ -1184,14 +1219,14 @@ function todayJobsCard(){
 /* 다이어리·오늘에 보일 것 고르기 (학급마다 저장) */
 const SHOW_OPTS = {
   diary: [["quick","빠른 입력"],["upcoming","다가오는 업무"],["tt","시간표"],["todo","할 일"],["sub","제출"],["sch","학교 일정"],["event","학급 행사"],["meet","회의"],["counsel","상담"],["memo","메모"],["eval","평가"],["asg","과제 마감"],["att","출결"],["rec","학생 기록"],["exp","지출"]],
-  today: [["tt","오늘 시간표"],["quick","빠른 입력"],["roll","재적"],["attn","오늘 출결"],["budget","예산"],["eval","평가 확인"],["todo","오늘 할 일"],["event","다가오는 행사"],["tasks","업무"],["counsel","상담"],["submit","제출 체크"],["jobs","일인일역"]]
+  today: [["tt","오늘 시간표"],["quick","빠른 입력"],["sched","오늘 일정"],["todo","오늘 할 일"],["memo","오늘 메모"],["submit","제출 현황"],["tasks","회의·다가오는 업무"],["eval","평가 확인"],["event","다가오는 행사"],["counsel","상담"],["jobs","일인일역"],["roll","재적"],["attn","오늘 출결"],["budget","예산"]]
 };
 const shown = (area, k) => { const a = S.show && S.show[area]; if(!a) return true; if(a[k] === false) return false; return !(a.stats === false && ["roll","attn","budget"].includes(k)); };
 function showCfgCard(area){
   if(ui.showCfg !== area) return "";
   return `<div class="card show-cfg"><div class="spread"><h2>${area==="diary"?"다이어리":"오늘"}에 보일 것</h2><div class="row"><button class="btn sm ghost" data-act="showAll" data-a="${area}">모두 보이기</button><button class="btn sm" data-act="showCfg" data-a="${area}">닫기</button></div></div>
     <div class="row" style="gap:6px;margin-top:8px">${SHOW_OPTS[area].map(([k,l])=>`<label class="show-chip ${shown(area,k)?"on":""}"><input type="checkbox" ${shown(area,k)?"checked":""} data-ch="showSet" data-a="${area}" data-k="${k}">${l}</label>`).join("")}</div>
-    <div class="small muted" style="margin-top:8px">끈 것은 화면에서만 숨겨요. 기록은 지워지지 않아요.</div></div>`;
+    <div class="small muted" style="margin-top:8px">끈 것은 화면에서만 숨겨요. 기록은 지워지지 않아요.${area==="today" ? ` 카드 위 <b>⠿ 옮기기</b>를 잡아 끌면 자리를, <b>↔</b>를 누르면 넓이를 바꿔요. <button class="btn sm ghost" data-act="dashReset">처음 배치로</button>` : ""}</div></div>`;
 }
 const showBtn = area => `<button class="btn ${ui.showCfg===area?"pri":""}" data-act="showCfg" data-a="${area}" title="보일 것 고르기">⚙ 보기</button>`;
 A.showCfg = el => { ui.showCfg = ui.showCfg === el.dataset.a ? null : el.dataset.a; render(); };
