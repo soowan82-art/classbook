@@ -663,6 +663,11 @@ label.f .combo select{flex:1}
 .menu-btn{display:none}
 .app.no-side{grid-template-columns:1fr}
 .app.no-side .side{display:none}
+.side-close{display:block;width:calc(100% - 20px);margin:10px 10px 0;border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:6px 10px;font:inherit;font-size:12.5px;color:var(--muted);cursor:pointer;text-align:left}.side-close:hover{color:var(--accent-ink);border-color:var(--accent)}
+.side-close .sc-m{display:none}
+.app.side-hidden{grid-template-columns:1fr}.app.side-hidden .wrap{padding-top:54px}.app.side-hidden .side{display:none}.app.side-hidden .menu-btn{display:inline-flex;position:fixed;top:10px;left:10px;z-index:35;padding:7px 12px;background:var(--surface);box-shadow:0 2px 10px rgba(0,0,0,.15);border-radius:999px}
+.col-rs{position:absolute;top:0;right:-4px;bottom:0;width:9px;cursor:col-resize;z-index:3;touch-action:none}.col-rs::after{content:"";position:absolute;top:25%;bottom:25%;left:4px;width:1px;background:var(--line)}.col-rs:hover::after,body.col-dragging .col-rs::after{background:var(--accent);width:2px;top:0;bottom:0}
+body.col-dragging{cursor:col-resize;user-select:none}.t th.col-set{white-space:normal}
 .setup{min-height:100%;display:flex;align-items:center;justify-content:center;padding:24px 16px}
 .setup-card{max-width:440px;width:100%;display:flex;flex-direction:column;gap:14px;padding:28px}
 .hidden{display:none!important}
@@ -675,6 +680,8 @@ label.f .combo select{flex:1}
   .app{grid-template-columns:1fr}
   .side{position:fixed;inset:0 auto 0 0;width:250px;z-index:40;transform:translateX(-100%);transition:transform .2s}
   .side.open{transform:none;box-shadow:0 0 40px rgba(0,0,0,.25)}
+  .side-close .sc-m{display:inline}.side-close .sc-d{display:none}
+  .app.side-hidden .side{display:flex}
   .menu-btn{display:inline-flex}
   .wrap{padding:18px 16px 50px}
   .split,.grid2,.grid3{grid-template-columns:1fr}
@@ -793,7 +800,7 @@ A.calWReset = () => { LOOK.calw = 0; saveLook(); render(); };
 A.lookAccent = el => { LOOK.accent = el.dataset.v; saveLook(); render(); };
 A.lookTone = el => { LOOK.tone = el.dataset.v; saveLook(); render(); };
 A.lookMode = el => { LOOK.mode = el.dataset.v; saveLook(); render(); };
-const APP_VER = "2026.11.17-13";
+const APP_VER = "2026.11.17-14";
 const LOGO_SVG = `<svg class="brand-logo" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" style="fill:var(--brand,#1F6E8C)"/><g transform="translate(256 258) scale(1.13) translate(-256 -258)"><rect x="140" y="112" width="232" height="292" rx="30" fill="#FFFFFF"/><rect x="140" y="112" width="44" height="292" rx="22" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><rect x="162" y="112" width="22" height="292" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><path d="M318 112 H352 V214 L335 198 L318 214 Z" fill="#F2B84B"/><path d="M212 196 L236 220 L284 168" fill="none" style="stroke:var(--accent-ink,#1F6E8C)" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/><rect x="212" y="262" width="124" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="306" width="96" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="350" width="112" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 26%, #fff)"/></g></svg>`;
 let storageOK = true;
 /* 학급 여러 개: 학급마다 따로 저장한다. 처음 학급(c1)은 예전 저장 위치를 그대로 쓴다 */
@@ -1108,7 +1115,9 @@ function renderSide(cur){
   const days = S.lastBackup ? Math.floor((Date.now() - S.lastBackup)/86400000) : null;
   const bcol = days === null ? "var(--warn)" : days > 7 ? "var(--warn)" : "var(--ok)";
   const btxt = days === null ? "아직 백업 안 함" : days === 0 ? "오늘 백업함" : `${days}일 전 백업`;
+  document.querySelector(".app").classList.toggle("side-hidden", !!LOOK.sideHide);
   $("#side").innerHTML = `
+    <button class="side-close" data-act="closeSide" title="메뉴 닫기" aria-label="메뉴 닫기"><span class="sc-m">✕ 메뉴 닫기</span><span class="sc-d">« 메뉴 접기</span></button>
     <button class="brand brand-btn" data-act="classMenu" title="학급 바꾸기·추가"><div class="cls">${LOGO_SVG}${esc(clsName())} <span class="brand-caret">▾</span></div><div class="sub">${[S.cls.year, S.cls.grade].filter(Boolean).map(esc).join(" · ")} · ${S.students.length}명${REG.list.length>1?` · 학급 ${REG.list.length}개`:""}</div></button>
     <nav class="nav" aria-label="메뉴">
       ${MENUS.map(g => {
@@ -1180,7 +1189,7 @@ function render(){
   if(r !== "today"){ try{ layoutize(r); }catch(err){ console.error("layout", err); } }
   AFTER[r] && AFTER[r]();
   try{ limFit(); }catch(e){}
-  koInputs(document);
+  koInputs(document); try{ colInit(); }catch(e){}
   try{ if(document.querySelector("#main .dash")) dashFit(); }catch(e){}
   const keepPos = () => { $("#main").scrollTop = mainTop; if(Math.abs(window.scrollY - winY) > 1) window.scrollTo(0, winY); };
   if(prevR === r){ keepPos(); if(focId){ const f = document.getElementById(focId); if(f && document.activeElement !== f && !f.disabled){ try{ f.focus({preventScroll:true}); if(focSel && f.setSelectionRange) f.setSelectionRange(focSel[0], focSel[1]); }catch(e){} } } }
@@ -5059,7 +5068,25 @@ $("#fileRestore").addEventListener("change", async e => { const f = e.target.fil
 A.clearSample = async () => { if(await ask("예시 학생과 기록을 모두 지우고 빈 학급으로 시작할까요?","예시 지우기",true)){ const keep = {cls:S.cls, menus:S.menus, jobsList:S.jobs.list, roleList:rolesOf().list, jobMode:S.jobMode}; S = blank(); S.cls = keep.cls; S.menus = keep.menus; S.jobs.list = keep.jobsList; S.roles.list = keep.roleList; S.jobMode = keep.jobMode; S.jobs.list.forEach(j=>j.id=j.id); location.hash = "students"; commit(); toast("직업·역할 목록만 남겨 두었어요. 학생을 등록해 주세요"); } };
 A.loadSample = async () => { if(await ask("지금 데이터를 예시 데이터로 바꿀까요? 지금 데이터는 사라져요. 먼저 백업해 두세요.","바꾸기",true)){ const c = S.cls; S = sampleData(); S.cls = c; commit(); } };
 A.resetAll = async () => { if(await ask("모든 학생과 기록을 지울까요? 되돌릴 수 없어요.","모두 지우기",true)){ const c = S.cls; S = blank(); S.cls = c; commit(); } };
-A.openSide = () => $("#side").classList.add("open");
+A.openSide = () => { if(innerWidth > 860 && LOOK.sideHide){ LOOK.sideHide = false; laySave(); render(); return; } $("#side").classList.add("open"); };
+A.closeSide = () => { if(innerWidth > 860){ LOOK.sideHide = true; laySave(); render(); toast("메뉴를 접었어요. 왼쪽 위 ☰ 메뉴로 다시 열어요"); } else $("#side").classList.remove("open"); };
+
+/* ── 표 열 너비: 제목 칸 오른쪽 끝을 끌어서 조절, 두 번 누르면 원래대로. 화면·표마다 이 기기에 저장 ── */
+function colKey(t, ti){ const c = t.tHead.rows[0].cells; return `${route()}|${ti}|${c.length}|${[...c].map(x=>x.textContent.trim().slice(0,6)).join("/")}`; }
+function colSet(th, w){ if(w){ th.style.width = th.style.minWidth = th.style.maxWidth = w + "px"; th.classList.add("col-set"); } else { th.style.width = th.style.minWidth = th.style.maxWidth = ""; th.classList.remove("col-set"); } }
+function colInit(){ document.querySelectorAll("#main table.t").forEach((t, ti) => { if(!t.tHead || !t.tHead.rows[0]) return; const key = colKey(t, ti), W = (LOOK.colw || {})[key] || {};
+  [...t.tHead.rows[0].cells].forEach((th, ci) => { if(W[ci]) colSet(th, W[ci]); if(th.querySelector(":scope > .col-rs") || th.colSpan > 1) return;
+    if(getComputedStyle(th).position === "static") th.style.position = "relative";
+    const h = document.createElement("span"); h.className = "col-rs"; h.title = "끌어서 열 너비 조절 · 두 번 누르면 원래대로"; h.dataset.key = key; h.dataset.ci = ci; th.appendChild(h); }); }); }
+(() => { let D = null; const zf = () => (document.documentElement.classList.contains("zoomed") ? (LOOK.zoom || 1) : 1);
+  document.addEventListener("pointerdown", e => { const h = e.target.closest && e.target.closest(".col-rs"); if(!h) return; e.preventDefault(); e.stopPropagation(); const th = h.parentElement;
+    D = {h, th, x: e.clientX, w: th.offsetWidth}; try{ h.setPointerCapture(e.pointerId); }catch(er){} document.body.classList.add("col-dragging"); }, true);
+  document.addEventListener("pointermove", e => { if(!D) return; colSet(D.th, Math.max(36, Math.round(D.w + (e.clientX - D.x) / zf()))); });
+  const end = () => { if(!D) return; const {h, th} = D; D = null; document.body.classList.remove("col-dragging");
+    LOOK.colw ||= {}; const m = (LOOK.colw[h.dataset.key] ||= {}); m[h.dataset.ci] = th.offsetWidth; laySave(); try{ dashFit(); }catch(e){} };
+  document.addEventListener("pointerup", end); document.addEventListener("pointercancel", end);
+  document.addEventListener("dblclick", e => { const h = e.target.closest && e.target.closest(".col-rs"); if(!h) return; const m = (LOOK.colw||{})[h.dataset.key]; if(m){ delete m[h.dataset.ci]; laySave(); } colSet(h.parentElement, 0); toast("열 너비를 원래대로 돌렸어요"); });
+})();
 
 /* ───────── 구글 드라이브 자동 백업·동기화 ─────────
    저장할 때마다 '학급일지 자동백업' 폴더에 학급일지_<저장시각>.json 을 새로 만들고 최근 10개만 남긴다.
