@@ -801,7 +801,7 @@ A.calWReset = () => { LOOK.calw = 0; saveLook(); render(); };
 A.lookAccent = el => { LOOK.accent = el.dataset.v; saveLook(); render(); };
 A.lookTone = el => { LOOK.tone = el.dataset.v; saveLook(); render(); };
 A.lookMode = el => { LOOK.mode = el.dataset.v; saveLook(); render(); };
-const APP_VER = "2026.11.17-16";
+const APP_VER = "2026.11.17-17";
 const LOGO_SVG = `<svg class="brand-logo" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" style="fill:var(--brand,#1F6E8C)"/><g transform="translate(256 258) scale(1.13) translate(-256 -258)"><rect x="140" y="112" width="232" height="292" rx="30" fill="#FFFFFF"/><rect x="140" y="112" width="44" height="292" rx="22" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><rect x="162" y="112" width="22" height="292" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><path d="M318 112 H352 V214 L335 198 L318 214 Z" fill="#F2B84B"/><path d="M212 196 L236 220 L284 168" fill="none" style="stroke:var(--accent-ink,#1F6E8C)" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/><rect x="212" y="262" width="124" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="306" width="96" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="350" width="112" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 26%, #fff)"/></g></svg>`;
 let storageOK = true;
 /* 학급 여러 개: 학급마다 따로 저장한다. 처음 학급(c1)은 예전 저장 위치를 그대로 쓴다 */
@@ -4072,14 +4072,14 @@ function upcomingCard(){
 function tasksTodayCard(){
   const t = today(), wk = ymd(addDays(new Date(),7));
   const open = (S.tasks||[]).filter(x=>!x.done && !(x.due && x.due <= t));
-  const meets = (S.meetings||[]).filter(m=>m.date===t);
-  const subs = (S.submits||[]).filter(x=>!x.done && x.due && x.due > t && x.due<=wk);
-  /* 마감이 급한 순서: 오늘 회의(시각 순) → 마감 빠른 제출·업무 → 기한 없는 업무 */
-  const items = [...meets.map(m=>({k:"meet", x:m, key:`${t} ${m.time||"99:99"}`})), ...subs.map(x=>({k:"sub", x, key:`${x.due} ~`})), ...open.map(x=>({k:"task", x, key: x.due ? `${x.due} ~~` : "9999"}))]
+  const meets = (S.meetings||[]).filter(m=>m.date && m.date>=t);
+  const subs = (S.submits||[]).filter(x=>!x.done && x.due);
+  /* 날짜가 임박한 순서: 회의·제출·업무를 날짜(회의는 시각까지)로 한 줄에 섞어 정렬, 기한 없는 업무는 맨 뒤 */
+  const items = [...meets.map(m=>({k:"meet", x:m, key:`${m.date} ${m.time||"99:99"}`})), ...subs.map(x=>({k:"sub", x, key:`${x.due} ~`})), ...open.map(x=>({k:"task", x, key: x.due ? `${x.due} ~~` : "9999"}))]
     .sort((a,b)=>a.key.localeCompare(b.key));
   const N = 8, show = items.slice(0, N);
-  const row = {meet: m => `<div class="task-row compact" data-act="goMeet" style="cursor:pointer"><span class="pill vio">회의</span><div class="task-main"><div class="task-title">${m.time?`<b class="num">${esc(m.time)}</b> `:""}${esc(m.title)}</div>${m.place||(m.agenda||"").trim()?`<div class="small muted">${esc(m.place||"")}${(m.agenda||"").trim()?` · ${esc(m.agenda.split("\n")[0])}`:""}</div>`:""}</div></div>`, sub: x => { const g = taskGroup(x); return `<div class="task-row compact ${g==="기한 지남"?"late":""}"><input type="checkbox" data-ch="subDone" data-id="${x.id}" aria-label="제출함"><div class="task-main"><div class="task-title">${esc(x.title)}</div><div class="small muted">제출${x.to?` → ${esc(x.to)}`:""} · 마감 ${md(x.due)}</div></div><span class="pill ${g==="기한 지남"?"bad":g==="오늘"?"warn":""}">${dday(x.due)}</span></div>`; }, task: t => { const g = taskGroup(t); return `<div class="task-row compact ${g==="기한 지남"?"late":""}"><input type="checkbox" data-ch="taskDone" data-id="${t.id}" aria-label="완료"><div class="task-main"><div class="task-title">${esc(t.title)}</div><div class="small muted">${esc(t.cat)}${t.due?` · 마감 ${md(t.due)}`:""}</div></div>${t.due?`<span class="pill ${g==="기한 지남"?"bad":g==="오늘"?"warn":""}">${dday(t.due)}</span>`:""}</div>`; }};
-  return `<div class="card"><div class="spread"><h2>오늘 회의 · 다가오는 업무</h2><a class="btn sm" href="#tasks">업무 관리</a></div>
+  const row = {meet: m => `<div class="task-row compact" data-act="goMeet" style="cursor:pointer"><span class="pill vio">회의</span><div class="task-main"><div class="task-title">${m.date!==t?`<span class="small num" style="color:var(--accent-ink)">${md(m.date)}${dday(m.date)?` · ${dday(m.date)}`:""}</span> `:""}${m.time?`<b class="num">${esc(m.time)}</b> `:""}${esc(m.title)}</div>${m.place||(m.agenda||"").trim()?`<div class="small muted">${esc(m.place||"")}${(m.agenda||"").trim()?` · ${esc(m.agenda.split("\n")[0])}`:""}</div>`:""}</div></div>`, sub: x => { const g = taskGroup(x); return `<div class="task-row compact ${g==="기한 지남"?"late":""}"><input type="checkbox" data-ch="subDone" data-id="${x.id}" aria-label="제출함"><div class="task-main"><div class="task-title">${esc(x.title)}</div><div class="small muted">제출${x.to?` → ${esc(x.to)}`:""} · 마감 ${md(x.due)}</div></div><span class="pill ${g==="기한 지남"?"bad":g==="오늘"?"warn":""}">${dday(x.due)}</span></div>`; }, task: t => { const g = taskGroup(t); return `<div class="task-row compact ${g==="기한 지남"?"late":""}"><input type="checkbox" data-ch="taskDone" data-id="${t.id}" aria-label="완료"><div class="task-main"><div class="task-title">${esc(t.title)}</div><div class="small muted">${esc(t.cat)}${t.due?` · 마감 ${md(t.due)}`:""}</div></div>${t.due?`<span class="pill ${g==="기한 지남"?"bad":g==="오늘"?"warn":""}">${dday(t.due)}</span>`:""}</div>`; }};
+  return `<div class="card"><div class="spread"><h2>회의 · 다가오는 업무 <span class="small muted">날짜 임박한 순</span></h2><a class="btn sm" href="#tasks">업무 관리</a></div>
     ${show.length ? show.map(it => row[it.k](it.x)).join("") + (items.length > N ? `<div class="small muted" style="margin-top:6px">그 밖에 ${items.length-N}개</div>` : "") : `<div class="empty">오늘 회의와 다가오는 업무가 없어요</div>`}</div>`;
 }
 
