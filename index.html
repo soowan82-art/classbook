@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=5, user-scalable=yes">
 <title>학급일지</title>
 <meta name="theme-color" content="#F5F7F9">
 <link rel="manifest" href="manifest.webmanifest">
@@ -732,7 +732,20 @@ let LOOK = (() => { try{ return JSON.parse(localStorage.getItem(LOOK_KEY)) || {}
 if(LOOK.accent === "classic"){ LOOK.accent = "teal"; LOOK.tone = "vivid"; }
 const lookPal = a => { const vivid = LOOK.tone === "vivid"; a.l = vivid ? a.v : a.p; a.d = vivid ? a.vd : null; return a; };
 const darkMQ = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
+/* 화면 배율 (이 기기에만): 70%~200%. Ctrl+마우스 휠, Ctrl + / - / 0, 설정의 − + 버튼 */
+const ZOOM_MIN = 0.7, ZOOM_MAX = 2;
+function setZoom(z, quiet){ z = Math.round(Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, z)) * 20) / 20; LOOK.zoom = z; laySave(); document.documentElement.style.zoom = z === 1 ? "" : z;
+  const el = document.getElementById("zoomVal"); if(el) el.textContent = Math.round(z*100) + "%";
+  if(!quiet){ document.querySelectorAll(".toast.zm-t").forEach(x=>x.remove()); const t = document.createElement("div"); t.className = "toast zm-t"; t.innerHTML = `화면 ${Math.round(z*100)}% ${z!==1?`<button class="toast-undo" data-act="zoomSet" data-v="1">100%로</button>`:""}`; document.body.appendChild(t); clearTimeout(setZoom._t); setZoom._t = setTimeout(()=>t.remove(), 1500); }
+  try{ dashFit(); }catch(e){} }
+A.zoomStep = el => setZoom((LOOK.zoom||1) + Number(el.dataset.d));
+A.zoomSet = el => setZoom(Number(el.dataset.v));
+const IN_FRAME = (() => { try{ return window.top !== window; }catch(e){ return true; } })();
+window.addEventListener("wheel", e => { if(!e.ctrlKey || !IN_FRAME) return; e.preventDefault(); setZoom((LOOK.zoom||1) + (e.deltaY < 0 ? 0.1 : -0.1)); }, {passive:false});
+window.addEventListener("keydown", e => { if(!(e.ctrlKey || e.metaKey) || e.altKey || !IN_FRAME) return;
+  if(e.key === "=" || e.key === "+"){ e.preventDefault(); setZoom((LOOK.zoom||1) + 0.1); } else if(e.key === "-" || e.key === "_"){ e.preventDefault(); setZoom((LOOK.zoom||1) - 0.1); } else if(e.key === "0"){ e.preventDefault(); setZoom(1); } });
 function applyLook(){
+  if(LOOK.zoom && LOOK.zoom !== 1) document.documentElement.style.zoom = LOOK.zoom;
   const root = document.documentElement, mode = LOOK.mode || "auto", a = lookPal({...(ACCENTS[LOOK.accent] || ACCENTS.teal)});
   if(mode === "auto") root.removeAttribute("data-theme"); else root.setAttribute("data-theme", mode);
   const dark = mode === "dark" || (mode === "auto" && darkMQ && darkMQ.matches);
@@ -756,6 +769,7 @@ function lookCard(){
     <div class="row" style="gap:8px">${Object.entries(ACCENTS).map(([k, a0]) => { const a = lookPal({...a0}); return `<button class="look-sw ${k===cur?"on":""}" data-act="lookAccent" data-v="${k}" style="--c:${a.l[0]};--cs:${a.l[1]}" aria-label="${a.name}"><i></i>${a.name}</button>`; }).join("")}</div>
     <div class="row" style="gap:8px;margin-top:12px"><span class="small muted">색감</span><div class="seg"><button class="${LOOK.tone!=="vivid"?"on":""}" data-act="lookTone" data-v="pastel">파스텔</button><button class="${LOOK.tone==="vivid"?"on":""}" data-act="lookTone" data-v="vivid">원색</button></div></div>
     <div class="row" style="gap:8px;margin-top:12px"><span class="small muted">밝기</span><div class="seg"><button class="${mode==="auto"?"on":""}" data-act="lookMode" data-v="auto">기기 설정 따라</button><button class="${mode==="light"?"on":""}" data-act="lookMode" data-v="light">밝게</button><button class="${mode==="dark"?"on":""}" data-act="lookMode" data-v="dark">어둡게</button></div></div>
+    <div class="row" style="gap:8px;margin-top:12px;align-items:center"><span class="small muted">화면 크기</span><button class="btn sm" data-act="zoomStep" data-d="-0.1" aria-label="작게">−</button><b id="zoomVal" class="num" style="min-width:48px;text-align:center">${Math.round((LOOK.zoom||1)*100)}%</b><button class="btn sm" data-act="zoomStep" data-d="0.1" aria-label="크게">＋</button><button class="btn sm ghost" data-act="zoomSet" data-v="1">100%</button><span class="small muted">PC: Ctrl+마우스 휠 · 휴대폰: 두 손가락으로 벌리기</span></div>
     <label class="row small" style="gap:6px;margin-top:12px;cursor:pointer"><input type="checkbox" ${LOOK.noKoFix?"":"checked"} data-ch="koFixSet">영어로 잘못 친 글자 한글로 바꾸기 <span class="muted">(예: dkssud → 안녕, 진짜 영어 단어는 그대로)</span></label></div>`;
 }
 /* 달력 칸 너비 (이 기기에만 저장): 0 = 화면에 맞춤, 그 밖은 요일 칸 최소 너비(px). 넓히면 옆으로 밀어서 보고, 이름·내용이 다 보인다 */
@@ -770,7 +784,7 @@ A.calWReset = () => { LOOK.calw = 0; saveLook(); render(); };
 A.lookAccent = el => { LOOK.accent = el.dataset.v; saveLook(); render(); };
 A.lookTone = el => { LOOK.tone = el.dataset.v; saveLook(); render(); };
 A.lookMode = el => { LOOK.mode = el.dataset.v; saveLook(); render(); };
-const APP_VER = "2026.11.17-8";
+const APP_VER = "2026.11.17-10";
 const LOGO_SVG = `<svg class="brand-logo" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" style="fill:var(--brand,#1F6E8C)"/><g transform="translate(256 258) scale(1.13) translate(-256 -258)"><rect x="140" y="112" width="232" height="292" rx="30" fill="#FFFFFF"/><rect x="140" y="112" width="44" height="292" rx="22" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><rect x="162" y="112" width="22" height="292" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><path d="M318 112 H352 V214 L335 198 L318 214 Z" fill="#F2B84B"/><path d="M212 196 L236 220 L284 168" fill="none" style="stroke:var(--accent-ink,#1F6E8C)" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/><rect x="212" y="262" width="124" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="306" width="96" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="350" width="112" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 26%, #fff)"/></g></svg>`;
 let storageOK = true;
 /* 학급 여러 개: 학급마다 따로 저장한다. 처음 학급(c1)은 예전 저장 위치를 그대로 쓴다 */
@@ -1145,14 +1159,19 @@ function render(){
   renderSide(r);
   let v; try{ v = VIEWS[r](); }catch(err){ console.error(err); v = `<div class="card"><h2>이 화면을 그리지 못했어요</h2><p class="small">${esc(err && err.message || String(err))}</p><p class="small muted">기록은 그대로 저장돼 있어요. 이 문구를 알려 주시면 고칠게요. 다른 메뉴는 그대로 쓸 수 있어요.</p></div>`; }
   const keepSc = [...document.querySelectorAll("#main .lim-scroll, #main .sub-scroll, #main .scroll")].map((el, i) => [i, el.className, el.scrollTop, el.scrollLeft]);
-  const mainTop = $("#main").scrollTop, prevR = ui._lastRoute; ui._lastRoute = r;
+  const mainTop = $("#main").scrollTop, winY = window.scrollY, prevR = ui._lastRoute; ui._lastRoute = r;
+  const ae = document.activeElement, focId = ae && ae.id && ae.closest && ae.closest("#main") && /^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName) ? ae.id : null;
+  let focSel = null; try{ if(focId && ae.selectionStart != null) focSel = [ae.selectionStart, ae.selectionEnd]; }catch(e){}
   $("#main").innerHTML = `<div class="wrap">${archiveBanner()}${syncBanner()}${liveS?"":sampleBanner()}${v}</div>`;
   if(r !== "today"){ try{ layoutize(r); }catch(err){ console.error("layout", err); } }
   AFTER[r] && AFTER[r]();
   try{ limFit(); }catch(e){}
   koInputs(document);
+  try{ if(document.querySelector("#main .dash")) dashFit(); }catch(e){}
+  const keepPos = () => { $("#main").scrollTop = mainTop; if(Math.abs(window.scrollY - winY) > 1) window.scrollTo(0, winY); };
+  if(prevR === r){ keepPos(); if(focId){ const f = document.getElementById(focId); if(f && document.activeElement !== f && !f.disabled){ try{ f.focus({preventScroll:true}); if(focSel && f.setSelectionRange) f.setSelectionRange(focSel[0], focSel[1]); }catch(e){} } } }
   if(prevR === r){ const now = [...document.querySelectorAll("#main .lim-scroll, #main .sub-scroll, #main .scroll")]; keepSc.forEach(([i, c, t, l]) => { const el = now[i]; if(el && el.className === c){ el.scrollTop = t; el.scrollLeft = l; } }); $("#main").scrollTop = mainTop; }
-  requestAnimationFrame(() => { limFit(); document.querySelectorAll("textarea.tt-memo-in").forEach(growTa); if(document.querySelector(".dash")) dashWatch(); });
+  requestAnimationFrame(() => { limFit(); document.querySelectorAll("textarea.tt-memo-in").forEach(growTa); if(document.querySelector(".dash")) dashWatch(); if(prevR === r) keepPos(); });
   document.title = `${TITLE[r]} · ${clsName()} 학급일지`;
 }
 
