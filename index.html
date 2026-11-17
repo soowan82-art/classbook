@@ -270,6 +270,10 @@ input[type=text],input[type=search],input:not([type]),textarea{ime-mode:active}
 .g-fin{display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-top:10px;padding:8px 10px;border:1px dashed var(--line);border-radius:10px}.g-fin.done{justify-content:flex-start;border-style:solid;border-color:var(--ok);background:var(--ok-soft);color:var(--ok)}
 .ep-finbtn{margin-top:4px;font-size:12px;padding:2px 8px}
 .gs-t .lv{flex-wrap:nowrap}.gs-t .lv button{white-space:nowrap}
+.tt-time .f{gap:4px}.tt-tf{flex-direction:row!important;align-items:center;gap:4px}.tt-lunch-pill{background:var(--warn-soft,#FFF4E5);color:var(--warn)}
+.tt-lunch th,.tt-lunch td{background:var(--bg);color:var(--muted);font-size:12.5px;text-align:center;padding:6px!important}
+.ttl-lunch,.tt-lunch-row{font-size:12.5px;color:var(--muted);background:var(--bg);border-radius:8px;padding:5px 10px;margin:4px 0;text-align:center}
+.setup-tm{border:1px solid var(--line);border-radius:10px;padding:10px 12px}.setup-tm>summary{cursor:pointer;margin-bottom:8px}
 .ep-fbar{background:var(--accent-soft);border-radius:8px;padding:8px 12px;margin-bottom:10px}.ep-fin{margin-top:4px}
 .rng-f{display:flex;justify-content:space-between;gap:8px 16px;flex-wrap:wrap;margin:0 0 10px;padding:8px 10px;border:1px solid var(--line);border-radius:10px}
 .rng-ck{cursor:pointer}.rng-ck input{width:15px;height:15px;margin:0 2px 0 0;accent-color:var(--accent-ink)}
@@ -807,7 +811,7 @@ A.calWReset = () => { LOOK.calw = 0; saveLook(); render(); };
 A.lookAccent = el => { LOOK.accent = el.dataset.v; saveLook(); render(); };
 A.lookTone = el => { LOOK.tone = el.dataset.v; saveLook(); render(); };
 A.lookMode = el => { LOOK.mode = el.dataset.v; saveLook(); render(); };
-const APP_VER = "2026.11.18-1";
+const APP_VER = "2026.11.18-2";
 const LOGO_SVG = `<svg class="brand-logo" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" style="fill:var(--brand,#1F6E8C)"/><g transform="translate(256 258) scale(1.13) translate(-256 -258)"><rect x="140" y="112" width="232" height="292" rx="30" fill="#FFFFFF"/><rect x="140" y="112" width="44" height="292" rx="22" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><rect x="162" y="112" width="22" height="292" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><path d="M318 112 H352 V214 L335 198 L318 214 Z" fill="#F2B84B"/><path d="M212 196 L236 220 L284 168" fill="none" style="stroke:var(--accent-ink,#1F6E8C)" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/><rect x="212" y="262" width="124" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="306" width="96" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="350" width="112" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 26%, #fff)"/></g></svg>`;
 let storageOK = true;
 /* 학급 여러 개: 학급마다 따로 저장한다. 처음 학급(c1)은 예전 저장 위치를 그대로 쓴다 */
@@ -1167,6 +1171,7 @@ function setupView(){
     <p class="muted" style="margin:0">학급 이름을 정해 주세요. 메뉴 맨 위와 내려받는 파일 이름에 쓰여요. 나중에 설정에서 바꿀 수 있어요.</p>
     <label class="f">학급 이름<input type="text" id="setName" placeholder="예: 무지개반, 3학년 2반" data-enter="setupGo" autofocus></label>
     <div class="form" style="grid-template-columns:1fr 1fr"><label class="f">학년·반 (선택)<input type="text" id="setGrade" placeholder="예: 4학년 3반" data-enter="setupGo"></label><label class="f">학년도<input type="number" id="setYear" value="${S.cls.year||new Date().getFullYear()}"></label></div>
+    <details class="setup-tm" open><summary><b>교시 시간 · 점심시간</b> <span class="small muted">우리 학교 일과에 맞춰 주세요 (나중에 시간표에서 바꿀 수 있어요)</span></summary>${ttTimePanel(true)}<div class="small muted" id="setupTmPrev" style="margin-top:6px">${ttTimesLine()}</div></details>
     <button class="btn pri" data-act="setupGo" style="padding:10px">시작하기</button>
     <div class="row" style="gap:10px;align-items:center"><span style="flex:1;height:1px;background:var(--line)"></span><span class="small muted">다른 기기에서 쓰던 중이라면</span><span style="flex:1;height:1px;background:var(--line)"></span></div>
     <button class="btn" data-act="setupFromDrive" style="padding:10px">${GMODE ? "구글 계정으로 로그인해 기록 불러오기" : "구글 드라이브에서 기록 불러오기"}</button>
@@ -2830,7 +2835,7 @@ A.seatExport = () => { seatFix(); const st = S.seats, rows = [];
 
 /* ───────── 시간표 ─────────
    기본 시간표(요일별) + 날짜별 변경(overrides) + 교시별 메모(memos). 과목은 팔레트에서 골라 칸을 눌러 칠한다. */
-function ttBlank(band){ band = band || "3-4"; return {periods:6, band, times:["09:00","09:50","10:50","11:40","13:30","14:20","15:10"], subjects:ttBandSubjects(band), base:{1:[],2:[],3:[],4:[],5:[]}, over:{}, memos:{}}; }
+function ttBlank(band){ band = band || "3-4"; return {periods:6, band, times:["09:00","09:50","10:40","11:30","13:00","13:50","14:40"], tm:{start:"09:00", len:40, brk:10, after:4, lunch:50}, subjects:ttBandSubjects(band), base:{1:[],2:[],3:[],4:[],5:[]}, over:{}, memos:{}}; }
 function TT(){
   if(!S.timetable) S.timetable = ttBlank(guessBand());
   const tt = S.timetable;
@@ -2869,12 +2874,12 @@ VIEWS.timetable = () => {
     ${ui.ttEdit ? `<div class="row" style="margin-top:12px;gap:10px"><input type="text" id="ttNewSub" placeholder="새 과목 (예: 안전한 생활)" data-enter="ttSubAdd" style="width:200px"><button class="btn sm" data-act="ttSubAdd">과목 추가</button>
         <label class="f" style="flex-direction:row;align-items:center;gap:6px;margin-left:auto">학년군 교과<select data-ch="ttBand">${Object.keys(TT_BANDS).map(b=>`<option value="${b}" ${b===tt.band?"selected":""}>${b.replace("-","~")}학년</option>`).join("")}</select></label>
         <label class="f" style="flex-direction:row;align-items:center;gap:6px">하루 교시 수<select data-ch="ttPeriods">${[4,5,6,7].map(n=>`<option ${n===tt.periods?"selected":""}>${n}</option>`).join("")}</select></label></div>
-      <div class="row small" style="margin-top:8px;gap:8px">${Array.from({length:tt.periods},(_,i)=>`<label class="f" style="flex-direction:row;align-items:center;gap:4px">${i+1}교시<input type="time" value="${tt.times[i]||""}" data-ch="ttTime" data-i="${i}" style="width:110px"></label>`).join("")}</div>
       <div class="small muted" style="margin-top:6px">설정 중에는 과목을 누르면 지워져요. 이미 시간표에 들어간 과목명은 그대로 남아요.</div>` : ""}
   </div>`;
   const head = mode==="base" ? [1,2,3,4,5].map(w=>`<th class="c">${WD[w]}</th>`).join("")
     : days.map(d=>{ const dt = parse(d), ch = Object.keys(tt.over[d]||{}).length; return `<th class="c ${d===t?"tt-today":""}"><div>${WD[dt.getDay()]} <span class="muted num">${dt.getMonth()+1}/${dt.getDate()}</span></div>${HOLI[d]?`<div class="small holi">${HOLI[d]}</div>`:""}${ch?`<button class="btn sm ghost" data-act="ttResetDay" data-d="${d}" style="padding:1px 6px;font-size:11.5px">기본으로</button>`:""}</th>`; }).join("");
-  const rows = Array.from({length:tt.periods}, (_,i) => `<tr><th class="tt-p"><b>${i+1}교시</b>${tt.times[i]?`<div class="small muted num">${tt.times[i]}</div>`:""}</th>${
+  const LU = ttLunch(tt), LA = ttTm(tt).after;
+  const rows = Array.from({length:tt.periods}, (_,i) => `${LU && i === LA ? `<tr class="tt-lunch"><th class="tt-p">🍚 점심</th><td colspan="5"><span class="num">${LU[0]} ~ ${LU[1]}</span> 점심시간</td></tr>` : ""}<tr><th class="tt-p"><b>${i+1}교시</b>${tt.times[i]?`<div class="small muted num">${tt.times[i]}~${ttEndOf(tt,i)}</div>`:""}</th>${
     mode==="base" ? [1,2,3,4,5].map(w=>{ const src = ui.ttDraft || tt.base, v = (src[w]||[])[i]||"", ch = ui.ttDraft && v !== ((tt.base[w]||[])[i]||""); return `<td><button class="tt-cell ${ch?"changed":""}" data-act="ttCell" data-w="${w}" data-i="${i}" aria-label="${WD[w]} ${i+1}교시 ${esc(cellLabel(v))||"비어 있음"}">${subjChip(v)}</button></td>`; }).join("")
     : days.map(d=>{ const r = ttDay(d)[i]; if(!r) return `<td class="tt-off">${i===0?`<span class="small" style="color:var(--bad)">${esc(offName(d)||"쉬는 날")}</span>`:""}</td>`; return `<td class="${d===t?"tt-today":""}"><button class="tt-cell ${r.changed?"changed":""}" data-act="ttCell" data-d="${d}" data-i="${i}" title="${r.changed?`기본: ${esc(cellLabel(r.base))||"없음"} → 이날만 ${esc(cellLabel(r.subj))||"비움"}`:""}${r.memo?(r.changed?" · ":"")+esc(r.memo):""}">${subjChip(r.subj)}${r.changed?`<span class="tt-badge">변경</span>`:""}${r.memo?`<span class="tt-memo">${esc(r.memo)}</span>`:""}</button></td>`; }).join("")
   }</tr>`).join("");
@@ -2887,8 +2892,8 @@ VIEWS.timetable = () => {
       ${ui.wgOpen || ui.wg ? wgCard() : ""}${ui.ttCalOpen ? ttWeekCal(days) : ""}`;
   return header("시간표", mode==="base" ? "요일별 기본 시간표" : `${md(days[0])} ~ ${md(days[4])}${days.includes(t) ? " · 이번 주" : ""}`,
     `<div class="seg big-seg"><button class="${mode==="week"?"on":""}" data-act="ttMode" data-v="week">날짜별</button><button class="${mode==="base"?"on":""}" data-act="ttMode" data-v="base">기본 시간표 (매주)</button></div>` +
-    (mode==="week" ? `<button class="btn" data-act="ttWk" data-n="-7">이전 주</button><button class="btn" data-act="ttWk" data-n="0">이번 주</button><button class="btn" data-act="ttWk" data-n="7">다음 주</button>` : "")) +
-  modeBar + (mode==="base" && !draft ? "" : pal) + `<div class="card ${mode==="base"?"tt-basecard":""} ${draft?"tt-drafting":""}">${mode==="week" && isNarrow() ? ttWeekList(days) : `<div class="scroll"><table class="tt-table"><thead><tr><th></th>${head}</tr></thead><tbody>${rows}</tbody></table></div>`}
+    `<button class="btn ${ui.ttTimeOpen?"pri":""}" data-act="ttTimeOpen">⏰ 교시 시간·점심</button>` + (mode==="week" ? `<button class="btn" data-act="ttWk" data-n="-7">이전 주</button><button class="btn" data-act="ttWk" data-n="0">이번 주</button><button class="btn" data-act="ttWk" data-n="7">다음 주</button>` : "")) +
+  modeBar + (ui.ttTimeOpen ? `<div class="card"><div class="spread"><h2>⏰ 교시 시간 · 점심시간</h2><button class="btn sm ghost" data-act="ttTimeOpen">닫기</button></div>${ttTimePanel()}</div>` : "") + (mode==="base" && !draft ? "" : pal) + `<div class="card ${mode==="base"?"tt-basecard":""} ${draft?"tt-drafting":""}">${mode==="week" && isNarrow() ? ttWeekList(days) : `<div class="scroll"><table class="tt-table"><thead><tr><th></th>${head}</tr></thead><tbody>${rows}</tbody></table></div>`}
     ${mode==="base" && ttHasAny() ? ttHoursSummary() : ""}
     ${mode==="base" && !ttHasAny() ? `<div class="small muted" style="margin-top:10px">${draft?"위에서 과목을 고르고 칸을 차례로 누르면 금방 채워져요. 다 채우면 저장을 눌러 주세요.":"'기본 시간표 고치기'를 누르고 과목을 칠한 뒤 저장하세요."}</div>` : ""}</div>`;
 };
@@ -2899,7 +2904,7 @@ function ttWeekList(days){
   return `<div class="ttl">${days.map(d => { const dt = parse(d), L = ttDay(d), ch = Object.keys(tt.over[d]||{}).length;
     return `<div class="ttl-day ${d===t?"on":""}"><div class="spread ttl-h"><b>${WD[dt.getDay()]}요일 <span class="muted num">${dt.getMonth()+1}/${dt.getDate()}</span>${d===t?` <span class="pill acc">오늘</span>`:""}</b>${ch?`<button class="btn sm ghost" data-act="ttResetDay" data-d="${d}">기본으로</button>`:""}</div>
       ${!L.length ? `<div class="small" style="color:var(--bad);padding:6px 2px">${esc(offName(d) || "쉬는 날")}</div>` :
-        L.map((r, i) => `<button class="ttl-row ${r.changed?"changed":""}" data-act="ttCell" data-d="${d}" data-i="${i}"><span class="ttl-p">${i+1}교시${tt.times[i]?`<span class="muted num">${tt.times[i]}</span>`:""}</span><span class="ttl-s">${subjChip(r.subj,"sm")}${r.changed?`<span class="tt-badge" style="position:static">변경</span>`:""}</span><span class="ttl-memo">${esc(r.memo)}</span></button>`).join("")}</div>`; }).join("")}</div>`;
+        L.map((r, i) => `${ttLunch(tt) && i === ttTm(tt).after ? `<div class="ttl-lunch">🍚 점심 <span class="num">${ttLunch(tt).join(" ~ ")}</span></div>` : ""}<button class="ttl-row ${r.changed?"changed":""}" data-act="ttCell" data-d="${d}" data-i="${i}"><span class="ttl-p">${i+1}교시${tt.times[i]?`<span class="muted num">${tt.times[i]}</span>`:""}</span><span class="ttl-s">${subjChip(r.subj,"sm")}${r.changed?`<span class="tt-badge" style="position:static">변경</span>`:""}</span><span class="ttl-memo">${esc(r.memo)}</span></button>`).join("")}</div>`; }).join("")}</div>`;
 }
 let narrowWas = isNarrow(); window.addEventListener("resize", () => { const n = isNarrow(); if(n !== narrowWas){ narrowWas = n; if(location.hash.includes("timetable")) render(); } });
 function ttHoursSummary(){
@@ -3201,17 +3206,44 @@ CH.ttBand = async el => { const tt = TT(), b = el.value;
   const extra = tt.subjects.filter(x=>!Object.values(TT_BANDS).flat().includes(x.name));
   tt.band = b; tt.subjects = ttBandSubjects(b).concat(extra); ui.ttBrush = null; commit(); };
 CH.ttPeriods = el => { TT().periods = Number(el.value); commit(); };
-CH.ttTime = el => { const tt = TT(); tt.times[Number(el.dataset.i)] = el.value; commit(); };
+CH.ttTime = el => { const tt = TT(), i = Number(el.dataset.i); tt.times[i] = el.value; if(i === 0){ tt.tm = Object.assign(ttTm(tt), {start: el.value}); } commit(); };
 /* 메모 칸은 글이 길면 줄을 바꿔 아래로 늘어난다 */
 const growTa = el => { el.style.height = "auto"; el.style.height = el.scrollHeight + 2 + "px"; };
 IN.ttMemo = el => { growTa(el); const tt = TT(), d = el.dataset.d, i = el.dataset.i; const m = tt.memos[d] ||= {}; if(el.value.trim()) m[i] = el.value; else { delete m[i]; if(!Object.keys(m).length) delete tt.memos[d]; } persist(); };
+/* ── 교시 시간·점심시간: 1교시 시작·수업·쉬는 시간·점심 위치로 자동 계산, 교시마다 직접 고쳐도 됨 ── */
+const hm2m = t => { const m = String(t||"").match(/^(\d{1,2}):(\d{2})/); return m ? +m[1]*60 + +m[2] : null; };
+const m2hm = n => `${String(Math.floor(n/60)).padStart(2,"0")}:${String(n%60).padStart(2,"0")}`;
+const ttTm = tt => Object.assign({start: (tt.times && tt.times[0]) || "09:00", len:40, brk:10, after:0, lunch:50}, tt.tm || {});
+function ttCalc(tt, tm){ tm = Object.assign(ttTm(tt), tm || {}); const out = []; let t = hm2m(tm.start) ?? 540;
+  for(let i = 0; i < Math.max(tt.periods, 7); i++){ out.push(m2hm(t)); t += tm.len; if(i + 1 === tm.after) t += tm.lunch; else t += tm.brk; }
+  tt.tm = tm; tt.times = out; return tt; }
+/* 점심시간 [시작, 끝] (점심 위치를 정했을 때만) */
+function ttLunch(tt){ const tm = ttTm(tt); if(!tm.after || tm.after >= tt.periods) return null; const s0 = hm2m(tt.times[tm.after-1]); const e = hm2m(tt.times[tm.after]); if(s0 == null) return null; const st = s0 + tm.len; return [m2hm(st), e != null && e > st ? m2hm(e) : m2hm(st + tm.lunch)]; }
+const ttEndOf = (tt, i) => { const s0 = hm2m(tt.times[i]); return s0 == null ? "" : m2hm(s0 + ttTm(tt).len); };
+function ttTimePanel(compact){ const tt = TT(), tm = ttTm(tt), L = ttLunch(tt);
+  const num = (id, v, w, unit) => `<input type="number" id="${id}" value="${v}" min="0" max="180" style="width:${w}px" data-ch="ttTmSet">${unit?`<span class="small muted">${unit}</span>`:""}`;
+  return `<div class="tt-time ${compact?"compact":""}">
+    <div class="row" style="gap:10px 14px;flex-wrap:wrap;align-items:flex-end">
+      <label class="f">1교시 시작<input type="time" id="tmStart" value="${tm.start}" data-ch="ttTmSet" style="width:120px"></label>
+      <label class="f">수업 시간<span class="row" style="gap:4px">${num("tmLen", tm.len, 70, "분")}</span></label>
+      <label class="f">쉬는 시간<span class="row" style="gap:4px">${num("tmBrk", tm.brk, 70, "분")}</span></label>
+      <label class="f">점심시간 위치<select id="tmAfter" data-ch="ttTmSet"><option value="0" ${!tm.after?"selected":""}>표시 안 함</option>${Array.from({length:Math.max(tt.periods,6)-1},(_,i)=>`<option value="${i+1}" ${tm.after===i+1?"selected":""}>${i+1}교시 뒤</option>`).join("")}</select></label>
+      <label class="f">점심시간 길이<span class="row" style="gap:4px">${num("tmLunch", tm.lunch, 70, "분")}</span></label>
+    </div>
+    ${compact ? "" : `<div class="small muted" style="margin:10px 0 4px">위 값을 바꾸면 모든 교시 시작 시각이 다시 계산돼요. 중간놀이처럼 어느 한 쉬는 시간만 길면 아래에서 그 교시 시각만 고치면 돼요.</div>
+    <div class="row small" style="gap:8px;flex-wrap:wrap">${Array.from({length:tt.periods},(_,i)=>`<label class="f tt-tf">${i+1}교시<input type="time" value="${tt.times[i]||""}" data-ch="ttTime" data-i="${i}" style="width:110px"><span class="muted num">~${ttEndOf(tt,i)}</span></label>${tm.after===i+1 && L ? `<span class="pill tt-lunch-pill">🍚 점심 ${L[0]}~${L[1]}</span>` : ""}`).join("")}</div>`}
+  </div>`; }
+CH.ttTmSet = () => { const tt = TT(), g = id => document.getElementById(id); if(!g("tmStart")) return;
+  ttCalc(tt, {start: g("tmStart").value || "09:00", len: Math.max(10, +g("tmLen").value || 40), brk: Math.max(0, +g("tmBrk").value || 0), after: +g("tmAfter").value || 0, lunch: Math.max(0, +g("tmLunch").value || 0)}); commit(); };
+A.ttTimeOpen = () => { ui.ttTimeOpen = !ui.ttTimeOpen; render(); };
+function ttTimesLine(){ const tt = TT(), L = ttLunch(tt), a = ttTm(tt).after; return Array.from({length:tt.periods},(_,i)=>`${i+1}교시 ${tt.times[i]}${L && a===i+1 ? ` · 점심 ${L[0]}` : ""}`).join(" · "); }
 /* 다이어리·오늘 화면용 */
 function ttDayCard(d, editable){
   const rows = ttDay(d), tt = TT();
   if(!rows.length) return "";
   if(!rows.some(r=>r.subj) && !ttHasAny()) return `<div class="card"><div class="spread"><h2>시간표</h2><a class="btn sm" href="#timetable">시간표 입력</a></div><div class="empty">기본 시간표를 입력하면 여기에 그날 시간표가 나와요</div></div>`;
   return `<div class="card"><div class="spread"><h2>${d===today()?"오늘 시간표":"이날 시간표"}</h2><a class="btn sm" href="#timetable" data-act="ttGoWeek" data-d="${d}">시간표 바꾸기</a></div>
-    <div class="tt-day">${rows.map(r=>`<div class="tt-row"><span class="tt-pn num">${r.p+1}<span class="small muted">${tt.times[r.p]?" "+tt.times[r.p]:""}</span></span>${subjChip(r.subj)}${r.changed?`<span class="tt-badge static">변경</span>`:"<span></span>"}
+    <div class="tt-day">${rows.map(r=>`${ttLunch(tt) && r.p === ttTm(tt).after ? `<div class="tt-lunch-row">🍚 점심 <span class="num">${ttLunch(tt).join(" ~ ")}</span></div>` : ""}<div class="tt-row"><span class="tt-pn num">${r.p+1}<span class="small muted">${tt.times[r.p]?" "+tt.times[r.p]:""}</span></span>${subjChip(r.subj)}${r.changed?`<span class="tt-badge static">변경</span>`:"<span></span>"}
       ${editable ? `<textarea rows="1" class="tt-memo-in" placeholder="${r.subj?esc(cellLabel(r.subj))+" 메모 (준비물, 진도 등)":"메모"}" data-in="ttMemo" data-d="${d}" data-i="${r.p}" id="ttm-${d}-${r.p}" aria-label="${r.p+1}교시 메모">${esc(r.memo)}</textarea>` : `<span class="tt-memo-txt">${esc(r.memo)}</span>`}</div>`).join("")}</div></div>`;
 }
 A.ttGoWeek = el => { ui.ttMode = "week"; ui.ttWeek = el.dataset.d; location.hash = "timetable"; };
