@@ -713,6 +713,12 @@ body.col-dragging{cursor:col-resize;user-select:none}.t th.col-set{white-space:n
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
+<script>
+/* 사용 통계(익명): Vercel에 올린 주소에서만 방문 수·기기·지역을 셉니다. 이름·이메일·학급 기록은 보내지 않아요. */
+(function(){ try{ var h = location.hostname; if(!/^https?:$/.test(location.protocol) || /claude|localhost|127\.0\.0\.1|usercontent/.test(h) || window.top !== window) return;
+  window.va = window.va || function(){ (window.vaq = window.vaq || []).push(arguments); };
+  var sc = document.createElement("script"); sc.defer = true; sc.src = "/_vercel/insights/script.js"; document.head.appendChild(sc); }catch(e){} })();
+</script>
 </head>
 <body>
 <div class="app">
@@ -801,7 +807,7 @@ A.calWReset = () => { LOOK.calw = 0; saveLook(); render(); };
 A.lookAccent = el => { LOOK.accent = el.dataset.v; saveLook(); render(); };
 A.lookTone = el => { LOOK.tone = el.dataset.v; saveLook(); render(); };
 A.lookMode = el => { LOOK.mode = el.dataset.v; saveLook(); render(); };
-const APP_VER = "2026.11.17-17";
+const APP_VER = "2026.11.18-1";
 const LOGO_SVG = `<svg class="brand-logo" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" style="fill:var(--brand,#1F6E8C)"/><g transform="translate(256 258) scale(1.13) translate(-256 -258)"><rect x="140" y="112" width="232" height="292" rx="30" fill="#FFFFFF"/><rect x="140" y="112" width="44" height="292" rx="22" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><rect x="162" y="112" width="22" height="292" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><path d="M318 112 H352 V214 L335 198 L318 214 Z" fill="#F2B84B"/><path d="M212 196 L236 220 L284 168" fill="none" style="stroke:var(--accent-ink,#1F6E8C)" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/><rect x="212" y="262" width="124" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="306" width="96" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="350" width="112" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 26%, #fff)"/></g></svg>`;
 let storageOK = true;
 /* 학급 여러 개: 학급마다 따로 저장한다. 처음 학급(c1)은 예전 저장 위치를 그대로 쓴다 */
