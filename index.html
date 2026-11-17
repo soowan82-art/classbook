@@ -770,7 +770,7 @@ A.calWReset = () => { LOOK.calw = 0; saveLook(); render(); };
 A.lookAccent = el => { LOOK.accent = el.dataset.v; saveLook(); render(); };
 A.lookTone = el => { LOOK.tone = el.dataset.v; saveLook(); render(); };
 A.lookMode = el => { LOOK.mode = el.dataset.v; saveLook(); render(); };
-const APP_VER = "2026.11.17-7";
+const APP_VER = "2026.11.17-8";
 const LOGO_SVG = `<svg class="brand-logo" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" style="fill:var(--brand,#1F6E8C)"/><g transform="translate(256 258) scale(1.13) translate(-256 -258)"><rect x="140" y="112" width="232" height="292" rx="30" fill="#FFFFFF"/><rect x="140" y="112" width="44" height="292" rx="22" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><rect x="162" y="112" width="22" height="292" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><path d="M318 112 H352 V214 L335 198 L318 214 Z" fill="#F2B84B"/><path d="M212 196 L236 220 L284 168" fill="none" style="stroke:var(--accent-ink,#1F6E8C)" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/><rect x="212" y="262" width="124" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="306" width="96" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="350" width="112" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 26%, #fff)"/></g></svg>`;
 let storageOK = true;
 /* 학급 여러 개: 학급마다 따로 저장한다. 처음 학급(c1)은 예전 저장 위치를 그대로 쓴다 */
@@ -2313,7 +2313,8 @@ function gBetter(a, x, y){ if(!hasV(x)) return y; if(!hasV(y)) return x;
   if(a.mode === "level"){ const i = a.levels.indexOf(x), j = a.levels.indexOf(y); return j >= 0 && (i < 0 || j < i) ? y : x; }
   return Number(y) > Number(x) ? y : x; }
 const gAbsent = (a, sid) => !!(a.absent && a.absent[sid]);
-function gFinal(a, sid){ if(gAbsent(a, sid)) return undefined; const v = a.scores[sid]; if(!a.retakeOn || !a.retake || !(sid in a.retake)) return v; return gBetter(a, v, a.retake[sid]); }
+const gExcl = (a, sid) => !!(a.excl && a.excl[sid]);
+function gFinal(a, sid){ if(gAbsent(a, sid) || gExcl(a, sid)) return undefined; const v = a.scores[sid]; if(!a.retakeOn || !a.retake || !(sid in a.retake)) return v; return gBetter(a, v, a.retake[sid]); }
 const gRetakeUsed = (a, sid) => !!(a.retakeOn && a.retake && hasV(a.retake[sid]) && gFinal(a, sid) === a.retake[sid] && a.retake[sid] !== a.scores[sid]);
 /* 평가 종류: 수행평가(등급) / 단원·형성평가(점수) */
 const aKind = a => a.kind || ((S.evalPlans||[]).some(p => p.assessId === a.id) ? "perf" : a.mode === "score" ? "test" : "perf");
@@ -2334,9 +2335,9 @@ VIEWS.grades = () => {
   const a = S.assessments.find(x=>x.id===ui.gradeSel);
   let summary = "";
   if(a){
-    if(a.mode==="level"){ summary = a.levels.map(l=>`<span class="pill">${esc(l)} <b class="num">${S.students.filter(s=>gFinal(a,s.id)===l).length}</b></span>`).join("") + `<span class="pill">미입력 <b class="num">${S.students.filter(s=>!gFinal(a,s.id)&&!gAbsent(a,s.id)).length}</b></span>`; }
+    if(a.mode==="level"){ summary = a.levels.map(l=>`<span class="pill">${esc(l)} <b class="num">${S.students.filter(s=>gFinal(a,s.id)===l).length}</b></span>`).join("") + `<span class="pill">미입력 <b class="num">${S.students.filter(s=>!gFinal(a,s.id)&&!gAbsent(a,s.id)&&!gExcl(a,s.id)).length}</b></span>`; }
     else { const v = S.students.map(s=>gFinal(a,s.id)).filter(x=>x!==undefined&&x!==""); const avg = v.length ? (v.reduce((p,c)=>p+Number(c),0)/v.length).toFixed(1) : "-";
-      summary = (a.retakeOn ? `<span class="small muted" style="width:100%">재시험 반영한 최종 기준</span>` : "") + `<span class="pill">평균 <b class="num">${avg}</b>/${a.max}</span><span class="pill">최고 <b class="num">${v.length?Math.max(...v):"-"}</b></span><span class="pill">최저 <b class="num">${v.length?Math.min(...v):"-"}</b></span><span class="pill">입력 <b class="num">${v.length}/${S.students.length}</b></span>`; }
+      summary = (a.retakeOn ? `<span class="small muted" style="width:100%">재시험 반영한 최종 기준</span>` : "") + `<span class="pill">평균 <b class="num">${avg}</b>/${a.max}</span><span class="pill">최고 <b class="num">${v.length?Math.max(...v):"-"}</b></span><span class="pill">최저 <b class="num">${v.length?Math.min(...v):"-"}</b></span><span class="pill">입력 <b class="num">${v.length}/${S.students.filter(s=>!gExcl(a,s.id)).length}</b></span>`; }
   }
   const nP = S.assessments.filter(x=>aKind(x)==="perf").length, nT = S.assessments.length - nP;
   const subjDL = `<datalist id="gSubList">${[...new Set(TT().subjects.map(x=>x.name).concat(["국어","수학","사회","과학","영어","도덕","음악","미술","체육","실과"]))].map(x=>`<option value="${esc(x)}">`).join("")}</datalist>`;
@@ -2369,7 +2370,7 @@ VIEWS.grades = () => {
       <div class="scroll"><table class="t ${ui.gBulk?"g-picking":""}"><thead><tr>${ui.gBulk?`<th style="width:34px"></th>`:""}<th>번호</th><th>이름</th><th>${a.mode==="level"?"등급":"점수"}</th>${a.retakeOn && !ui.gBulk ? `<th>재시험</th><th>최종</th>` : ""}</tr></thead><tbody>
       ${ui.gBulk ? sorted().map(s=>{ const on = ui.gBulk.sel.includes(s.id), v = a.scores[s.id];
         return `<tr class="g-row ${on?"on":""}" data-act="gPick" data-s="${s.id}"><td><input type="checkbox" ${on?"checked":""} tabindex="-1" aria-label="${esc(s.name)} 고르기"></td><td class="num">${s.no}</td><td>${esc(s.name)}</td><td>${v!==undefined&&v!=="" ? `<span class="pill">${esc(String(v))}</span>` : `<span class="small muted">미입력</span>`}${on ? ` <span class="small" style="color:var(--accent-ink)">→ ${esc(String(ui.gBulk.v))}</span>` : ""}</td></tr>`; }).join("") :
-      sorted().map(s=> gAbsent(a, s.id) ? `<tr class="g-abs-tr"><td class="num">${s.no}</td><td>${esc(s.name)}</td><td><span class="pill">미응시</span> <button class="btn sm ghost" data-act="gAbs" data-s="${s.id}">응시로 되돌리기</button></td>${a.retakeOn ? `<td></td><td></td>` : ""}</tr>` : `<tr><td class="num">${s.no}</td><td>${esc(s.name)}</td><td><div class="row" style="gap:6px;flex-wrap:nowrap">${a.mode==="level" ? `<div class="lv">${a.levels.map(l=>`<button class="${a.scores[s.id]===l?"on":""}" data-act="gLevel" data-s="${s.id}" data-l="${esc(l)}">${esc(l)}</button>`).join("")}</div>` : `<input type="number" class="scoreIn num" min="0" max="${a.max}" value="${a.scores[s.id]??""}" data-ch="gScore" data-s="${s.id}" aria-label="${esc(s.name)} 점수">`}<button class="g-abs" data-act="gAbs" data-s="${s.id}" title="결석 등으로 응시하지 않음">미응시</button></div></td>${a.retakeOn ? gRetakeCells(a, s) : ""}</tr>`).join("")}
+      sorted().map(s=> (gAbsent(a, s.id) || gExcl(a, s.id)) ? `<tr class="g-abs-tr"><td class="num">${s.no}</td><td>${esc(s.name)}</td><td>${gExcl(a, s.id) ? `<span class="pill">제외</span> <button class="btn sm ghost" data-act="gExcl" data-s="${s.id}">제외 풀기</button>` : `<span class="pill">미응시</span> <button class="btn sm ghost" data-act="gAbs" data-s="${s.id}">응시로 되돌리기</button>`}</td>${a.retakeOn ? `<td></td><td></td>` : ""}</tr>` : `<tr><td class="num">${s.no}</td><td>${esc(s.name)}</td><td><div class="row" style="gap:6px;flex-wrap:nowrap">${a.mode==="level" ? `<div class="lv">${a.levels.map(l=>`<button class="${a.scores[s.id]===l?"on":""}" data-act="gLevel" data-s="${s.id}" data-l="${esc(l)}">${esc(l)}</button>`).join("")}</div>` : `<input type="number" class="scoreIn num" min="0" max="${a.max}" value="${a.scores[s.id]??""}" data-ch="gScore" data-s="${s.id}" aria-label="${esc(s.name)} 점수">`}<button class="g-abs" data-act="gAbs" data-s="${s.id}" title="결석 등으로 응시하지 않음">미응시</button><button class="g-abs" data-act="gExcl" data-s="${s.id}" title="평가 대상에서 빼기 (통계·인원에서 빠짐)">제외</button></div></td>${a.retakeOn ? gRetakeCells(a, s) : ""}</tr>`).join("")}
       </tbody></table></div>` : `<div class="empty">왼쪽에서 평가를 추가하거나 골라 주세요</div>`}</div>
   </div>`;
 };
@@ -2404,22 +2405,24 @@ A.gBulkApply = () => { const a = S.assessments.find(x=>x.id===ui.gradeSel), B = 
   const n = B.sel.length; ui.gBulk = null; commit(); toast(`${n}명에게 '${B.v}'을(를) 넣었어요`); };
 /* 남녀별 통계: 점수제는 응시·평균·만점 인원, 등급제는 단계별 인원 (재시험 반영한 최종 기준) */
 function gGenderTable(a){
-  const grp = [["남", sorted().filter(s=>s.gender==="남")], ["여", sorted().filter(s=>s.gender==="여")], ["전체", sorted()]];
-  const noG = sorted().filter(s=>s.gender!=="남" && s.gender!=="여").length;
+  const IN = sorted().filter(s=>!gExcl(a, s.id)), EX = sorted().filter(s=>gExcl(a, s.id));
+  const grp = [["남", IN.filter(s=>s.gender==="남")], ["여", IN.filter(s=>s.gender==="여")], ["전체", IN]];
+  const noG = IN.filter(s=>s.gender!=="남" && s.gender!=="여").length;
+  const exNote = EX.length ? `<span class="pill">제외 · 남 <b class="num">${EX.filter(s=>s.gender==="남").length}</b>명 · 여 <b class="num">${EX.filter(s=>s.gender==="여").length}</b>명 · 전체 <b class="num">${EX.length}</b>명 <span class="muted">(${EX.map(s=>esc(s.name)).join(", ")})</span></span>` : "";
   const vals = L => L.map(s=>gFinal(a, s.id)).filter(v=>v!==undefined && v!=="");
   const abs = L => L.filter(s=>gAbsent(a, s.id)).length;
-  let head, rows, top = "";
+  let head, rows, top = exNote ? `<div class="g-top">${exNote}</div>` : "";
   if(a.mode === "level"){
     head = `<th></th>${a.levels.map(l=>`<th class="r">${esc(l)}</th>`).join("")}<th class="r">미응시</th><th class="r">미입력</th>`;
     rows = grp.map(([g, L]) => { const v = vals(L), ab = abs(L); return `<tr class="${g==="전체"?"g-tot":""}"><td>${g} <span class="muted small">${L.length}명</span></td>${a.levels.map(l=>`<td class="r num">${v.filter(x=>x===l).length}</td>`).join("")}<td class="r num">${ab}</td><td class="r num muted">${L.length - v.length - ab}</td></tr>`; });
   } else {
     const full = L => vals(L).map(Number).filter(x=>x===Number(a.max)).length;
-    top = `<div class="g-top"><span class="pill ok">${a.max}점(만점) · 남 <b class="num">${full(grp[0][1])}</b>명 · 여 <b class="num">${full(grp[1][1])}</b>명 · 전체 <b class="num">${full(grp[2][1])}</b>명</span><span class="pill">미응시 · 남 <b class="num">${abs(grp[0][1])}</b>명 · 여 <b class="num">${abs(grp[1][1])}</b>명 · 전체 <b class="num">${abs(grp[2][1])}</b>명</span></div>`;
+    top = `<div class="g-top"><span class="pill ok">${a.max}점(만점) · 남 <b class="num">${full(grp[0][1])}</b>명 · 여 <b class="num">${full(grp[1][1])}</b>명 · 전체 <b class="num">${full(grp[2][1])}</b>명</span><span class="pill">미응시 · 남 <b class="num">${abs(grp[0][1])}</b>명 · 여 <b class="num">${abs(grp[1][1])}</b>명 · 전체 <b class="num">${abs(grp[2][1])}</b>명</span>${exNote}</div>`;
     head = `<th></th><th class="r">응시</th><th class="r">미응시</th><th class="r">미입력</th><th class="r">평균</th><th class="r">${a.max}점(만점)</th><th class="r">최고</th><th class="r">최저</th>`;
     rows = grp.map(([g, L]) => { const v = vals(L).map(Number), ab = abs(L), avg = v.length ? (v.reduce((p,c)=>p+c,0)/v.length).toFixed(1) : "-";
       return `<tr class="${g==="전체"?"g-tot":""}"><td>${g} <span class="muted small">${L.length}명</span></td><td class="r num">${v.length}</td><td class="r num">${ab}</td><td class="r num muted">${L.length - v.length - ab}</td><td class="r num"><b>${avg}</b></td><td class="r num"><b>${v.filter(x=>x===Number(a.max)).length}</b>명</td><td class="r num">${v.length?Math.max(...v):"-"}</td><td class="r num">${v.length?Math.min(...v):"-"}</td></tr>`; });
   }
-  return `${top}<div class="scroll" style="margin-top:8px"><table class="t g-gt"><thead><tr>${head}</tr></thead><tbody>${rows.join("")}</tbody></table></div><div class="small muted">평균은 응시해서 점수를 넣은 학생만으로 계산해요${noG ? ` · 성별이 정해지지 않은 학생 ${noG}명은 전체에만 들어가요 (학생 관리에서 남·여를 골라 주세요)` : ""}</div>`;
+  return `${top}<div class="scroll" style="margin-top:8px"><table class="t g-gt"><thead><tr>${head}</tr></thead><tbody>${rows.join("")}</tbody></table></div><div class="small muted">평균은 응시해서 점수를 넣은 학생만으로 계산해요${EX.length ? " · 제외한 학생은 인원·통계에서 모두 빠져요" : ""}${noG ? ` · 성별이 정해지지 않은 학생 ${noG}명은 전체에만 들어가요 (학생 관리에서 남·여를 골라 주세요)` : ""}</div>`;
 }
 function gRetakeCells(a, s){
   const R = a.retake || {}, on = s.id in R, f = gFinal(a, s.id), used = gRetakeUsed(a, s.id);
@@ -2433,6 +2436,8 @@ A.gRetake = el => { const a = S.assessments.find(x=>x.id===ui.gradeSel), sid = e
 A.gRetakeLv = el => { const a = S.assessments.find(x=>x.id===ui.gradeSel), sid = el.dataset.s; a.retake[sid] = a.retake[sid] === el.dataset.l ? "" : el.dataset.l; commit(); };
 CH.gRetakeSc = el => { const a = S.assessments.find(x=>x.id===ui.gradeSel), sid = el.dataset.s; a.retake[sid] = el.value === "" ? "" : Math.max(0, Math.min(a.max, Number(el.value))); commit(); };
 A.gLevel = el => { const a = S.assessments.find(x=>x.id===ui.gradeSel); a.scores[el.dataset.s] === el.dataset.l ? delete a.scores[el.dataset.s] : a.scores[el.dataset.s] = el.dataset.l; commit(); };
+A.gExcl = el => { const a = S.assessments.find(x=>x.id===ui.gradeSel); if(!a) return; const sid = el.dataset.s; a.excl ||= {};
+  if(a.excl[sid]) delete a.excl[sid]; else { a.excl[sid] = true; delete a.scores[sid]; if(a.absent) delete a.absent[sid]; if(a.retake) delete a.retake[sid]; } commit(); };
 A.gAbs = el => { const a = S.assessments.find(x=>x.id===ui.gradeSel); if(!a) return; const sid = el.dataset.s; a.absent ||= {};
   if(a.absent[sid]) delete a.absent[sid]; else { a.absent[sid] = true; delete a.scores[sid]; if(a.retake) delete a.retake[sid]; } commit(); };
 CH.gScore = el => { const a = S.assessments.find(x=>x.id===ui.gradeSel); if(el.value===""){ delete a.scores[el.dataset.s]; } else { let v = Math.max(0, Math.min(a.max, Number(el.value))); a.scores[el.dataset.s] = v; } commit(); };
@@ -3782,7 +3787,7 @@ A.epExport = () => { const rows = [["학기","과목","단원·영역","평가 �
   (S.evalPlans||[]).slice().sort((a,b)=>(a.term+(a.date||a.month)).localeCompare(b.term+(b.date||b.month))).forEach(p=>{ const s = planStatus(p); rows.push([termName(p.term), p.subj, p.unit, p.item, p.std, p.method, p.date || (p.month?`${Number(p.month.slice(5))}월`:""), PLAN_PILL[s.k][1], s.a?`${s.n}/${S.students.length}`:""]); });
   exportSheets(`${clsName()}_평가계획`, [["평가 계획", rows]]); };
 function evalTodayCard(){
-  const miss = a => sorted().filter(s => !gAbsent(a, s.id) && (a.scores[s.id] === undefined || a.scores[s.id] === ""));
+  const miss = a => sorted().filter(s => !gAbsent(a, s.id) && !gExcl(a, s.id) && (a.scores[s.id] === undefined || a.scores[s.id] === ""));
   const plans = (S.evalPlans||[]).map(p=>({p, s:planStatus(p)})).filter(x => !x.s.a && (x.s.k==="late" || x.s.k==="soon" || x.s.k==="entry"));
   const order = {late:0, entry:1, soon:2}; plans.sort((a,b)=>order[a.s.k]-order[b.s.k] || (planDue(a.p)||"").localeCompare(planDue(b.p)||""));
   const list = S.assessments.filter(a => miss(a).length).sort((a,b)=>(a.date||"").localeCompare(b.date||""));
@@ -3801,7 +3806,7 @@ function evalTodayCard(){
       return `<div class="lim-item ev-row ev-a"><div class="spread"><span>${subjChip(a.subject,"sm")} ${esc(a.title)}</span><span class="small muted num" style="white-space:nowrap">${n}/${S.students.length}${a.date?` · ${md(a.date)}`:""}</span></div>
         <div class="small muted" style="margin-top:4px">미입력 ${m.length}명 <span style="font-size:11px">(이름을 누르면 바로 입력)</span><div>${m.map(s=>`<button class="sub-nm ${Q&&Q.aid===a.id&&Q.sid===s.id?"on":""}" data-act="evqOpen" data-a="${a.id}" data-s="${s.id}">${esc(s.name)}</button>`).join("")}</div></div>${editor(a)}</div>`; }).join("") || `<div class="small muted" style="padding:6px 0">입력이 남은 평가가 없어요</div>`}</div></div>`;
 }
-const evqMiss = a => sorted().filter(s => !gAbsent(a, s.id) && (a.scores[s.id] === undefined || a.scores[s.id] === ""));
+const evqMiss = a => sorted().filter(s => !gAbsent(a, s.id) && !gExcl(a, s.id) && (a.scores[s.id] === undefined || a.scores[s.id] === ""));
 function evqNext(a, after){ const m = evqMiss(a); if(!m.length) return null; const st = sorted(), i = st.findIndex(s=>s.id===after); return (m.find(s => st.indexOf(s) > i) || m[0]).id; }
 function evqFocus(){ setTimeout(() => { const el = document.getElementById("evqIn") || document.querySelector(".evq .lv button"); el?.focus(); document.querySelector(".evq")?.scrollIntoView({block:"nearest"}); }, 30); }
 A.evqOpen = el => { const Q = ui.evQuick; ui.evQuick = Q && Q.aid === el.dataset.a && Q.sid === el.dataset.s ? null : {aid: el.dataset.a, sid: el.dataset.s}; render(); evqFocus(); };
