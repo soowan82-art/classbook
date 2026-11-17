@@ -801,7 +801,7 @@ A.calWReset = () => { LOOK.calw = 0; saveLook(); render(); };
 A.lookAccent = el => { LOOK.accent = el.dataset.v; saveLook(); render(); };
 A.lookTone = el => { LOOK.tone = el.dataset.v; saveLook(); render(); };
 A.lookMode = el => { LOOK.mode = el.dataset.v; saveLook(); render(); };
-const APP_VER = "2026.11.17-15";
+const APP_VER = "2026.11.17-16";
 const LOGO_SVG = `<svg class="brand-logo" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" style="fill:var(--brand,#1F6E8C)"/><g transform="translate(256 258) scale(1.13) translate(-256 -258)"><rect x="140" y="112" width="232" height="292" rx="30" fill="#FFFFFF"/><rect x="140" y="112" width="44" height="292" rx="22" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><rect x="162" y="112" width="22" height="292" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><path d="M318 112 H352 V214 L335 198 L318 214 Z" fill="#F2B84B"/><path d="M212 196 L236 220 L284 168" fill="none" style="stroke:var(--accent-ink,#1F6E8C)" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/><rect x="212" y="262" width="124" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="306" width="96" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="350" width="112" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 26%, #fff)"/></g></svg>`;
 let storageOK = true;
 /* 학급 여러 개: 학급마다 따로 저장한다. 처음 학급(c1)은 예전 저장 위치를 그대로 쓴다 */
@@ -2373,7 +2373,8 @@ function gList(tab){
 VIEWS.grades = () => {
   if(!S.students.length) return header("성적 입력") + noStudents();
   const tab = ui.gTab || "perf"; ui.gGroup ||= "subj";
-  if(tab === "stu") return gStuView();
+  if(tab === "stu"){ ui.gTab = "perf"; ui.gGroup = "stu"; }
+  if(ui.gGroup === "stu") return gStuView();
   const groups = gList(tab), list = groups.flatMap(g => g.items);
   if(!ui.gradeSel || !list.find(a=>a.id===ui.gradeSel)) ui.gradeSel = list[0]?.id || null;
   const a = S.assessments.find(x=>x.id===ui.gradeSel);
@@ -2398,8 +2399,8 @@ VIEWS.grades = () => {
         <label class="f">날짜<input type="date" id="gDate" value="${today()}"></label>
       </div>`;
   return header("성적 입력", "수행평가는 등급으로, 단원평가·형성평가는 점수로 입력해요.", `<button class="btn" data-act="gradeExport">전체 성적 내보내기</button>`) + `
-  <div class="row" style="gap:10px;margin-bottom:14px;flex-wrap:wrap"><div class="seg big-seg"><button class="${tab==="perf"?"on":""}" data-act="gTab" data-v="perf">수행평가 <span class="num muted">${nP}</span></button><button class="${tab==="test"?"on":""}" data-act="gTab" data-v="test">단원·형성평가 <span class="num muted">${nT}</span></button><button data-act="gTab" data-v="stu">학생별</button></div>
-    <div class="seg"><button class="${ui.gGroup==="subj"?"on":""}" data-act="gGroup" data-v="subj">과목별</button><button class="${ui.gGroup==="month"?"on":""}" data-act="gGroup" data-v="month">월별</button></div></div>
+  <div class="row" style="gap:10px;margin-bottom:14px;flex-wrap:wrap"><div class="seg big-seg"><button class="${tab==="perf"?"on":""}" data-act="gTab" data-v="perf">수행평가 <span class="num muted">${nP}</span></button><button class="${tab==="test"?"on":""}" data-act="gTab" data-v="test">단원·형성평가 <span class="num muted">${nT}</span></button></div>
+    <div class="seg"><button class="${ui.gGroup==="subj"?"on":""}" data-act="gGroup" data-v="subj">과목별</button><button data-act="gGroup" data-v="stu">학생별</button><button class="${ui.gGroup==="month"?"on":""}" data-act="gGroup" data-v="month">월별</button></div></div>
   <div class="split">
     <div class="card" style="padding:12px;display:flex;flex-direction:column;gap:8px">${subjDL}
       <h3 style="margin:2px 0">${tab==="perf"?"수행평가 추가":"단원·형성평가 추가"}</h3>
@@ -2422,7 +2423,7 @@ A.addGrade = () => { const t = $("#gTitle").value.trim(); if(!t){ $("#gTitle").f
   const a = {id:uid(), subject:$("#gSub").value.trim()||"기타", title:t, date:$("#gDate")?.value || today(), kind:tab, mode: tab==="test" ? "score" : "level", levels:LEVELS.slice(), max:100, scores:{}};
   if(tab === "test"){ const mx = Number($("#gMaxNew").value); if(!(mx > 0)){ toast("몇 점 만점인지 적어 주세요"); $("#gMaxNew").focus(); return; } a.max = mx; a.testType = $("#gType").value; }
   S.assessments.push(a); ui.gradeSel = a.id; commit(); };
-A.gTab = el => { ui.gTab = el.dataset.v; ui.gBulk = null; ui.gradeSel = null; render(); };
+A.gTab = el => { ui.gTab = el.dataset.v; if(ui.gGroup === "stu") ui.gGroup = "subj"; ui.gBulk = null; ui.gradeSel = null; render(); };
 A.gGroup = el => { ui.gGroup = el.dataset.v; render(); };
 CH.gType = el => { const a = S.assessments.find(x=>x.id===ui.gradeSel); a.testType = el.value; commit(); };
 EN.addGrade = () => A.addGrade();
@@ -2475,7 +2476,9 @@ function gStuView(){
   const mine = a => !gExcl(a, s.id);
   const filled = sid => S.assessments.filter(a => !gExcl(a, sid) && (gAbsent(a, sid) || (gFinal(a, sid) !== undefined && gFinal(a, sid) !== ""))).length;
   const tot = sid => S.assessments.filter(a => !gExcl(a, sid)).length;
-  const sortA = L => L.sort((a,b)=>gSubjOrder(a.subject)-gSubjOrder(b.subject)||a.subject.localeCompare(b.subject)||(a.date||"").localeCompare(b.date||""));
+  const so = ui.gsSort || "subj";
+  const sortA = L => L.sort((a,b)=> so === "date" ? (a.date||"").localeCompare(b.date||"") || gSubjOrder(a.subject)-gSubjOrder(b.subject)
+    : gSubjOrder(a.subject)-gSubjOrder(b.subject)||a.subject.localeCompare(b.subject)||(a.date||"").localeCompare(b.date||""));
   const perf = sortA(S.assessments.filter(a => aKind(a)==="perf" && mine(a))), test = sortA(S.assessments.filter(a => aKind(a)==="test" && mine(a)));
   const classAvg = a => { const v = S.students.map(x=>gFinal(a,x.id)).filter(x=>x!==undefined&&x!=="").map(Number); return v.length ? (v.reduce((p,c)=>p+c,0)/v.length).toFixed(1) : "-"; };
   const cell = a => { const v = a.scores[s.id], lock = a.fin ? "g-locked" : "";
@@ -2484,21 +2487,37 @@ function gStuView(){
       : `<input type="number" class="scoreIn num" min="0" max="${a.max}" value="${v??""}" data-ch="gsScore" data-s="${s.id}" data-k="${a.id}" data-a="${a.id}" aria-label="${esc(a.title)} 점수"><span class="small muted">/${a.max}</span>`}<button class="g-abs" data-act="gsAbs" data-a="${a.id}">미응시</button></div>`; };
   const extra = a => { const f = gFinal(a, s.id), rt = a.retakeOn && a.retake && (s.id in a.retake);
     return `${rt ? `<div class="small muted">재시험 ${esc(String(a.retake[s.id]??"-"))} → 최종 <b>${esc(String(f??"-"))}</b></div>` : ""}${a.mode==="score" ? `<div class="small muted">반 평균 ${classAvg(a)}</div>` : ""}${a.fin ? `<div class="small" style="color:var(--ok)">✓ 평가 완료</div>` : ""}`; };
-  const table = (L, title) => `<h3 class="evh" style="margin-top:14px">${title} <span class="num muted">${L.length}</span></h3>${L.length ? `<div class="scroll"><table class="t gs-t"><thead><tr><th>과목</th><th>평가</th><th>날짜</th><th>결과</th><th></th></tr></thead><tbody>
+  const table = (L, title) => `<div class="spread" style="margin-top:14px"><h3 class="evh" style="margin:0">${title} <span class="num muted">${L.length}</span></h3><div class="seg"><button class="${so==="subj"?"on":""}" data-act="gsSort" data-v="subj">과목순</button><button class="${so==="date"?"on":""}" data-act="gsSort" data-v="date">날짜순</button></div></div>${L.length ? `<div class="scroll"><table class="t gs-t"><thead><tr><th>과목</th><th>평가</th><th>날짜</th><th>결과</th><th></th></tr></thead><tbody>
     ${L.map(a=>`<tr><td style="white-space:nowrap">${subjChip(a.subject,"sm")}</td><td><button class="sub-title" data-act="gsGo" data-a="${a.id}" title="이 평가 전체 보기">${a.testType?`<span class="pill" style="font-size:11px;padding:0 6px">${esc(a.testType)}</span> `:""}${esc(a.title)}</button></td><td class="num small" style="white-space:nowrap">${a.date?md(a.date):""}</td><td>${cell(a)}</td><td>${extra(a)}</td></tr>`).join("")}</tbody></table></div>` : `<div class="small muted">평가가 없어요</div>`}`;
   const pv = perf.map(a=>gFinal(a, s.id)).filter(Boolean), tv = test.map(a=>{ const f = gFinal(a, s.id); return f===undefined||f==="" ? null : Number(f)/a.max*100; }).filter(x=>x!==null);
-  const sum = `${LEVELS.map(l=>`<span class="pill">${l} <b class="num">${pv.filter(x=>x===l).length}</b></span>`).join("")}<span class="pill">단원·형성 평균 <b class="num">${tv.length ? (tv.reduce((p,c)=>p+c,0)/tv.length).toFixed(1) : "-"}</b>점 <span class="muted small">(100점 환산)</span></span>`;
+  const sum = `${LEVELS.map(l=>`<span class="pill">${l} <b class="num">${pv.filter(x=>x===l).length}</b></span>`).join("")}<span class="pill">단원·형성 전체 평균 <b class="num">${tv.length ? (tv.reduce((p,c)=>p+c,0)/tv.length).toFixed(1) : "-"}</b>점 <span class="muted small">(100점 환산)</span></span>`;
+  /* 과목별 평균: 수행평가는 등급을 점수로(매우 잘함 4 ~ 노력 요함 1) 바꿔 평균 낸 뒤 가장 가까운 등급으로, 단원·형성평가는 100점 환산 평균 */
+  const LV = l => { const i = LEVELS.indexOf(l); return i < 0 ? null : 4 - i; };
+  const subjs = [...new Set(perf.concat(test).map(a=>a.subject))].sort((a,b)=>gSubjOrder(a)-gSubjOrder(b)||a.localeCompare(b));
+  const pAvg = (sid, sb) => { const v = perf.filter(a=>a.subject===sb && a.mode==="level").map(a=>LV(gFinal(a, sid))).filter(x=>x!==null); return v.length ? v.reduce((p,c)=>p+c,0)/v.length : null; };
+  const pScA = (sid, sb) => { const v = perf.filter(a=>a.subject===sb && a.mode==="score").map(a=>{ const f = gFinal(a, sid); return f===undefined||f==="" ? null : Number(f)/a.max*100; }).filter(x=>x!==null); return v.length ? v.reduce((p,c)=>p+c,0)/v.length : null; };
+  const tAvg = (sid, sb) => { const v = test.filter(a=>a.subject===sb).map(a=>{ const f = gFinal(a, sid); return f===undefined||f==="" ? null : Number(f)/a.max*100; }).filter(x=>x!==null); return v.length ? v.reduce((p,c)=>p+c,0)/v.length : null; };
+  const clsAvg = (fn, sb) => { const v = st.map(x=>fn(x.id, sb)).filter(x=>x!==null); return v.length ? v.reduce((p,c)=>p+c,0)/v.length : null; };
+  const lvName = x => x === null ? "-" : LEVELS[Math.max(0, Math.min(3, 4 - Math.round(x)))];
+  const subjTable = subjs.length ? `<h3 class="evh" style="margin-top:14px">과목별 평균</h3><div class="scroll"><table class="t gs-avg"><thead><tr><th>과목</th><th>수행평가 평균</th><th class="muted">반 평균</th><th class="r">단원·형성 평균</th><th class="r muted">반 평균</th></tr></thead><tbody>
+    ${subjs.map(sb => { const npL = perf.filter(a=>a.subject===sb && a.mode==="level").length, npS = perf.filter(a=>a.subject===sb && a.mode==="score").length, nt = test.filter(a=>a.subject===sb).length, pa = pAvg(s.id, sb), ps = pScA(s.id, sb), ta = tAvg(s.id, sb), pc = clsAvg(pAvg, sb), psc = clsAvg(pScA, sb), tc = clsAvg(tAvg, sb);
+      const pCell = [npL ? `<b>${lvName(pa)}</b> <span class="small muted num">${pa===null?"":pa.toFixed(2)+"점 · "}등급 ${npL}개</span>` : "", npS ? `<b class="num">${ps===null?"-":ps.toFixed(1)}</b> <span class="small muted">점(100점 환산) · 점수 ${npS}개</span>` : ""].filter(Boolean).join("<br>") || `<span class="muted">-</span>`;
+      const pcCell = [npL ? `${lvName(pc)}${pc===null?"":` (${pc.toFixed(2)})`}` : "", npS && psc!==null ? `${psc.toFixed(1)}점` : ""].filter(Boolean).join("<br>");
+      return `<tr><td>${subjChip(sb,"sm")}</td><td>${pCell}</td><td class="small muted">${pcCell}</td><td class="r num">${nt ? `<b>${ta===null?"-":ta.toFixed(1)}</b> <span class="small muted">· ${nt}개</span>` : `<span class="muted">-</span>`}</td><td class="r num small muted">${nt && tc!==null ? tc.toFixed(1) : ""}</td></tr>`; }).join("")}</tbody></table></div><div class="small muted">수행평가 평균은 매우 잘함 4 · 잘함 3 · 보통 2 · 노력 요함 1로 바꿔 낸 평균이에요. 단원·형성평가는 100점 만점으로 바꿔 낸 평균이에요.</div>` : "";
   const i = st.indexOf(s);
   return header("성적 입력", "학생별로 모든 평가 결과를 한눈에 보고 바로 고칠 수 있어요.", `<button class="btn" data-act="gradeExport">전체 성적 내보내기</button>`) + `
-  <div class="row" style="gap:10px;margin-bottom:14px;flex-wrap:wrap"><div class="seg big-seg"><button data-act="gTab" data-v="perf">수행평가 <span class="num muted">${nP}</span></button><button data-act="gTab" data-v="test">단원·형성평가 <span class="num muted">${nT}</span></button><button class="on" data-act="gTab" data-v="stu">학생별</button></div></div>
+  <div class="row" style="gap:10px;margin-bottom:14px;flex-wrap:wrap"><div class="seg big-seg"><button data-act="gTab" data-v="perf">수행평가 <span class="num muted">${nP}</span></button><button data-act="gTab" data-v="test">단원·형성평가 <span class="num muted">${nT}</span></button></div>
+    <div class="seg"><button data-act="gGroup" data-v="subj">과목별</button><button class="on" data-act="gGroup" data-v="stu">학생별</button><button data-act="gGroup" data-v="month">월별</button></div></div>
   <div class="split">
     <div class="card" style="padding:12px"><h2 style="margin-bottom:6px">학생</h2><div class="list">${st.map(x=>{ const f = filled(x.id), t = tot(x.id); return `<div class="li ${x.id===s.id?"on":""}" data-act="gsSel" data-id="${x.id}"><div><span class="num muted small">${x.no}</span> ${esc(x.name)}</div><span class="small num ${f<t?"":"muted"}" style="${f<t?"color:var(--warn)":""}">${f}/${t}</span></div>`; }).join("")}</div></div>
     <div class="card"><div class="spread"><h2><span class="num muted">${s.no}</span> ${esc(s.name)} 성적</h2><div class="row" style="gap:6px"><button class="btn sm" data-act="gsSel" data-id="${st[(i-1+st.length)%st.length].id}">◀ 앞 학생</button><button class="btn sm" data-act="gsSel" data-id="${st[(i+1)%st.length].id}">다음 학생 ▶</button></div></div>
       <div class="row" style="margin-top:6px;gap:6px;flex-wrap:wrap">${sum}</div>
+      ${subjTable}
       ${table(perf, "수행평가 (등급)")}${table(test, "단원·형성평가 (점수)")}
       <div class="small muted" style="margin-top:8px">점수 칸에서 Enter를 누르면 다음 평가 칸으로 넘어가요. 평가 이름을 누르면 그 평가의 반 전체 화면으로 가요.</div></div>
   </div>`;
 }
+A.gsSort = el => { ui.gsSort = el.dataset.v; render(); };
 A.gsSel = el => { ui.gStu = el.dataset.id; render(); };
 A.gsGo = el => { const a = S.assessments.find(x=>x.id===el.dataset.a); ui.gTab = aKind(a); ui.gradeSel = a.id; render(); };
 A.gsLevel = el => { const a = S.assessments.find(x=>x.id===el.dataset.a); if(!a || a.fin) return; const sid = ui.gStu; a.scores[sid] === el.dataset.l ? delete a.scores[sid] : a.scores[sid] = el.dataset.l; commit(); };
