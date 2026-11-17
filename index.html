@@ -260,6 +260,7 @@ input[type=text],input[type=search],input:not([type]),textarea{ime-mode:active}
 .sug-wrap{position:relative}.sug-box{position:absolute;z-index:40;left:0;right:0;top:100%;margin-top:2px;background:var(--surface);border:1px solid var(--line);border-radius:8px;box-shadow:0 8px 20px rgba(0,0,0,.12);padding:4px;min-width:180px}
 .sug-box[hidden]{display:none}.sug-it{display:block;width:100%;text-align:left;border:0;background:none;padding:6px 8px;border-radius:6px;font:inherit;font-size:14px;color:var(--ink);cursor:pointer}
 .sug-it:hover,.sug-it.on{background:var(--accent-soft);color:var(--accent-ink)}.sug-tip{font-size:11px;color:var(--muted);padding:2px 8px 0}
+.g-gt{width:auto;min-width:320px;font-size:13px}.g-gt td,.g-gt th{padding:4px 10px!important}.g-gt tr.g-tot td{border-top:2px solid var(--line);font-weight:600}
 .rng-f{display:flex;justify-content:space-between;gap:8px 16px;flex-wrap:wrap;margin:0 0 10px;padding:8px 10px;border:1px solid var(--line);border-radius:10px}
 .rng-ck{cursor:pointer}.rng-ck input{width:15px;height:15px;margin:0 2px 0 0;accent-color:var(--accent-ink)}
 .abs-filt{display:flex;flex-direction:column;gap:6px;margin:0 0 10px;padding:8px 10px;border:1px solid var(--line);border-radius:10px}
@@ -767,7 +768,7 @@ A.calWReset = () => { LOOK.calw = 0; saveLook(); render(); };
 A.lookAccent = el => { LOOK.accent = el.dataset.v; saveLook(); render(); };
 A.lookTone = el => { LOOK.tone = el.dataset.v; saveLook(); render(); };
 A.lookMode = el => { LOOK.mode = el.dataset.v; saveLook(); render(); };
-const APP_VER = "2026.11.17-5";
+const APP_VER = "2026.11.17-6";
 const LOGO_SVG = `<svg class="brand-logo" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" style="fill:var(--brand,#1F6E8C)"/><g transform="translate(256 258) scale(1.13) translate(-256 -258)"><rect x="140" y="112" width="232" height="292" rx="30" fill="#FFFFFF"/><rect x="140" y="112" width="44" height="292" rx="22" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><rect x="162" y="112" width="22" height="292" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><path d="M318 112 H352 V214 L335 198 L318 214 Z" fill="#F2B84B"/><path d="M212 196 L236 220 L284 168" fill="none" style="stroke:var(--accent-ink,#1F6E8C)" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/><rect x="212" y="262" width="124" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="306" width="96" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="350" width="112" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 26%, #fff)"/></g></svg>`;
 let storageOK = true;
 /* 학급 여러 개: 학급마다 따로 저장한다. 처음 학급(c1)은 예전 저장 위치를 그대로 쓴다 */
@@ -2358,7 +2359,7 @@ VIEWS.grades = () => {
       <button class="btn pri" data-act="addGrade">평가 추가</button>
       <div class="list" style="margin-top:4px">${groups.length ? groups.map(g=>`<div class="g-grp">${esc(g.label)} <span class="num">${g.items.length}</span></div>` + g.items.map(x=>`<div class="li ${x.id===ui.gradeSel?"on":""}" data-act="gradeSel" data-id="${x.id}"><div><div class="t1">${aKind(x)==="test"?`<span class="pill" style="font-size:11px;padding:0 6px">${esc(x.testType||"단원평가")}</span> `:""}${esc(x.title)}</div><div class="small muted">${ui.gGroup==="month"?esc(x.subject)+" · ":""}${x.date?md(x.date):""}${aKind(x)==="test"?` · ${x.max}점 만점`:""}</div></div><span class="small muted num">${S.students.filter(s=>x.scores[s.id]!==undefined&&x.scores[s.id]!=="").length}/${S.students.length}</span></div>`).join("")).join("") : `<div class="empty">${tab==="perf"?"수행평가":"단원·형성평가"}를 추가해 보세요</div>`}</div>
     </div>
-    <div class="card">${a ? `<div class="spread"><div>${ui.gEdit===a.id ? `<div class="row" style="gap:6px;flex-wrap:wrap"><input type="text" id="geSub" data-sug="subj" autocomplete="off" value="${esc(a.subject)}" style="width:110px" aria-label="과목"><input type="text" id="geTitle" value="${esc(a.title)}" data-enter="gEdSave" style="flex:1;min-width:200px;font-weight:600" aria-label="평가 이름"><button class="btn sm pri" data-act="gEdSave">저장</button><button class="btn sm ghost" data-act="edCancel" data-k="gEdit">취소</button></div>${subjDL}` : `<h2>${esc(a.subject)} · ${esc(a.title)} <button class="btn sm ghost asg-pen" data-act="gEdOpen" aria-label="평가 이름 고치기">✎ 고치기</button></h2>`}<div class="row" style="margin-top:6px">${summary}</div></div>
+    <div class="card">${a ? `<div class="spread"><div>${ui.gEdit===a.id ? `<div class="row" style="gap:6px;flex-wrap:wrap"><input type="text" id="geSub" data-sug="subj" autocomplete="off" value="${esc(a.subject)}" style="width:110px" aria-label="과목"><input type="text" id="geTitle" value="${esc(a.title)}" data-enter="gEdSave" style="flex:1;min-width:200px;font-weight:600" aria-label="평가 이름"><button class="btn sm pri" data-act="gEdSave">저장</button><button class="btn sm ghost" data-act="edCancel" data-k="gEdit">취소</button></div>${subjDL}` : `<h2>${esc(a.subject)} · ${esc(a.title)} <button class="btn sm ghost asg-pen" data-act="gEdOpen" aria-label="평가 이름 고치기">✎ 고치기</button></h2>`}<div class="row" style="margin-top:6px">${summary}</div>${gGenderTable(a)}</div>
       <div class="row">${aKind(a)==="test"?`<select data-ch="gType" aria-label="평가 종류">${TEST_TYPES.map(x=>`<option ${(a.testType||"단원평가")===x?"selected":""}>${x}</option>`).join("")}</select>`:""}${a.mode==="score"?`<label class="f" style="flex-direction:row;align-items:center;gap:6px">만점<input type="number" class="scoreIn" style="width:76px" value="${a.max}" data-ch="gMax" min="1"></label>`:""}<input type="date" value="${a.date}" data-ch="gDate"><label class="row small g-rt-tg" style="gap:5px"><input type="checkbox" ${a.retakeOn?"checked":""} data-ch="gRetakeOn">재시험 있음</label><button class="btn sm danger" data-act="delGrade">평가 삭제</button></div></div>
       ${a.retakeOn ? `<div class="banner g-rt-info" style="margin-top:10px"><div class="small">재시험 볼 학생은 <b>재시험</b> 칸의 '＋ 재시험'을 누르고, 결과를 넣으세요. 처음 결과와 재시험 중 <b>더 나은 쪽이 최종</b>이 돼요. 재시험 대상 <b class="num">${Object.keys(a.retake||{}).length}명</b> · 결과 입력 <b class="num">${Object.values(a.retake||{}).filter(hasV).length}명</b></div></div>` : ""}
       ${gBulkBar(a)}
@@ -2398,6 +2399,22 @@ A.gPickAll = el => { const a = S.assessments.find(x=>x.id===ui.gradeSel), k = el
 A.gBulkCancel = () => { ui.gBulk = null; render(); };
 A.gBulkApply = () => { const a = S.assessments.find(x=>x.id===ui.gradeSel), B = ui.gBulk; B.sel.forEach(id => a.scores[id] = B.v);
   const n = B.sel.length; ui.gBulk = null; commit(); toast(`${n}명에게 '${B.v}'을(를) 넣었어요`); };
+/* 남녀별 통계: 점수제는 응시·평균·만점 인원, 등급제는 단계별 인원 (재시험 반영한 최종 기준) */
+function gGenderTable(a){
+  const grp = [["남", sorted().filter(s=>s.gender==="남")], ["여", sorted().filter(s=>s.gender==="여")], ["전체", sorted()]];
+  const noG = sorted().filter(s=>s.gender!=="남" && s.gender!=="여").length;
+  const vals = L => L.map(s=>gFinal(a, s.id)).filter(v=>v!==undefined && v!=="");
+  let head, rows;
+  if(a.mode === "level"){
+    head = `<th></th>${a.levels.map(l=>`<th class="r">${esc(l)}</th>`).join("")}<th class="r">미입력</th>`;
+    rows = grp.map(([g, L]) => { const v = vals(L); return `<tr class="${g==="전체"?"g-tot":""}"><td>${g} <span class="muted small">${L.length}명</span></td>${a.levels.map(l=>`<td class="r num">${v.filter(x=>x===l).length}</td>`).join("")}<td class="r num muted">${L.length - v.length}</td></tr>`; });
+  } else {
+    head = `<th></th><th class="r">입력</th><th class="r">평균</th><th class="r">${a.max}점(만점)</th><th class="r">최고</th><th class="r">최저</th>`;
+    rows = grp.map(([g, L]) => { const v = vals(L).map(Number), avg = v.length ? (v.reduce((p,c)=>p+c,0)/v.length).toFixed(1) : "-";
+      return `<tr class="${g==="전체"?"g-tot":""}"><td>${g} <span class="muted small">${L.length}명</span></td><td class="r num">${v.length}</td><td class="r num"><b>${avg}</b></td><td class="r num">${v.filter(x=>x===Number(a.max)).length}명</td><td class="r num">${v.length?Math.max(...v):"-"}</td><td class="r num">${v.length?Math.min(...v):"-"}</td></tr>`; });
+  }
+  return `<div class="scroll" style="margin-top:8px"><table class="t g-gt"><thead><tr>${head}</tr></thead><tbody>${rows.join("")}</tbody></table></div>${noG ? `<div class="small muted">성별이 정해지지 않은 학생 ${noG}명은 전체에만 들어가요 (학생 관리에서 남·여를 골라 주세요)</div>` : ""}`;
+}
 function gRetakeCells(a, s){
   const R = a.retake || {}, on = s.id in R, f = gFinal(a, s.id), used = gRetakeUsed(a, s.id);
   const cell = !on ? `<button class="btn sm ghost" data-act="gRetake" data-s="${s.id}">＋ 재시험</button>`
