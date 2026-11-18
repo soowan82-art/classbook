@@ -660,6 +660,14 @@ label.f .combo select{flex:1}
 .draw-roll{font-size:30px;font-weight:800;letter-spacing:-.5px;margin-top:6px;min-height:42px;color:var(--accent-ink);transition:transform .15s}
 .draw-roll.rolling{color:var(--muted);filter:blur(.3px)}
 .draw-roll.hit{transform:scale(1.15)}
+.fx-bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding-bottom:10px;border-bottom:1px dashed var(--line)}.fx-ck{cursor:pointer;font-size:12.5px}.fx-ck input{position:absolute;opacity:0;pointer-events:none}.fx-ck{position:relative}.fx-ck:not(.on){opacity:.6;text-decoration:line-through}
+.sm-seg button{font-size:12px;padding:4px 9px}.draw-fx .fx-bar{border:0;padding:6px 0 0}
+.fx-rolling{color:var(--muted)!important;filter:blur(.4px)}
+.fx-hit{animation:fxHit .6s cubic-bezier(.2,1.6,.4,1)}@keyframes fxHit{0%{transform:scale(.6);opacity:.3}60%{transform:scale(1.22);text-shadow:0 0 22px var(--accent)}100%{transform:scale(1)}}
+.fx-in{animation:fxIn .35s cubic-bezier(.2,1.5,.4,1)}@keyframes fxIn{0%{transform:translateY(10px) scale(.85);opacity:0}100%{transform:none;opacity:1}}
+.fx-confetti{position:fixed;inset:0;pointer-events:none;z-index:2000}
+.fx-big{position:fixed;inset:0;z-index:1500;background:rgba(15,22,30,.92);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;cursor:pointer}
+.fx-big-t{font-size:clamp(20px,3vw,34px);opacity:.75}.fx-big-n{font-size:clamp(60px,14vw,200px);font-weight:800;letter-spacing:-2px;line-height:1.1;text-align:center}.fx-big-n.fx-rolling{color:#9fb3c8!important}.fx-big-h{font-size:14px;opacity:.5}
 .draw-list{max-height:240px;overflow:auto;display:flex;flex-direction:column;gap:2px}
 .draw-item{display:flex;justify-content:space-between;padding:5px 8px;border-radius:6px;background:var(--bg);font-size:14px}
 .modal-bg{position:fixed;inset:0;background:rgba(10,16,24,.42);display:flex;align-items:center;justify-content:center;z-index:50;padding:16px}
@@ -715,7 +723,7 @@ body.col-dragging{cursor:col-resize;user-select:none}.t th.col-set{white-space:n
   .cal:not(.cal-wide) .cell .who{font-size:0;gap:0}.cal:not(.cal-wide) .cell .who.more{font-size:10px}
   .cal:not(.cal-wide) .cell .whos{flex-direction:row;flex-wrap:wrap;gap:2px}
 }
-@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}.fx-hit{animation:fxHit .6s cubic-bezier(.2,1.6,.4,1)!important}.fx-in{animation:fxIn .35s cubic-bezier(.2,1.5,.4,1)!important}}
 </style>
 <script>
 /* 사용 통계(익명): Vercel에 올린 주소에서만 방문 수·기기·지역을 셉니다. 이름·이메일·학급 기록은 보내지 않아요. */
@@ -811,7 +819,7 @@ A.calWReset = () => { LOOK.calw = 0; saveLook(); render(); };
 A.lookAccent = el => { LOOK.accent = el.dataset.v; saveLook(); render(); };
 A.lookTone = el => { LOOK.tone = el.dataset.v; saveLook(); render(); };
 A.lookMode = el => { LOOK.mode = el.dataset.v; saveLook(); render(); };
-const APP_VER = "2026.11.18-2";
+const APP_VER = "2026.11.18-4";
 const LOGO_SVG = `<svg class="brand-logo" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" style="fill:var(--brand,#1F6E8C)"/><g transform="translate(256 258) scale(1.13) translate(-256 -258)"><rect x="140" y="112" width="232" height="292" rx="30" fill="#FFFFFF"/><rect x="140" y="112" width="44" height="292" rx="22" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><rect x="162" y="112" width="22" height="292" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><path d="M318 112 H352 V214 L335 198 L318 214 Z" fill="#F2B84B"/><path d="M212 196 L236 220 L284 168" fill="none" style="stroke:var(--accent-ink,#1F6E8C)" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/><rect x="212" y="262" width="124" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="306" width="96" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="350" width="112" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 26%, #fff)"/></g></svg>`;
 let storageOK = true;
 /* 학급 여러 개: 학급마다 따로 저장한다. 처음 학급(c1)은 예전 저장 위치를 그대로 쓴다 */
@@ -4566,6 +4574,43 @@ function rndPool(){
     .map(s => ({key:s.id, name:s.name, gender:s.gender, no:s.no}));
 }
 const rndName = k => k.startsWith("t:") ? k.slice(2) : sname(k);
+/* ───── 뽑기 효과: 소리·꽃가루·긴장감(속도)·크게 보기. 하나씩 켜고 끌 수 있고 이 기기에 저장 ───── */
+const FX_DEF = {on:true, sound:true, confetti:true, pop:true, speed:"normal", big:false};
+const FX = () => Object.assign({}, FX_DEF, LOOK.fx || {});
+const FX_SPEED = {short:[10, 1.08, 35], normal:[18, 1.1, 45], long:[30, 1.09, 50]};
+let fxAC = null;
+function fxSound(kind){ const f = FX(); if(!f.on || !f.sound) return; try{
+  fxAC ||= new (window.AudioContext || window.webkitAudioContext)(); if(fxAC.state === "suspended") fxAC.resume();
+  const t0 = fxAC.currentTime, beep = (freq, at, dur, type = "square", vol = .06) => { const o = fxAC.createOscillator(), g = fxAC.createGain(); o.type = type; o.frequency.value = freq; g.gain.setValueAtTime(vol, t0+at); g.gain.exponentialRampToValueAtTime(.0001, t0+at+dur); o.connect(g).connect(fxAC.destination); o.start(t0+at); o.stop(t0+at+dur+.02); };
+  if(kind === "tick") beep(900 + Math.random()*300, 0, .03, "square", .035);
+  else if(kind === "win"){ [523, 659, 784, 1047].forEach((fq,i)=>beep(fq, i*.09, .22, "triangle", .09)); beep(1047, .36, .45, "triangle", .08); }
+  else if(kind === "pop") beep(660, 0, .12, "triangle", .07);
+  else if(kind === "done"){ [784, 988, 1175, 1568].forEach((fq,i)=>beep(fq, i*.11, .3, "triangle", .08)); }
+}catch(e){} }
+function fxConfetti(amount = 150){ const f = FX(); if(!f.on || !f.confetti) return;
+  const cv = document.createElement("canvas"); cv.className = "fx-confetti"; const W = cv.width = innerWidth, H = cv.height = innerHeight; document.body.appendChild(cv); const c = cv.getContext("2d");
+  const cols = ["#F6C445","#F07A7A","#6EC6E6","#8BD48B","#B79CF2","#FF9F5A"];
+  const P = Array.from({length:amount}, () => ({x: W/2 + (Math.random()-.5)*W*.3, y: H*.35, vx:(Math.random()-.5)*14, vy: -Math.random()*14-4, r: Math.random()*6+4, c: cols[Math.floor(Math.random()*cols.length)], a: Math.random()*6, va:(Math.random()-.5)*.3}));
+  let t = 0; const fr = () => { c.clearRect(0,0,W,H); P.forEach(p => { p.vy += .35; p.vx *= .99; p.x += p.vx; p.y += p.vy; p.a += p.va; c.save(); c.translate(p.x,p.y); c.rotate(p.a); c.fillStyle = p.c; c.globalAlpha = Math.max(0, 1 - t/120); c.fillRect(-p.r/2,-p.r/4,p.r,p.r/2); c.restore(); });
+    if(++t < 130) requestAnimationFrame(fr); else cv.remove(); }; fr(); }
+/* 이름 돌리기: pool에서 빠르게 바뀌다가 점점 느려져 final에서 멈춤 */
+function fxRoll(el, pool, final, done){ const f = FX();
+  if(!f.on || pool.length < 2){ el.textContent = final; done && done(); return () => {}; }
+  const [steps, mul, w0] = FX_SPEED[f.speed] || FX_SPEED.normal; let n = 0, wait = w0, tm = null; el.classList.add("fx-rolling");
+  const tick = () => { if(n < steps){ let v; do{ v = pool[Math.floor(Math.random()*pool.length)]; }while(pool.length > 1 && v === el.textContent); el.textContent = v; fxSound("tick"); n++; wait *= mul; tm = setTimeout(tick, wait); }
+    else { el.textContent = final; el.classList.remove("fx-rolling"); done && done(); } };
+  tick(); return () => { clearTimeout(tm); el.classList.remove("fx-rolling"); el.textContent = final; }; }
+function fxHit(el, big){ const f = FX(); if(!f.on) return; if(f.pop && el){ el.classList.remove("fx-hit"); void el.offsetWidth; el.classList.add("fx-hit"); } fxSound("win"); if(big !== false) fxConfetti(); }
+/* 크게 보기: 화면 가득 이름을 띄워 돌리기 */
+function fxBig(title, pool, final, onClose){ const bg = document.createElement("div"); bg.className = "fx-big";
+  bg.innerHTML = `<div class="fx-big-t">${esc(title)}</div><div class="fx-big-n" id="fxBigN">…</div><div class="fx-big-h">아무 곳이나 누르면 닫혀요</div>`; document.body.appendChild(bg);
+  const n = bg.querySelector("#fxBigN"); let fin = false; const stop = fxRoll(n, pool, final, () => { fin = true; fxHit(n); });
+  bg.addEventListener("click", () => { if(!fin){ stop(); fin = true; fxHit(n); return; } bg.remove(); onClose && onClose(); }); }
+function fxBar(){ const f = FX(), ck = (k, l) => `<label class="chip fx-ck ${f.on && f[k]?"on":""}" ${!f.on?'style="opacity:.5"':""}><input type="checkbox" ${f[k]?"checked":""} ${!f.on?"disabled":""} data-ch="fxSet" data-k="${k}">${l}</label>`;
+  return `<div class="fx-bar"><label class="chip fx-ck ${f.on?"on":""}"><input type="checkbox" ${f.on?"checked":""} data-ch="fxSet" data-k="on"><b>✨ 효과</b></label>${ck("sound","🔊 소리")}${ck("confetti","🎉 꽃가루")}${ck("pop","💥 튀어나오기")}${ck("big","🖥 크게 보기")}
+    <span class="seg sm-seg" ${!f.on?'style="opacity:.5;pointer-events:none"':""}>${[["short","빠르게"],["normal","보통"],["long","두근두근"]].map(([k,l])=>`<button class="${f.speed===k?"on":""}" data-act="fxSpeed" data-v="${k}">${l}</button>`).join("")}</span></div>`; }
+CH.fxSet = el => { LOOK.fx = Object.assign(FX(), {[el.dataset.k]: el.checked}); laySave(); if(el.dataset.k === "sound" && el.checked) setTimeout(()=>fxSound("pop"), 0); render(); };
+A.fxSpeed = el => { LOOK.fx = Object.assign(FX(), {speed: el.dataset.v}); laySave(); render(); };
 VIEWS.random = () => {
   if(!S.students.length && ui.rnd.target!=="custom") ui.rnd.target = "custom";
   const R = ui.rnd, ab = rndAbsent(), pool = rndPool();
@@ -4598,7 +4643,7 @@ VIEWS.random = () => {
       <label class="check"><input type="checkbox" ${R.skipAbsent?"checked":""} data-ch="rndSkipAbsent"><span>오늘 결석·체험학습인 학생 빼기${ab.length?` (${ab.length}명)`:""}</span></label></div>`;
   return header("랜덤 뽑기", "대상을 먼저 정하고(전체·남자만·여자만·직접 입력) 뽑는 방식을 고르세요.", modeSeg) + `
   <div class="grid2" style="grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);align-items:start">
-    <div class="card" style="display:flex;flex-direction:column;gap:14px">${stage}</div>
+    <div class="card" style="display:flex;flex-direction:column;gap:14px">${fxBar()}${stage}</div>
     ${targetCard}
   </div>`;
 };
@@ -4618,13 +4663,16 @@ A.rndReset = () => { ui.rnd.drawn = []; ui.rnd.result = null; render(); };
 A.rndDraw = () => {
   const R = ui.rnd; let pool = rndPool(); if(R.noRepeat) pool = pool.filter(p=>!R.drawn.includes(p.key));
   if(!pool.length) return;
-  const final = pool[Math.floor(Math.random()*pool.length)].key;
-  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const el = $("#pickName"); let k = 0; const steps = reduce ? 0 : 14;
-  const tick = () => { if(k < steps){ el.textContent = pool[Math.floor(Math.random()*pool.length)].name; k++; setTimeout(tick, 40 + k*9); } else { R.result = final; if(!R.drawn.includes(final)) R.drawn.push(final); render(); } };
-  tick();
+  if(R.busy) return; R.busy = true;
+  const final = pool[Math.floor(Math.random()*pool.length)].key, names = pool.map(p=>p.name), fn = rndName(final);
+  const commitRes = () => { R.busy = false; R.result = final; if(!R.drawn.includes(final)) R.drawn.push(final); render(); };
+  if(FX().on && FX().big){ fxBig("뽑힌 사람은…", names, fn, null); commitRes(); return; }
+  const el = $("#pickName"); fxRoll(el, names, fn, () => { commitRes(); fxHit($("#pickName")); });
 };
-A.rndOrder = () => { ui.rnd.order = shuffle(rndPool().map(p=>p.key)); render(); };
+A.rndOrder = () => { ui.rnd.order = shuffle(rndPool().map(p=>p.key)); render(); fxStagger(".order .o"); };
+/* 순서·모둠: 하나씩 차례로 나타나기 */
+function fxStagger(sel){ const f = FX(), L = [...document.querySelectorAll(sel)]; if(!f.on) return;
+  const gap = {short:40, normal:90, long:180}[f.speed] || 90; L.forEach((x,i) => { x.style.opacity = 0; setTimeout(() => { x.style.opacity = ""; if(f.pop) x.classList.add("fx-in"); fxSound("tick"); if(i === L.length-1){ fxSound("done"); fxConfetti(110); } }, i*gap); }); }
 A.rndCopy = async () => { try{ await navigator.clipboard.writeText(ui.rnd.order.map((k,i)=>`${i+1}. ${rndName(k)}`).join("\n")); toast("순서를 복사했어요"); }catch(e){ toast("복사가 막혀 있어요"); } };
 A.rndGroups = () => {
   const R = ui.rnd, pool = rndPool(), n = pool.length; if(!n) return;
@@ -4635,7 +4683,7 @@ A.rndGroups = () => {
   // 차례로 나눠 담되, 시작 모둠을 무작위로 돌려 인원이 많은 모둠도 매번 달라지게
   const off = Math.floor(Math.random()*g), groups = Array.from({length:g}, () => []);
   order.forEach((p,i) => groups[(i+off)%g].push(p.key));
-  R.groups = groups.map(gr => shuffle(gr)); render();
+  R.groups = groups.map(gr => shuffle(gr)); render(); fxStagger(".groups .grp-card");
 };
 A.rndGroupCopy = async () => { try{ await navigator.clipboard.writeText(ui.rnd.groups.map((gr,i)=>`${i+1}모둠: ${gr.map(rndName).join(", ")}`).join("\n")); toast("모둠을 복사했어요"); }catch(e){ toast("복사가 막혀 있어요"); } };
 
@@ -4721,18 +4769,20 @@ function drawShow(title, items){
     bg.innerHTML = `<div class="modal draw-modal"><div class="spread"><h3>${esc(title)}</h3><span class="small muted num" id="drawCnt">0 / ${items.length}</span></div>
       <div class="draw-stage"><div class="draw-label" id="drawLabel">&nbsp;</div><div class="draw-roll" id="drawRoll">준비</div></div>
       <div class="draw-list" id="drawList"></div>
+      <div class="draw-fx">${fxBar()}</div>
       <div class="row" style="justify-content:flex-end"><button class="btn" data-k="all">결과 바로 보기</button><button class="btn pri" data-k="next">${items.length>1?"한 명씩 뽑기":"뽑기"}</button></div></div>`;
     document.body.appendChild(bg);
-    const $$ = id => bg.querySelector("#"+id); let i = 0, busy = false, timer = null;
+    const $$ = id => bg.querySelector("#"+id); let i = 0, busy = false, stopRoll = null;
     const addDone = it => { $$("drawList").insertAdjacentHTML("beforeend", `<div class="draw-item"><span>${esc(it.label)}</span><b>${esc(it.result)}</b></div>`); $$("drawList").scrollTop = 1e6; $$("drawCnt").textContent = `${i} / ${items.length}`; };
-    const finish = () => { const b = bg.querySelector('[data-k="next"]'); b.textContent = "닫기"; b.dataset.k = "close"; bg.querySelector('[data-k="all"]').remove(); $$("drawLabel").textContent = "추첨 끝"; $$("drawRoll").textContent = "🎉"; };
+    const finish = () => { const b = bg.querySelector('[data-k="next"]'); b.textContent = "닫기"; b.dataset.k = "close"; bg.querySelector('[data-k="all"]').remove(); $$("drawLabel").textContent = "추첨 끝"; $$("drawRoll").textContent = "🎉"; fxSound("done"); fxConfetti(); };
     const step = () => { if(busy || i >= items.length) return; busy = true; const it = items[i], pool = it.pool.length ? it.pool : [it.result];
-      $$("drawLabel").textContent = it.label; const roll = $$("drawRoll"); roll.classList.add("rolling"); let n = 0, wait = 45;
-      const tick = () => { roll.textContent = pool[Math.floor(Math.random()*pool.length)]; n++; if(n < 18){ wait *= 1.1; timer = setTimeout(tick, wait); } else { roll.textContent = it.result; roll.classList.remove("rolling"); roll.classList.add("hit"); setTimeout(()=>roll.classList.remove("hit"), 400); i++; addDone(it); busy = false; if(i >= items.length) finish(); } };
-      tick(); };
-    bg.addEventListener("click", e => { const k = e.target.closest("[data-k]")?.dataset.k;
+      $$("drawLabel").textContent = it.label; const roll = $$("drawRoll"); roll.classList.add("rolling");
+      stopRoll = fxRoll(roll, pool, it.result, () => { roll.classList.remove("rolling"); i++; addDone(it); busy = false; stopRoll = null; if(i >= items.length){ fxHit(roll, false); finish(); } else fxHit(roll, false); }); };
+    bg.addEventListener("change", () => { setTimeout(() => { const d = bg.querySelector(".draw-fx"); if(d) d.innerHTML = fxBar(); }, 0); });
+    bg.addEventListener("click", e => { if(e.target.closest("[data-act=fxSpeed]")) setTimeout(() => { const d = bg.querySelector(".draw-fx"); if(d) d.innerHTML = fxBar(); }, 0);
+      const k = e.target.closest("[data-k]")?.dataset.k;
       if(k==="next") step();
-      else if(k==="all"){ clearTimeout(timer); busy = false; const roll = $$("drawRoll"); roll.classList.remove("rolling"); while(i < items.length){ i++; addDone(items[i-1]); } finish(); }
+      else if(k==="all"){ if(stopRoll){ const sr = stopRoll; stopRoll = null; busy = true; sr(); } busy = false; const roll = $$("drawRoll"); roll.classList.remove("rolling"); while(i < items.length){ i++; addDone(items[i-1]); } finish(); }
       else if(k==="close" || (e.target===bg && i >= items.length)){ bg.remove(); done(); } });
   });
 }
