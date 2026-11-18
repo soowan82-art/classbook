@@ -668,6 +668,9 @@ label.f .combo select{flex:1}
 .fx-confetti{position:fixed;inset:0;pointer-events:none;z-index:2000}
 .fx-big{position:fixed;inset:0;z-index:1500;background:rgba(15,22,30,.92);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;cursor:pointer}
 .fx-big-t{font-size:clamp(20px,3vw,34px);opacity:.75}.fx-big-n{font-size:clamp(60px,14vw,200px);font-weight:800;letter-spacing:-2px;line-height:1.1;text-align:center}.fx-big-n.fx-rolling{color:#9fb3c8!important}.fx-big-h{font-size:14px;opacity:.5}
+.fx-big-list{background:rgba(15,22,30,.98);justify-content:flex-start;padding:4vh 3vw;overflow:auto}.fxb-grid{display:grid;gap:14px;width:100%;max-width:1600px}
+.fxb-order{grid-template-columns:repeat(auto-fill,minmax(210px,1fr))}.fxb-o{display:flex;align-items:center;gap:14px;background:rgba(255,255,255,.08);border-radius:16px;padding:14px 18px;font-size:clamp(22px,2.6vw,40px);font-weight:700}.fxb-o b{min-width:1.6em;color:#F6C445}
+.fxb-groups{grid-template-columns:repeat(auto-fill,minmax(280px,1fr))}.fxb-g{background:rgba(255,255,255,.08);border-radius:18px;padding:16px 20px}.fxb-g>b{display:block;font-size:clamp(22px,2.4vw,34px);color:#F6C445;margin-bottom:8px}.fxb-g>div{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:clamp(20px,2.2vw,34px);font-weight:700}
 .draw-list{max-height:240px;overflow:auto;display:flex;flex-direction:column;gap:2px}
 .draw-item{display:flex;justify-content:space-between;padding:5px 8px;border-radius:6px;background:var(--bg);font-size:14px}
 .modal-bg{position:fixed;inset:0;background:rgba(10,16,24,.42);display:flex;align-items:center;justify-content:center;z-index:50;padding:16px}
@@ -819,7 +822,7 @@ A.calWReset = () => { LOOK.calw = 0; saveLook(); render(); };
 A.lookAccent = el => { LOOK.accent = el.dataset.v; saveLook(); render(); };
 A.lookTone = el => { LOOK.tone = el.dataset.v; saveLook(); render(); };
 A.lookMode = el => { LOOK.mode = el.dataset.v; saveLook(); render(); };
-const APP_VER = "2026.11.18-4";
+const APP_VER = "2026.11.18-5";
 const LOGO_SVG = `<svg class="brand-logo" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" style="fill:var(--brand,#1F6E8C)"/><g transform="translate(256 258) scale(1.13) translate(-256 -258)"><rect x="140" y="112" width="232" height="292" rx="30" fill="#FFFFFF"/><rect x="140" y="112" width="44" height="292" rx="22" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><rect x="162" y="112" width="22" height="292" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><path d="M318 112 H352 V214 L335 198 L318 214 Z" fill="#F2B84B"/><path d="M212 196 L236 220 L284 168" fill="none" style="stroke:var(--accent-ink,#1F6E8C)" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/><rect x="212" y="262" width="124" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="306" width="96" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="350" width="112" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 26%, #fff)"/></g></svg>`;
 let storageOK = true;
 /* 학급 여러 개: 학급마다 따로 저장한다. 처음 학급(c1)은 예전 저장 위치를 그대로 쓴다 */
@@ -4669,7 +4672,18 @@ A.rndDraw = () => {
   if(FX().on && FX().big){ fxBig("뽑힌 사람은…", names, fn, null); commitRes(); return; }
   const el = $("#pickName"); fxRoll(el, names, fn, () => { commitRes(); fxHit($("#pickName")); });
 };
-A.rndOrder = () => { ui.rnd.order = shuffle(rndPool().map(p=>p.key)); render(); fxStagger(".order .o"); };
+A.rndOrder = () => { ui.rnd.order = shuffle(rndPool().map(p=>p.key)); render();
+  if(FX().on && FX().big) fxBigList("발표 순서", ui.rnd.order.map((k,i)=>`<div class="fxb-o"><b>${i+1}</b><span>${esc(rndName(k))}</span></div>`), "fxb-order"); else fxStagger(".order .o"); };
+/* 크게 보기(순서·모둠): 화면 가득 하나씩 나타나기. 누르면 남은 것 한꺼번에 → 한 번 더 누르면 닫기 */
+function fxBigList(title, items, cls){ const bg = document.createElement("div"); bg.className = "fx-big fx-big-list";
+  bg.innerHTML = `<div class="fx-big-t">${esc(title)}</div><div class="fxb-grid ${cls}">${items.join("")}</div><div class="fx-big-h">누르면 바로 다 보여요 · 다 나오면 누르면 닫혀요</div>`; document.body.appendChild(bg);
+  const L = [...bg.querySelectorAll(".fxb-grid > *")], f = FX(), gap = {short:60, normal:140, long:280}[f.speed] || 140; let i = 0, tm = null, fin = false;
+  L.forEach(x => x.style.visibility = "hidden");
+  const show = x => { x.style.visibility = ""; if(f.pop) x.classList.add("fx-in"); };
+  const end = () => { fin = true; fxSound("done"); fxConfetti(); bg.querySelector(".fx-big-h").textContent = "아무 곳이나 누르면 닫혀요"; };
+  const step = () => { if(i < L.length){ show(L[i]); fxSound("tick"); i++; tm = setTimeout(step, gap); } else end(); };
+  step();
+  bg.addEventListener("click", () => { if(!fin){ clearTimeout(tm); L.forEach(show); i = L.length; end(); return; } bg.remove(); }); }
 /* 순서·모둠: 하나씩 차례로 나타나기 */
 function fxStagger(sel){ const f = FX(), L = [...document.querySelectorAll(sel)]; if(!f.on) return;
   const gap = {short:40, normal:90, long:180}[f.speed] || 90; L.forEach((x,i) => { x.style.opacity = 0; setTimeout(() => { x.style.opacity = ""; if(f.pop) x.classList.add("fx-in"); fxSound("tick"); if(i === L.length-1){ fxSound("done"); fxConfetti(110); } }, i*gap); }); }
@@ -4683,7 +4697,8 @@ A.rndGroups = () => {
   // 차례로 나눠 담되, 시작 모둠을 무작위로 돌려 인원이 많은 모둠도 매번 달라지게
   const off = Math.floor(Math.random()*g), groups = Array.from({length:g}, () => []);
   order.forEach((p,i) => groups[(i+off)%g].push(p.key));
-  R.groups = groups.map(gr => shuffle(gr)); render(); fxStagger(".groups .grp-card");
+  R.groups = groups.map(gr => shuffle(gr)); render();
+  if(FX().on && FX().big) fxBigList("모둠 발표", R.groups.map((gr,i)=>`<div class="fxb-g"><b>${i+1}모둠</b><div>${gr.map(k=>`<span>${esc(rndName(k))}</span>`).join("")}</div></div>`), "fxb-groups"); else fxStagger(".groups .grp-card");
 };
 A.rndGroupCopy = async () => { try{ await navigator.clipboard.writeText(ui.rnd.groups.map((gr,i)=>`${i+1}모둠: ${gr.map(rndName).join(", ")}`).join("\n")); toast("모둠을 복사했어요"); }catch(e){ toast("복사가 막혀 있어요"); } };
 
