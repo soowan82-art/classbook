@@ -140,6 +140,9 @@ table.t{width:100%;border-collapse:collapse;font-size:13.5px}
 .t td.r,.t th.r{text-align:right}
 .t td.c,.t th.c{text-align:center}
 .scroll{overflow-x:auto}
+/* 출결 종합표: 표 안에서 위아래로 스크롤 → 제목행이 위에 붙어 있음 */
+.scroll.hold{overflow:auto;max-height:calc(100dvh - 190px);min-height:240px;overscroll-behavior:contain;border:1px solid var(--line);border-radius:10px}
+.scroll.hold .t thead th{position:sticky;top:0;z-index:3;background:var(--surface);box-shadow:0 1px 0 var(--line)}
 .empty{color:var(--muted);text-align:center;padding:26px 10px;font-size:13.5px}
 
 .banner{background:var(--warn-soft);color:var(--ink);border:1px solid color-mix(in srgb,var(--warn) 30%,transparent);border-radius:10px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
@@ -822,7 +825,7 @@ A.calWReset = () => { LOOK.calw = 0; saveLook(); render(); };
 A.lookAccent = el => { LOOK.accent = el.dataset.v; saveLook(); render(); };
 A.lookTone = el => { LOOK.tone = el.dataset.v; saveLook(); render(); };
 A.lookMode = el => { LOOK.mode = el.dataset.v; saveLook(); render(); };
-const APP_VER = "2026.11.18-5";
+const APP_VER = "2026.11.19-1";
 const LOGO_SVG = `<svg class="brand-logo" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" style="fill:var(--brand,#1F6E8C)"/><g transform="translate(256 258) scale(1.13) translate(-256 -258)"><rect x="140" y="112" width="232" height="292" rx="30" fill="#FFFFFF"/><rect x="140" y="112" width="44" height="292" rx="22" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><rect x="162" y="112" width="22" height="292" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><path d="M318 112 H352 V214 L335 198 L318 214 Z" fill="#F2B84B"/><path d="M212 196 L236 220 L284 168" fill="none" style="stroke:var(--accent-ink,#1F6E8C)" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/><rect x="212" y="262" width="124" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="306" width="96" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="350" width="112" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 26%, #fff)"/></g></svg>`;
 let storageOK = true;
 /* 학급 여러 개: 학급마다 따로 저장한다. 처음 학급(c1)은 예전 저장 위치를 그대로 쓴다 */
@@ -834,6 +837,8 @@ function saveReg(){ try{ localStorage.setItem(REG_KEY, JSON.stringify(REG)); }ca
 function loadState(id){ try{ const r = localStorage.getItem(dataKey(id || REG.cur)); return r ? JSON.parse(r) : null; }catch(e){ storageOK = false; return null; } }
 function regName(){ if(!S || !S.cls) return; const e = REG.list.find(c=>c.id===REG.cur), n = S.cls.name || "", y = S.cls.year || "";
   if(!e){ REG.list.push({id:REG.cur, name:n, year:y}); saveReg(); } else if(e.name!==n || e.year!==y){ e.name = n; e.year = y; saveReg(); } }
+/* 같은 기기의 다른 화면(평가·평어)이 기록을 바꾸면 다시 읽기 */
+window.addEventListener("storage", e => { try{ if(liveS || !e.newValue || e.key !== dataKey(REG.cur)) return; const n = JSON.parse(e.newValue); if(!n || !n.cls) return; S = n; markDirty(); render(); }catch(err){} });
 function persist(){ if(liveS) return; try{ localStorage.setItem(dataKey(REG.cur), JSON.stringify(S)); storageOK = true; }catch(e){ storageOK = false; } regName(); markDirty(); }
 /* 구글 드라이브 동기화 상태(이 기기에만 저장) */
 const syncKeyOf = id => dataKey(id) + "-drive";
@@ -1889,7 +1894,7 @@ function attDateTable(rows, label){
   const L = []; Object.entries(rows).forEach(([sid, o]) => (o.groups||[]).forEach(g => L.push({sid, ...g})));
   L.sort((a,b)=>a.days[0].localeCompare(b.days[0]) || (stu(a.sid)?.no??0)-(stu(b.sid)?.no??0));
   return `<div class="spread" style="margin:4px 0 10px"><span class="small muted">${label} · ${L.length}건 · ${Object.keys(rows).length}명 (날짜순)</span><button class="btn sm" data-act="attExportRange">내보내기</button></div>
-  <div class="scroll"><table class="t"><thead><tr><th>날짜</th><th>번호</th><th>이름</th><th>구분</th><th class="r">일수</th><th>교시</th><th>내용</th><th class="c">고치기</th></tr></thead><tbody>
+  <div class="scroll hold"><table class="t"><thead><tr><th>날짜</th><th>번호</th><th>이름</th><th>구분</th><th class="r">일수</th><th>교시</th><th>내용</th><th class="c">고치기</th></tr></thead><tbody>
   ${L.map(g=>{ const a = g.days[0], b = g.days[g.days.length-1];
     return `<tr><td class="num" style="white-space:nowrap">${a===b?md(a):`${md(a)} ~ ${md(b)}`}</td><td class="num">${stu(g.sid)?.no??""}</td><td style="white-space:nowrap">${esc(sname(g.sid))}</td><td style="white-space:nowrap"><i class="dot c-${g.reason}"></i> ${g.reason==="체험학습"?"체험학습":g.reason}${g.kind}</td><td class="r num">${g.kind==="결석"?g.days.length:"-"}</td><td class="num">${g.kind!=="결석"&&g.periods.length?g.periods.join(",")+"교시":""}</td><td>${esc(g.note)}</td><td class="c"><button class="btn sm ghost att-pen ${attEditOn(g.sid, g.days)?"on":""}" data-act="attEdit" data-s="${g.sid}" data-days="${g.days.join(",")}" aria-label="${esc(sname(g.sid))} 기록 고치기">✎</button></td></tr>${attEditOn(g.sid, g.days) ? `<tr class="att-ed-tr"><td colspan="8">${attEditor()}</td></tr>` : ""}`; }).join("") || `<tr><td colspan="8" class="empty">이 기간에 출결 특이사항이 없어요</td></tr>`}
   ${attEditOn("__new") ? `<tr class="att-ed-tr"><td colspan="8">${attEditor()}</td></tr>` : ""}</tbody></table></div>`;
@@ -1908,7 +1913,7 @@ function attSumTable(rows, label, act, emptyLabel){
   const list = sorted().filter(s=>rows[s.id]);
   const tot = ATT_COLS.map(c=>list.reduce((a,s)=>a+rows[s.id][c],0));
   return `<div class="spread" style="margin:4px 0 10px"><span class="small muted">${label} 출결 특이사항 ${list.length}명</span><button class="btn sm" data-act="${act}">내보내기</button></div>
-  <div class="scroll"><table class="t"><thead><tr><th>번호</th><th>이름</th>${ATT_COLS.map(c=>`<th class="r">${c}</th>`).join("")}<th>내용</th></tr></thead><tbody>
+  <div class="scroll hold"><table class="t"><thead><tr><th>번호</th><th>이름</th>${ATT_COLS.map(c=>`<th class="r">${c}</th>`).join("")}<th>내용</th></tr></thead><tbody>
   ${list.map(s=>`<tr><td class="num">${s.no}</td><td style="white-space:nowrap">${esc(s.name)} <button class="att-plus" data-act="attEdit" data-s="${s.id}" data-days="" title="${esc(s.name)} 출결 더 넣기" aria-label="${esc(s.name)} 출결 더 넣기">＋</button></td>${ATT_COLS.map(c=>`<td class="r num">${rows[s.id][c]||""}</td>`).join("")}<td class="small">${(rows[s.id].groups||[]).map(g=>`<button class="att-g ${attEditOn(s.id, g.days)?"on":""}" data-act="attEdit" data-s="${s.id}" data-days="${g.days.join(",")}" title="눌러서 고치기"><i class="dot c-${g.reason}"></i>${esc(g.label)}</button>`).join("")}</td></tr>${attEditOn(s.id) ? `<tr class="att-ed-tr"><td colspan="${3+ATT_COLS.length}">${attEditor()}</td></tr>` : ""}`).join("") || `<tr><td colspan="11" class="empty">${emptyLabel} 출결 특이사항이 없어요</td></tr>`}
   ${attEditOn("__new") ? `<tr class="att-ed-tr"><td colspan="${3+ATT_COLS.length}">${attEditor()}</td></tr>` : ""}
   ${list.length?`<tr><td></td><td><b>합계</b></td>${tot.map(v=>`<td class="r num"><b>${v||""}</b></td>`).join("")}<td></td></tr>`:""}</tbody></table></div>`;
