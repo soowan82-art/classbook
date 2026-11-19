@@ -118,7 +118,9 @@ input[type=text],input[type=tel],input[type=number],input[type=date],input[type=
   border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:7px 10px;min-width:0}
 input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
 textarea{width:100%;resize:vertical;line-height:1.6}
-label.f{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--muted)}
+label.f,div.f{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--muted)}
+div.f .stu-pick{color:var(--ink);font-size:14px}
+.ev-d{color:var(--accent);margin-top:2px;white-space:nowrap}
 label.f > input,label.f > select,label.f > textarea{color:var(--ink);font-size:14px;width:100%}
 .form{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;align-items:end}
 
@@ -825,7 +827,7 @@ A.calWReset = () => { LOOK.calw = 0; saveLook(); render(); };
 A.lookAccent = el => { LOOK.accent = el.dataset.v; saveLook(); render(); };
 A.lookTone = el => { LOOK.tone = el.dataset.v; saveLook(); render(); };
 A.lookMode = el => { LOOK.mode = el.dataset.v; saveLook(); render(); };
-const APP_VER = "2026.11.19-1";
+const APP_VER = "2026.11.19-4";
 const LOGO_SVG = `<svg class="brand-logo" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" style="fill:var(--brand,#1F6E8C)"/><g transform="translate(256 258) scale(1.13) translate(-256 -258)"><rect x="140" y="112" width="232" height="292" rx="30" fill="#FFFFFF"/><rect x="140" y="112" width="44" height="292" rx="22" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><rect x="162" y="112" width="22" height="292" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><path d="M318 112 H352 V214 L335 198 L318 214 Z" fill="#F2B84B"/><path d="M212 196 L236 220 L284 168" fill="none" style="stroke:var(--accent-ink,#1F6E8C)" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/><rect x="212" y="262" width="124" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="306" width="96" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="350" width="112" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 26%, #fff)"/></g></svg>`;
 let storageOK = true;
 /* 학급 여러 개: 학급마다 따로 저장한다. 처음 학급(c1)은 예전 저장 위치를 그대로 쓴다 */
@@ -1937,12 +1939,12 @@ function attFieldRows(from, to, type = "field"){
   return out.filter(r => (!from || r.end >= from) && (!to || r.start <= to)).sort((a,b)=>a.start.localeCompare(b.start) || (stu(a.sid)?.no??0)-(stu(b.sid)?.no??0));
 }
 /* ── 학생 고르기 상자: 이름·번호를 바로 쳐도 되고(쉼표·띄어쓰기로 여러 명), ▾로 명단을 펼쳐 체크해도 돼요 ── */
-function stuPickHtml(p, ph = "이름·번호 입력 (예: 민준, 5)"){
-  return `<div class="stu-pick" id="${p}Pick"><div class="stu-pick-box" data-act="stuPickFocus" data-p="${p}"><span class="stu-pick-sel" id="${p}PickSel"></span>
-      <input type="text" id="${p}PickQ" placeholder="${ph}" autocomplete="off" data-in="stuPickQ" data-enter="stuPickEnter" data-p="${p}" aria-label="학생 이름 또는 번호">
+function stuPickHtml(p, ph = "이름·번호 입력 (예: 민준, 5)", pre = []){
+  return `<div class="stu-pick" id="${p}Pick"><div class="stu-pick-box" data-act="stuPickFocus" data-p="${p}"><span class="stu-pick-sel" id="${p}PickSel">${pre.map(id=>`<span class="sp-chip">${esc(sname(id))}<button type="button" data-act="stuPickDel" data-p="${p}" data-id="${id}" aria-label="${esc(sname(id))} 빼기">×</button></span>`).join("")}</span>
+      <input type="text" id="${p}PickQ" placeholder="${pre.length?"더 넣기":ph}" autocomplete="off" data-in="stuPickQ" data-enter="stuPickEnter" data-p="${p}" aria-label="학생 이름 또는 번호">
       <button type="button" class="stu-pick-tg" data-act="stuPickTg" data-p="${p}" aria-label="학생 명단 펼치기">▾</button></div>
     <div class="stu-pick-in" hidden><div class="row" style="gap:6px;margin-bottom:6px"><button class="btn sm" type="button" data-act="stuPickAll" data-p="${p}" data-v="1">모두</button><button class="btn sm ghost" type="button" data-act="stuPickAll" data-p="${p}" data-v="0">모두 해제</button><span style="flex:1"></span><button class="btn sm ghost" type="button" data-act="stuPickTg" data-p="${p}">닫기</button></div>
-      <div class="stu-pick-g">${sorted().map(x=>`<label data-n="${x.no}" data-nm="${esc(x.name)}"><input type="checkbox" value="${x.id}" data-ch="stuPick" data-p="${p}"><span class="num muted">${x.no}</span> ${esc(x.name)}</label>`).join("")}</div></div></div>`;
+      <div class="stu-pick-g">${sorted().map(x=>`<label data-n="${x.no}" data-nm="${esc(x.name)}"><input type="checkbox" value="${x.id}" ${pre.includes(x.id)?"checked":""} data-ch="stuPick" data-p="${p}"><span class="num muted">${x.no}</span> ${esc(x.name)}</label>`).join("")}</div></div></div>`;
 }
 const stuPicked = p => [...document.querySelectorAll(`#${p}Pick input[type=checkbox]:checked`)].map(x=>x.value);
 const attPicked = stuPicked;
@@ -2353,27 +2355,35 @@ VIEWS.records = () => {
     <div style="display:flex;flex-direction:column;gap:16px">
       <div class="card"><h2>기록 추가</h2>
         <div class="form">
-          <label class="f">학생<select id="recStu">${sorted().map(s=>`<option value="${s.id}" ${s.id===sid?"selected":""}>${s.no}. ${esc(s.name)}</option>`).join("")}</select></label>
-          <label class="f">날짜<input type="date" id="recDate" value="${today()}" data-ch="recDateCh"></label>
+          <div class="f" style="grid-column:1/-1">학생 <span class="small">여러 명을 고르면 같은 내용이 한 명씩 따로 저장돼요</span>${stuPickHtml("rs", undefined, sid && sid!=="all" ? [sid] : [])}</div>
+          <label class="f">기록(지도) 날짜<input type="date" id="recDate" value="${today()}" data-ch="recDateCh"></label>
+          <label class="f">사건 날짜 <span class="small">(다를 때만)</span><input type="date" id="recEv"></label>
           <label class="f">분류<select id="recCat">${REC_CATS.map(c=>`<option>${c}</option>`).join("")}</select></label>
           <label class="f">언제<select id="recWhen" data-ch="recWhenCh"><option value="">선택 안 함</option>${whenOptions(today()).map(o=>`<option value="${o.v}" data-subj="${esc(o.subj)}">${o.v}${o.subj?" · "+esc(o.subj):""}</option>`).join("")}</select></label>
           <label class="f">과목<select id="recSubj"><option value="">없음</option>${TT().subjects.map(x=>`<option>${esc(x.name)}</option>`).join("")}</select></label>
-          <label class="f" style="grid-column:1/-1">내용<textarea id="recText" rows="3" placeholder="관찰한 사실 위주로 적어 두세요"></textarea></label>
+          <label class="f" style="grid-column:1/-1">내용<textarea id="recText" rows="3" placeholder="관찰한 사실 위주로 적어 두세요. 여러 명일 때 {이름}이라고 쓰면 학생 이름으로 바뀌어요"></textarea></label>
         </div><div class="row" style="justify-content:flex-end;margin-top:10px"><button class="btn pri" data-act="addRec">기록 저장</button></div></div>
       <div class="card"><div class="spread"><h2>${sid==="all"?"전체 기록":esc(sname(sid))+" 기록"} <span class="small muted">${list.length}</span></h2>
         <div class="chips">${["전체",...REC_CATS].map(c=>`<button class="chip k-plain ${ui.recCat===c?"on":""}" data-act="recCat" data-c="${c}">${c}</button>`).join("")}</div></div>
-        <div class="tl">${list.map(r=> ui.recEdit===r.id ? `<div class="it rec-ed"><div class="dt"><input type="date" id="reDate" value="${r.date}"><select id="reCat" style="margin-top:4px">${REC_CATS.map(c=>`<option ${c===r.cat?"selected":""}>${c}</option>`).join("")}</select></div><div>${sid==="all"?`<div style="font-weight:600;margin-bottom:2px">${esc(sname(r.sid))}</div>`:""}<textarea id="reText" rows="3" style="width:100%" data-enter="recEdSave">${esc(r.text)}</textarea><div class="row" style="gap:6px;margin-top:6px;justify-content:flex-end"><button class="btn sm ghost" data-act="edCancel" data-k="recEdit">취소</button><button class="btn sm pri" data-act="recEdSave">저장</button></div></div><span></span></div>` : `<div class="it"><div class="dt num">${r.date.replace(/-/g,". ")}<div style="margin-top:4px"><span class="pill ${recPill(r.cat)}">${r.cat}</span></div></div><div>${sid==="all"?`<div style="font-weight:600;margin-bottom:2px">${esc(sname(r.sid))}</div>`:""}<div class="tx">${r.when?`<span class="pill" style="margin-right:6px">${esc(whenLabel(r))}</span>`:""}${esc(r.text)}</div></div><div class="row" style="gap:2px;align-items:flex-start"><button class="x" data-act="recEdOpen" data-id="${r.id}" aria-label="고치기" title="고치기">✎</button><button class="x" data-act="delRec" data-id="${r.id}" aria-label="삭제">×</button></div></div>`).join("") || `<div class="empty">기록이 없어요</div>`}</div></div>
+        <div class="tl">${list.map(r=> ui.recEdit===r.id ? `<div class="it rec-ed"><div class="dt"><input type="date" id="reDate" value="${r.date}" title="기록(지도) 날짜"><div class="small muted" style="margin-top:4px">사건 날짜</div><input type="date" id="reEv" value="${r.ev||""}" title="사건 날짜(다를 때만)"><select id="reCat" style="margin-top:4px">${REC_CATS.map(c=>`<option ${c===r.cat?"selected":""}>${c}</option>`).join("")}</select></div><div>${sid==="all"?`<div style="font-weight:600;margin-bottom:2px">${esc(sname(r.sid))}</div>`:""}<textarea id="reText" rows="3" style="width:100%" data-enter="recEdSave">${esc(r.text)}</textarea><div class="row" style="gap:6px;margin-top:6px;justify-content:flex-end"><button class="btn sm ghost" data-act="edCancel" data-k="recEdit">취소</button><button class="btn sm pri" data-act="recEdSave">저장</button></div></div><span></span></div>` : `<div class="it"><div class="dt num">${r.date.replace(/-/g,". ")}${r.ev && r.ev!==r.date ? `<div class="small ev-d" title="실제로 일이 일어난 날">사건 ${md(r.ev)}</div>` : ""}<div style="margin-top:4px"><span class="pill ${recPill(r.cat)}">${r.cat}</span></div></div><div>${sid==="all"?`<div style="font-weight:600;margin-bottom:2px">${esc(sname(r.sid))}</div>`:""}<div class="tx">${r.when?`<span class="pill" style="margin-right:6px">${esc(whenLabel(r))}</span>`:""}${esc(r.text)}</div></div><div class="row" style="gap:2px;align-items:flex-start"><button class="x" data-act="recEdOpen" data-id="${r.id}" aria-label="고치기" title="고치기">✎</button><button class="x" data-act="delRec" data-id="${r.id}" aria-label="삭제">×</button></div></div>`).join("") || `<div class="empty">기록이 없어요</div>`}</div></div>
     </div>
   </div>`;
 };
 A.recSel = el => { ui.recSel = el.dataset.id; render(); };
 A.recCat = el => { ui.recCat = el.dataset.c; render(); };
-A.addRec = () => { const text = $("#recText").value.trim(); if(!text){ $("#recText").focus(); return; } S.records.push({id:uid(), sid:$("#recStu").value, date:$("#recDate").value||today(), cat:$("#recCat").value, text, when:$("#recWhen").value, subj:$("#recSubj").value}); commit(); toast("기록을 저장했어요"); };
+/* {이름} 자리에 학생 이름 넣기. 뒤에 붙은 조사(은/는, 이/가, 을/를, 과/와)는 이름 받침에 맞춰 고친다 */
+function nameFill(text, id){ const nm = sname(id), c = nm.charCodeAt(nm.length-1), jong = c >= 0xAC00 && c <= 0xD7A3 && (c - 0xAC00) % 28 > 0;
+  const P = {"은":"은는","는":"은는","이":"이가","가":"이가","을":"을를","를":"을를","과":"과와","와":"과와"};
+  return String(text||"").replace(/\{이름\}(은|는|이|가|을|를|과|와)?/g, (_, j) => nm + (j ? P[j][jong ? 0 : 1] : "")); }
+A.addRec = () => { const text = $("#recText").value.trim(); if(!text){ $("#recText").focus(); return; } const ids = stuPickRead("rs"); if(!ids) return;
+  const d0 = $("#recDate").value||today(), ev = $("#recEv").value; const base = {date:d0, ev: ev && ev !== d0 ? ev : undefined, cat:$("#recCat").value, when:$("#recWhen").value, subj:$("#recSubj").value}, grp = ids.length > 1 ? uid() : undefined;
+  ids.forEach(id => S.records.push({id:uid(), sid:id, ...base, text: nameFill(text, id), grp}));
+  commit(); toast(ids.length > 1 ? `${ids.length}명에게 같은 기록을 저장했어요` : "기록을 저장했어요"); };
 CH.recWhenCh = el => { const o = el.selectedOptions[0]; const subj = o ? o.dataset.subj || "" : ""; const sel = $("#recSubj"); if(/교시$/.test(el.value)){ if(subj && ![...sel.options].some(x=>x.value===subj)) sel.add(new Option(subj, subj)); sel.value = subj; } else sel.value = ""; };
 CH.recDateCh = el => { const w = $("#recWhen"), cur = w.value; const opts = whenOptions(el.value||today());
   w.innerHTML = `<option value="">선택 안 함</option>` + opts.map(o=>`<option value="${o.v}" data-subj="${esc(o.subj)}">${o.v}${o.subj?" · "+esc(o.subj):""}</option>`).join(""); w.value = cur; CH.recWhenCh(w); };
 A.delRec = async el => { if(await ask("이 기록을 삭제할까요?","삭제",true)){ S.records = S.records.filter(r=>r.id!==el.dataset.id); commit(); } };
-A.recExport = () => { const rows = [["날짜","번호","이름","분류","언제","과목","내용"], ...S.records.slice().sort((a,b)=>(stu(a.sid)?.no??99)-(stu(b.sid)?.no??99)||a.date.localeCompare(b.date)).map(r=>[r.date, stu(r.sid)?.no??"", sname(r.sid), r.cat, r.when||"", r.subj||"", r.text])];
+A.recExport = () => { const rows = [["날짜","사건 날짜","번호","이름","분류","언제","과목","내용"], ...S.records.slice().sort((a,b)=>(stu(a.sid)?.no??99)-(stu(b.sid)?.no??99)||a.date.localeCompare(b.date)).map(r=>[r.date, r.ev||"", stu(r.sid)?.no??"", sname(r.sid), r.cat, r.when||"", r.subj||"", r.text])];
   exportSheets(`${clsName()}_학생누가기록`, [["누가기록", rows]]); };
 
 /* ───────── 성적 ───────── */
@@ -2610,7 +2620,7 @@ VIEWS.budget = () => {
 };
 A.recEdOpen = el => { ui.recEdit = el.dataset.id; render(); setTimeout(()=>{ const t = $("#reText"); t?.focus(); t && t.setSelectionRange(t.value.length, t.value.length); }, 20); };
 A.recEdSave = () => { const r = S.records.find(x=>x.id===ui.recEdit); if(!r) return; const t = $("#reText").value.trim(); if(!t){ toast("내용을 적어 주세요"); return $("#reText").focus(); }
-  r.text = t; r.cat = $("#reCat").value; if($("#reDate").value) r.date = $("#reDate").value; ui.recEdit = null; commit(); toast("기록을 고쳤어요"); };
+  r.text = t; r.cat = $("#reCat").value; if($("#reDate").value) r.date = $("#reDate").value; { const v = $("#reEv")?.value; r.ev = v && v !== r.date ? v : undefined; } ui.recEdit = null; commit(); toast("기록을 고쳤어요"); };
 EN.recEdSave = () => A.recEdSave();
 A.budSel = el => { ui.budgetSel = el.dataset.id; render(); };
 A.budEdOpen = () => { ui.budEdit = ui.budgetSel; render(); setTimeout(()=>$("#beName")?.focus(), 20); };
@@ -4304,13 +4314,14 @@ function csThreads(list, sel){
     const first = l[0], last = l[l.length-1], key = csKey(first), multi = l.length > 1, f = ui.csFollow;
     return `<div class="cs-thread ${multi?"multi":""}">
       ${multi ? `<div class="row cs-th-head" style="gap:6px">${sel==="all"?`<b>${esc(sname(first.sid))}</b>`:""}<span class="pill vio">${esc(first.topic)}</span><span class="small muted">${l.length}회 상담 · ${md(first.date)} ~ ${md(last.date)}</span></div>` : ""}
-      ${l.map((c,n)=>`<div class="it"><div class="dt num">${multi?`<b class="cs-n">${n+1}차</b><br>`:""}${c.date.replace(/-/g,". ")}${c.time?`<br>${esc(c.time)}`:""}</div>
+      ${l.map((c,n)=>`<div class="it"><div class="dt num">${multi?`<b class="cs-n">${n+1}차</b><br>`:""}${c.date.replace(/-/g,". ")}${c.time?`<br>${esc(c.time)}`:""}${c.ev && c.ev!==c.date ? `<div class="small ev-d" title="실제로 일이 일어난 날">사건 ${md(c.ev)}</div>` : ""}</div>
         <div style="display:flex;flex-direction:column;gap:4px;min-width:0">${multi ? `<div class="small muted">${esc(c.who)} · ${esc(c.how)}</div>` : `<div class="row" style="gap:6px">${sel==="all"?`<b>${esc(sname(c.sid))}</b>`:""}<span class="pill vio">${esc(c.topic)}</span><span class="small muted">${esc(c.who)} · ${esc(c.how)}</span></div>`}
-          <div class="tx">${esc(c.content)||'<span class="muted">(내용 없음)</span>'}</div>
+          ${c.ses ? (() => { const w = (S.counsels||[]).filter(x => x.ses === c.ses && x.sid !== c.sid).map(x=>sname(x.sid)); return w.length ? `<div class="small muted">함께 상담: ${esc([...new Set(w)].join(", "))}</div>` : ""; })() : ""}<div class="tx">${esc(c.content)||'<span class="muted">(내용 없음)</span>'}</div>
           ${c.followup?`<div class="small"><b>후속 조치</b> ${esc(c.followup)}</div>`:""}
           ${c.next?`<div class="small muted">다음 상담 ${md(c.next)}</div>`:""}</div>
         <div class="row" style="align-items:flex-start"><button class="btn sm ghost" data-act="csEditOpen" data-id="${c.id}">고치기</button><button class="x" data-act="csDel" data-id="${c.id}" aria-label="삭제">×</button></div></div>`).join("")}
       ${f && f.th===key ? `<div class="cs-follow"><div class="small" style="font-weight:600;margin-bottom:6px">${l.length+1}차 상담 이어서 기록 <span class="muted" style="font-weight:400">· ${esc(sname(first.sid))} · ${esc(first.topic)}</span></div>
+          <div class="f" style="margin-bottom:8px">함께 상담할 학생 <span class="small">다른 학생을 더하거나 ×로 뺄 수 있어요. 학생마다 자기 상담에 이어서(없으면 새로) 저장돼요</span>${stuPickHtml("cf", undefined, csGroupSids(l))}</div>
           <div class="form" style="grid-template-columns:150px 110px 130px 130px">
             <label class="f">날짜<input type="date" id="cfDate" value="${f.date}"></label>
             <label class="f">시간<input type="time" id="cfTime"></label>
@@ -4329,12 +4340,26 @@ A.csFollowOpen = el => { const key = el.dataset.th, l = (S.counsels||[]).filter(
   if(ui.csSel!=="all" && ui.csSel!==last.sid) ui.csSel = last.sid;
   render(); const box = $(".cs-follow"); box?.scrollIntoView({block:"center"}); $("#cfContent")?.focus(); };
 A.csFollowCancel = () => { ui.csFollow = null; render(); };
+/* 같이 상담한 묶음(grp)의 학생들 = 이 상담 줄기 학생 + 같은 묶음 학생 */
+function csGroupSids(l){ const gs = new Set(l.map(c=>c.grp).filter(Boolean)), ids = [l[0].sid]; (S.counsels||[]).forEach(c => { if(c.grp && gs.has(c.grp) && !ids.includes(c.sid)) ids.push(c.sid); }); return ids; }
 A.csFollowSave = () => { const f = ui.csFollow, l = (S.counsels||[]).filter(c=>csKey(c)===f.th); if(!l.length) return;
   const base = l[0], content = $("#cfContent").value.trim(); if(!content){ toast("상담 내용을 적어 주세요"); $("#cfContent").focus(); return; }
+  const ids = stuPickRead("cf"); if(!ids) return;
+  if(!(ids.length === 1 && ids[0] === base.sid)) return csFollowMulti(f, l, ids, content);
   const c = {id:uid(), thread:f.th, date:$("#cfDate").value||today(), time:$("#cfTime").value, sid:base.sid, who:$("#cfWho").value, how:$("#cfHow").value, topic:base.topic, content, followup:$("#cfFollow").value.trim(), next:$("#cfNext").value||""};
   // 이번 상담으로 지난 '다음 상담 예정'은 끝난 것으로 본다
   l.forEach(x => { if(x.next && x.next <= c.date) x.nextDone = true; });
   S.counsels.push(c); ui.csFollow = null; commit(); toast(`${l.length+1}차 상담을 기록했어요`); };
+/* 여러 학생 이어서 기록: 학생마다 같은 묶음의 자기 상담 줄기가 있으면 거기에 이어 붙이고, 없으면 새 줄기 */
+function csFollowMulti(f, l, ids, content){ const base = l[0], gs = new Set(l.map(c=>c.grp).filter(Boolean)), grp = [...gs][0] || uid();
+  l.forEach(c => { if(!c.grp) c.grp = grp; }); gs.add(grp);
+  const d = $("#cfDate").value||today(), common = {ses: uid(), date:d, time:$("#cfTime").value, who:$("#cfWho").value, how:$("#cfHow").value, topic:base.topic, next:$("#cfNext").value||""}, fol = $("#cfFollow").value.trim();
+  let n = 0; ids.forEach(sid => {
+    const mine = sid === base.sid ? l : (() => { const k = (S.counsels||[]).find(c => c.sid === sid && c.grp && gs.has(c.grp)); return k ? S.counsels.filter(c => csKey(c) === csKey(k)) : null; })();
+    const c = {id:uid(), ...common, sid, grp, content: nameFill(content, sid), followup: nameFill(fol, sid)};
+    if(mine && mine.length){ c.thread = csKey(mine[0]); mine.forEach(x => { if(x.next && x.next <= d) x.nextDone = true; }); }
+    S.counsels.push(c); n++; });
+  ui.csFollow = null; commit(); toast(`${n}명 상담을 이어서 기록했어요`); }
 function csBlank(sid){ return {id:uid(), date:today(), time:"", sid: sid || sorted()[0]?.id || "", who:"학생", how:"대면", topic:"생활", content:"", followup:"", next:""}; }
 VIEWS.counsel = () => {
   if(!S.students.length) return header("상담 기록") + noStudents();
@@ -4346,11 +4371,12 @@ VIEWS.counsel = () => {
     <div class="form">
       <label class="f">상담 날짜<input type="date" id="csDate" value="${e.date}"></label>
       <label class="f">시간(선택)<input type="time" id="csTime" value="${esc(e.time)}"></label>
-      <label class="f">학생<select id="csSid">${sorted().map(s=>`<option value="${s.id}" ${s.id===e.sid?"selected":""}>${s.no}. ${esc(s.name)}</option>`).join("")}</select></label>
+      <label class="f">사건 발생일 <span class="small">(다를 때만)</span><input type="date" id="csEv" value="${e.ev||""}"></label>
+      <div class="f" style="grid-column:1/-1">학생 <span class="small">${(S.counsels||[]).some(c=>c.id===e.id) ? "학생을 더 고르면 같은 내용으로 따로 저장돼요. ×로 빼거나 다른 학생으로 바꿀 수 있어요" : "여러 명을 고르면 학생마다 따로 저장돼요 (모둠 상담 등)"}</span>${stuPickHtml("cs", undefined, e.sid && ((S.counsels||[]).some(c=>c.id===e.id) || ui.csSel !== "all") ? [e.sid] : [])}</div>
       <label class="f">상담한 사람<select id="csWho">${CS_WHO.map(x=>`<option ${x===e.who?"selected":""}>${x}</option>`).join("")}</select></label>
       <label class="f">방법<select id="csHow">${CS_HOW.map(x=>`<option ${x===e.how?"selected":""}>${x}</option>`).join("")}</select></label>
       <label class="f">주제<select id="csTopic">${CS_TOPIC.map(x=>`<option ${x===e.topic?"selected":""}>${x}</option>`).join("")}</select></label>
-      <label class="f" style="grid-column:1/-1">상담 내용<textarea id="csContent" rows="5" placeholder="나눈 이야기, 학생·보호자의 의견">${esc(e.content)}</textarea></label>
+      <label class="f" style="grid-column:1/-1">상담 내용<textarea id="csContent" rows="5" placeholder="나눈 이야기, 학생·보호자의 의견 (여러 명일 때 {이름}은 학생 이름으로 바뀌어요)">${esc(e.content)}</textarea></label>
       <label class="f" style="grid-column:1/-1">후속 조치(선택)<textarea id="csFollow" rows="2" placeholder="예: 2주 뒤 교우관계 다시 확인, 담임·상담교사 공유">${esc(e.followup)}</textarea></label>
       <label class="f">다음 상담일(선택)<input type="date" id="csNext" value="${e.next||""}"></label>
     </div>
@@ -4373,14 +4399,20 @@ A.csNew = () => { ui.csEdit = csBlank(ui.csSel!=="all" ? ui.csSel : null); rende
 A.csNewFor = () => A.csNew();
 A.csEditOpen = el => { ui.csEdit = JSON.parse(JSON.stringify(S.counsels.find(c=>c.id===el.dataset.id))); render(); $("#main").scrollTop = 0; };
 A.csCancel = () => { ui.csEdit = null; render(); };
-A.csSave = () => { const e = ui.csEdit;
-  Object.assign(e, {date:$("#csDate").value||today(), time:$("#csTime").value, sid:$("#csSid").value, who:$("#csWho").value, how:$("#csHow").value, topic:$("#csTopic").value, content:$("#csContent").value.trim(), followup:$("#csFollow").value.trim(), next:$("#csNext").value||""});
-  if(!e.content){ toast("상담 내용을 적어 주세요"); $("#csContent").focus(); return; }
+A.csSave = () => { const e = ui.csEdit, ids = stuPickRead("cs"); if(!ids) return;
+  const content = $("#csContent").value.trim(); if(!content){ toast("상담 내용을 적어 주세요"); $("#csContent").focus(); return; }
+  const d = $("#csDate").value||today(), ev = $("#csEv").value, old = e.sid, isOld = (S.counsels||[]).some(c=>c.id===e.id);
+  const prim = isOld && ids.includes(old) ? old : ids[0];
+  Object.assign(e, {date:d, time:$("#csTime").value, ev: ev && ev !== d ? ev : undefined, sid:prim, who:$("#csWho").value, how:$("#csHow").value, topic:$("#csTopic").value, content, followup:$("#csFollow").value.trim(), next:$("#csNext").value||""});
+  if(isOld && prim !== old && e.thread) delete e.thread;   // 다른 학생으로 바꾸면 그 학생의 새 상담으로
   S.counsels ||= []; const i = S.counsels.findIndex(c=>c.id===e.id); i>=0 ? S.counsels[i] = e : S.counsels.push(e);
-  ui.csEdit = null; commit(); toast("상담 기록을 저장했어요"); };
+  const others = ids.filter(id => id !== prim);
+  if(others.length){ const grp = e.grp || uid(), ses = e.ses || uid(); e.grp = grp; e.ses = ses; others.forEach(id => { const c = {...e, id:uid(), sid:id, grp, ses}; delete c.thread; c.content = nameFill(content, id); c.followup = nameFill(e.followup, id); S.counsels.push(c); }); }
+  e.content = nameFill(e.content, prim); e.followup = nameFill(e.followup, prim);
+  ui.csEdit = null; commit(); toast(ids.length > 1 ? `${ids.length}명 상담 기록을 저장했어요` : "상담 기록을 저장했어요"); };
 A.csDel = async el => { if(await ask("이 상담 기록을 지울까요?","지우기",true)){ S.counsels = S.counsels.filter(c=>c.id!==el.dataset.id); commit(); } };
-A.csExport = () => { const rows = [["날짜","시간","번호","이름","상담한 사람","방법","주제","상담 내용","후속 조치","다음 상담일"],
-  ...(S.counsels||[]).slice().sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time)).map(c=>{ const l = S.counsels.filter(x=>csKey(x)===csKey(c)).sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time)); return [c.date, c.time, stu(c.sid)?.no??"", sname(c.sid), c.who, c.how, l.length>1 ? `${c.topic} (${l.indexOf(c)+1}차)` : c.topic, c.content, c.followup, c.next]; })];
+A.csExport = () => { const rows = [["날짜","시간","사건 발생일","번호","이름","상담한 사람","방법","주제","상담 내용","후속 조치","다음 상담일"],
+  ...(S.counsels||[]).slice().sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time)).map(c=>{ const l = S.counsels.filter(x=>csKey(x)===csKey(c)).sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time)); return [c.date, c.time, c.ev||"", stu(c.sid)?.no??"", sname(c.sid), c.who, c.how, l.length>1 ? `${c.topic} (${l.indexOf(c)+1}차)` : c.topic, c.content, c.followup, c.next]; })];
   exportSheets(`${clsName()}_상담기록`, [["상담 기록", rows]]); };
 function counselTodayCard(){
   const t = today(), up = (S.counsels||[]).filter(c=>c.next && c.next>=t && !c.nextDone).sort((a,b)=>a.next.localeCompare(b.next)).slice(0,4);
