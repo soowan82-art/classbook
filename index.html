@@ -827,7 +827,7 @@ A.calWReset = () => { LOOK.calw = 0; saveLook(); render(); };
 A.lookAccent = el => { LOOK.accent = el.dataset.v; saveLook(); render(); };
 A.lookTone = el => { LOOK.tone = el.dataset.v; saveLook(); render(); };
 A.lookMode = el => { LOOK.mode = el.dataset.v; saveLook(); render(); };
-const APP_VER = "2026.11.19-5";
+const APP_VER = "2026.11.19-6";
 const LOGO_SVG = `<svg class="brand-logo" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" style="fill:var(--brand,#1F6E8C)"/><g transform="translate(256 258) scale(1.13) translate(-256 -258)"><rect x="140" y="112" width="232" height="292" rx="30" fill="#FFFFFF"/><rect x="140" y="112" width="44" height="292" rx="22" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><rect x="162" y="112" width="22" height="292" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><path d="M318 112 H352 V214 L335 198 L318 214 Z" fill="#F2B84B"/><path d="M212 196 L236 220 L284 168" fill="none" style="stroke:var(--accent-ink,#1F6E8C)" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/><rect x="212" y="262" width="124" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="306" width="96" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="350" width="112" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 26%, #fff)"/></g></svg>`;
 let storageOK = true;
 /* 학급 여러 개: 학급마다 따로 저장한다. 처음 학급(c1)은 예전 저장 위치를 그대로 쓴다 */
@@ -1249,7 +1249,7 @@ function todayQuickCard(defDate, title){
     event: `<input type="text" id="qkTitle" placeholder="행사 이름 (예: 과학 체험 강사 수업)" style="flex:2;min-width:180px" data-enter="qkSave">
       <label class="f qk-f">날짜<input type="date" id="qkDate" value="${t}"></label><label class="f qk-f">시각<input type="time" id="qkTime"></label>
       <label class="f qk-f">종류<select id="qkType">${EV_TYPES.map(x=>`<option>${x}</option>`).join("")}</select></label>`,
-    counsel: st.length ? `<label class="f qk-f">학생<select id="qkSid">${st.map(s=>`<option value="${s.id}">${s.no}. ${esc(s.name)}</option>`).join("")}</select></label>
+    counsel: st.length ? `${stuPickHtml("qc")}
       <label class="f qk-f">날짜<input type="date" id="qkDate" value="${t}"></label>
       <label class="f qk-f">누구와<select id="qkWho">${CS_WHO.map(x=>`<option>${x}</option>`).join("")}</select></label>
       <label class="f qk-f">방법<select id="qkHow">${CS_HOW.map(x=>`<option>${x}</option>`).join("")}</select></label>
@@ -1276,7 +1276,9 @@ A.qkSave = () => {
   else if(k==="sub"){ if(!title) return $("#qkTitle").focus(); (S.submits ||= []).push({id:uid(), title, due:date, to:v("qkTo"), how:v("qkHow"), note:"", done:false, doneAt:""}); msg = "제출할 것을 넣었어요"; go = "업무 관리 → 제출"; }
   else if(k==="event"){ if(!title) return $("#qkTitle").focus(); const type = v("qkType"); S.events.push({id:uid(), date, time:v("qkTime"), title, type, host:"", place:"우리 교실", note:"", checklist:defaultChecklist(type)}); msg = "행사를 넣었어요"; go = "학급 행사"; }
   else if(k==="counsel"){ const body = v("qkBody"); if(!body){ toast("상담 내용을 적어 주세요"); return $("#qkBody").focus(); }
-    (S.counsels ||= []).push({...csBlank(v("qkSid")), date, who:v("qkWho"), how:v("qkHow"), topic:v("qkTopic"), content:body, next:v("qkNext")}); msg = `${sname(v("qkSid"))} 상담을 기록했어요`; go = "상담 기록"; }
+    const cids = stuPickRead("qc"); if(!cids) return; const ses = cids.length > 1 ? uid() : undefined;
+    cids.forEach(id => (S.counsels ||= []).push({...csBlank(id), date, who:v("qkWho"), how:v("qkHow"), topic:v("qkTopic"), content:nameFill(body, id), next:v("qkNext"), grp:ses, ses}));
+    msg = cids.length > 1 ? `${cids.length}명 상담을 기록했어요` : `${sname(cids[0])} 상담을 기록했어요`; go = "상담 기록"; }
   else if(k==="rec"){ const sids = stuPickRead("qr"); if(!sids) return; const rg = dateRead("qr"); if(!rg) return; const text = ($("#qrText").value||"").trim();
     if(!text){ toast("기록할 내용을 적어 주세요"); return $("#qrText").focus(); } const cat = $("#qrCat").value;
     sids.forEach(sid => S.records.push({id:uid(), sid, date:rg[0], cat, text, when:"", subj:""}));
@@ -1952,11 +1954,15 @@ function stuPickPaint(p){ const box = document.getElementById(p+"PickSel"); if(!
   box.innerHTML = ids.map(id=>`<span class="sp-chip">${esc(sname(id))}<button type="button" data-act="stuPickDel" data-p="${p}" data-id="${id}" aria-label="${esc(sname(id))} 빼기">×</button></span>`).join("");
   const q = document.getElementById(p+"PickQ"); if(q) q.placeholder = ids.length ? "더 넣기" : "이름·번호 입력 (예: 민준, 5)"; }
 function stuPickOpen(p, on){ const el = document.querySelector(`#${p}Pick .stu-pick-in`); if(!el) return; if(on === undefined) on = el.hidden; el.hidden = !on; if(!on) stuPickFilter(p, ""); }
-function stuPickFilter(p, q){ q = (q||"").trim(); document.querySelectorAll(`#${p}Pick .stu-pick-g label`).forEach(l => { l.hidden = !!q && !(l.dataset.n === q || l.dataset.nm.includes(q)); }); }
+/* 이름에 q가 들어 있는지: 한 글자씩 같거나, q 쪽이 자음(초성)이면 이름 글자의 초성과 같으면 됨. 'ㄱㅁㅈ', '김ㅁ', '민ㅈ' 모두 */
+const IS_CHO = ch => /[ㄱ-ㅎ]/.test(ch);
+function nameHit(name, q){ const n = [...String(name||"").replace(/\s+/g,"")], t = [...String(q||"").replace(/\s+/g,"")]; if(!t.length) return false; const nc = [...chosung(n.join(""))];
+  for(let i = 0; i + t.length <= n.length; i++){ if(t.every((ch, j) => ch === n[i+j] || (IS_CHO(ch) && nc[i+j] === ch))) return true; } return false; }
+function stuPickFilter(p, q){ q = (q||"").trim(); document.querySelectorAll(`#${p}Pick .stu-pick-g label`).forEach(l => { l.hidden = !!q && !(l.dataset.n === q || nameHit(l.dataset.nm, q)); }); }
 /* 글자 하나를 학생으로: 번호 → 정확한 이름 → 이름 일부(한 명일 때만) */
 function stuMatch(tok){ tok = (tok||"").replace(/번$/,"").trim(); if(!tok) return null; const st = sorted();
   if(/^\d+$/.test(tok)) return st.find(x=>String(x.no)===tok) || null;
-  return st.find(x=>x.name===tok) || (() => { const c = st.filter(x=>x.name.includes(tok)); return c.length===1 ? c[0] : null; })(); }
+  return st.find(x=>x.name===tok) || (() => { let c = st.filter(x=>x.name.includes(tok)); if(!c.length) c = st.filter(x=>nameHit(x.name, tok)); const ex = c.filter(x=>chosung(x.name) === tok); if(ex.length === 1) return ex[0]; return c.length===1 ? c[0] : null; })(); }
 function stuPickSet(p, id, on = true){ const cb = document.querySelector(`#${p}Pick input[value="${id}"]`); if(cb) cb.checked = on; }
 /* 입력칸 글자 처리. all=true면 마지막 낱말까지 처리. 못 찾은 낱말은 칸에 남김 */
 function stuPickFlush(p, all){ const q = document.getElementById(p+"PickQ"); if(!q) return []; const raw = q.value, endsSep = /[,\s]$/.test(raw);
