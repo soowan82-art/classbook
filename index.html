@@ -122,6 +122,7 @@ label.f,div.f{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:
 .g-names{margin-top:8px;display:flex;flex-direction:column;gap:5px;font-size:13px;background:var(--accent-soft);border-radius:10px;padding:8px 10px}
 .g-names>div{display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px}
 .g-nm{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:1px 9px;white-space:nowrap}
+.meet-memo{font-size:12.5px;color:var(--ink);background:var(--warn-soft,#fff6e0);border-radius:6px;padding:3px 8px;margin-top:4px;white-space:pre-wrap;word-break:break-word}
 div.f .stu-pick{color:var(--ink);font-size:14px;flex:none;min-width:0}
 .ev-d{color:var(--accent);margin-top:2px;white-space:nowrap}
 label.f > input,label.f > select,label.f > textarea{color:var(--ink);font-size:14px;width:100%}
@@ -830,7 +831,7 @@ A.calWReset = () => { LOOK.calw = 0; saveLook(); render(); };
 A.lookAccent = el => { LOOK.accent = el.dataset.v; saveLook(); render(); };
 A.lookTone = el => { LOOK.tone = el.dataset.v; saveLook(); render(); };
 A.lookMode = el => { LOOK.mode = el.dataset.v; saveLook(); render(); };
-const APP_VER = "2026.11.20-1";
+const APP_VER = "2026.11.20-2";
 const LOGO_SVG = `<svg class="brand-logo" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" style="fill:var(--brand,#1F6E8C)"/><g transform="translate(256 258) scale(1.13) translate(-256 -258)"><rect x="140" y="112" width="232" height="292" rx="30" fill="#FFFFFF"/><rect x="140" y="112" width="44" height="292" rx="22" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><rect x="162" y="112" width="22" height="292" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><path d="M318 112 H352 V214 L335 198 L318 214 Z" fill="#F2B84B"/><path d="M212 196 L236 220 L284 168" fill="none" style="stroke:var(--accent-ink,#1F6E8C)" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/><rect x="212" y="262" width="124" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="306" width="96" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="350" width="112" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 26%, #fff)"/></g></svg>`;
 let storageOK = true;
 /* 학급 여러 개: 학급마다 따로 저장한다. 처음 학급(c1)은 예전 저장 위치를 그대로 쓴다 */
@@ -1275,7 +1276,7 @@ A.qkSave = () => {
   const k = ui.qk || "task", v = fieldVal, title = v("qkTitle"), date = v("qkDate") || today();
   let msg = "", go = "";
   if(k==="task"){ if(!title) return $("#qkTitle").focus(); (S.tasks ||= []).push({id:uid(), title, due:date, cat:v("qkCat") || "기타", note:"", done:false, doneAt:"", created:today()}); msg = "할 일을 넣었어요"; go = "업무 관리"; }
-  else if(k==="meet"){ if(!title) return $("#qkTitle").focus(); (S.meetings ||= []).push({id:uid(), date, time:v("qkTime"), kind:v("qkKind") || "기타", title, place:v("qkPlace"), agenda:"", notes:"", todo:"", sent:0}); msg = "회의를 넣었어요"; go = "업무 관리 → 회의"; }
+  else if(k==="meet"){ if(!title) return $("#qkTitle").focus(); (S.meetings ||= []).push({id:uid(), date, time:v("qkTime"), kind:v("qkKind") || "기타", title, place:v("qkPlace"), memo:"", agenda:"", notes:"", todo:"", sent:0}); msg = "회의를 넣었어요"; go = "업무 관리 → 회의"; }
   else if(k==="sub"){ if(!title) return $("#qkTitle").focus(); (S.submits ||= []).push({id:uid(), title, due:date, to:v("qkTo"), how:v("qkHow"), note:"", done:false, doneAt:""}); msg = "제출할 것을 넣었어요"; go = "업무 관리 → 제출"; }
   else if(k==="event"){ if(!title) return $("#qkTitle").focus(); const type = v("qkType"); S.events.push({id:uid(), date, time:v("qkTime"), title, type, host:"", place:"우리 교실", note:"", checklist:defaultChecklist(type)}); msg = "행사를 넣었어요"; go = "학급 행사"; }
   else if(k==="counsel"){ const body = v("qkBody"); if(!body){ toast("상담 내용을 적어 주세요"); return $("#qkBody").focus(); }
@@ -4139,7 +4140,7 @@ function upcomingCard(){
   const dd = d => { const n = Math.round((parse(d) - parse(t)) / 864e5); return n < 0 ? `<span class="pill bad">${-n}일 지남</span>` : n === 0 ? `<span class="pill warn">오늘</span>` : `<span class="pill ${n<=3?"acc":""}">D-${n}</span>`; };
   const groups = {}; it.forEach(r => { const g = r.d < t ? "기한 지남" : r.d; (groups[g] ||= []).push(r); });
   const row = r => r.k === "meet"
-    ? `<div class="task-row compact" data-act="goMeet" style="cursor:pointer"><span class="pill vio">회의</span><div class="task-main"><div class="task-title">${r.x.time?`<b class="num">${esc(r.x.time)}</b> `:""}${esc(r.x.title)}</div>${r.x.place?`<div class="small muted">${esc(r.x.place)}</div>`:""}</div></div>`
+    ? `<div class="task-row compact" data-act="goMeet" style="cursor:pointer"><span class="pill vio">회의</span><div class="task-main"><div class="task-title">${r.x.time?`<b class="num">${esc(r.x.time)}</b> `:""}${esc(r.x.title)}</div>${r.x.place?`<div class="small muted">${esc(r.x.place)}</div>`:""}${(r.x.memo||"").trim()?`<div class="meet-memo">📝 ${esc(r.x.memo.trim())}</div>`:""}</div></div>`
     : `<div class="task-row compact ${r.d<t?"late":""}"><input type="checkbox" data-ch="${r.k==="sub"?"subDone":"taskDone"}" data-id="${r.x.id}" aria-label="완료"><span class="pill ${r.k==="sub"?"":"acc"}">${r.k==="sub"?"제출":"할 일"}</span><div class="task-main"><div class="task-title">${esc(r.x.title)}</div>${r.k==="sub"&&r.x.how?`<div class="small muted">${esc(r.x.how)}</div>`:""}</div>${dd(r.d)}</div>`;
   return `<div class="card up-card"><div class="spread"><h2>다가오는 업무 <span class="small muted">기한 지난 것 + 앞으로 2주</span></h2><a class="btn sm" href="#tasks">업무 관리</a></div>
     ${it.length ? Object.entries(groups).map(([g, L]) => `<div class="up-g"><div class="up-h">${g==="기한 지남" ? `<b style="color:var(--bad)">기한 지남</b>` : `<b>${md(g)}</b>${g===t?" · 오늘":""}`}</div>${L.map(row).join("")}</div>`).join("")
@@ -4155,7 +4156,7 @@ function tasksTodayCard(){
   const items = [...meets.map(m=>({k:"meet", x:m, key:`${m.date} ${m.time||"99:99"}`})), ...subs.map(x=>({k:"sub", x, key:`${x.due} ~`})), ...open.map(x=>({k:"task", x, key: x.due ? `${x.due} ~~` : "9999"}))]
     .sort((a,b)=>a.key.localeCompare(b.key));
   const N = 8, show = items.slice(0, N);
-  const row = {meet: m => `<div class="task-row compact" data-act="goMeet" style="cursor:pointer"><span class="pill vio">회의</span><div class="task-main"><div class="task-title">${m.date!==t?`<span class="small num" style="color:var(--accent-ink)">${md(m.date)}${dday(m.date)?` · ${dday(m.date)}`:""}</span> `:""}${m.time?`<b class="num">${esc(m.time)}</b> `:""}${esc(m.title)}</div>${m.place||(m.agenda||"").trim()?`<div class="small muted">${esc(m.place||"")}${(m.agenda||"").trim()?` · ${esc(m.agenda.split("\n")[0])}`:""}</div>`:""}</div></div>`, sub: x => { const g = taskGroup(x); return `<div class="task-row compact ${g==="기한 지남"?"late":""}"><input type="checkbox" data-ch="subDone" data-id="${x.id}" aria-label="제출함"><div class="task-main"><div class="task-title">${esc(x.title)}</div><div class="small muted">제출${x.to?` → ${esc(x.to)}`:""} · 마감 ${md(x.due)}</div></div><span class="pill ${g==="기한 지남"?"bad":g==="오늘"?"warn":""}">${dday(x.due)}</span></div>`; }, task: t => { const g = taskGroup(t); return `<div class="task-row compact ${g==="기한 지남"?"late":""}"><input type="checkbox" data-ch="taskDone" data-id="${t.id}" aria-label="완료"><div class="task-main"><div class="task-title">${esc(t.title)}</div><div class="small muted">${esc(t.cat)}${t.due?` · 마감 ${md(t.due)}`:""}</div></div>${t.due?`<span class="pill ${g==="기한 지남"?"bad":g==="오늘"?"warn":""}">${dday(t.due)}</span>`:""}</div>`; }};
+  const row = {meet: m => `<div class="task-row compact" data-act="goMeet" style="cursor:pointer"><span class="pill vio">회의</span><div class="task-main"><div class="task-title">${m.date!==t?`<span class="small num" style="color:var(--accent-ink)">${md(m.date)}${dday(m.date)?` · ${dday(m.date)}`:""}</span> `:""}${m.time?`<b class="num">${esc(m.time)}</b> `:""}${esc(m.title)}</div>${m.place||(m.agenda||"").trim()?`<div class="small muted">${esc(m.place||"")}${(m.agenda||"").trim()?` · ${esc(m.agenda.split("\n")[0])}`:""}</div>`:""}${(m.memo||"").trim()?`<div class="meet-memo">📝 ${esc(m.memo.trim())}</div>`:""}</div></div>`, sub: x => { const g = taskGroup(x); return `<div class="task-row compact ${g==="기한 지남"?"late":""}"><input type="checkbox" data-ch="subDone" data-id="${x.id}" aria-label="제출함"><div class="task-main"><div class="task-title">${esc(x.title)}</div><div class="small muted">제출${x.to?` → ${esc(x.to)}`:""} · 마감 ${md(x.due)}</div></div><span class="pill ${g==="기한 지남"?"bad":g==="오늘"?"warn":""}">${dday(x.due)}</span></div>`; }, task: t => { const g = taskGroup(t); return `<div class="task-row compact ${g==="기한 지남"?"late":""}"><input type="checkbox" data-ch="taskDone" data-id="${t.id}" aria-label="완료"><div class="task-main"><div class="task-title">${esc(t.title)}</div><div class="small muted">${esc(t.cat)}${t.due?` · 마감 ${md(t.due)}`:""}</div></div>${t.due?`<span class="pill ${g==="기한 지남"?"bad":g==="오늘"?"warn":""}">${dday(t.due)}</span>`:""}</div>`; }};
   return `<div class="card"><div class="spread"><h2>회의 · 다가오는 업무 <span class="small muted">날짜 임박한 순</span></h2><a class="btn sm" href="#tasks">업무 관리</a></div>
     ${show.length ? show.map(it => row[it.k](it.x)).join("") + (items.length > N ? `<div class="small muted" style="margin-top:6px">그 밖에 ${items.length-N}개</div>` : "") : `<div class="empty">오늘 회의와 다가오는 업무가 없어요</div>`}</div>`;
 }
@@ -4173,6 +4174,7 @@ function meetRow(m){
       <label class="f">종류${combo("meKind", meetKinds(), m.kind, {ph:"회의 종류"})}</label>
       <label class="f">회의 이름<input type="text" id="meTitle" value="${esc(m.title)}"></label>
       <label class="f">장소<input type="text" id="mePlace" value="${esc(m.place||"")}" placeholder="예: 4학년 연구실"></label>
+      <label class="f" style="grid-column:1/-1">메모 <span class="small muted">접어 둔 목록과 오늘 탭에도 그대로 보여요</span><textarea id="meMemo" rows="2" placeholder="예: 노트북 챙기기, 협의록 양식 출력">${esc(m.memo||"")}</textarea></label>
       <label class="f" style="grid-column:1/-1">안건 · 준비할 것<textarea id="meAgenda" rows="2" placeholder="예: 학년말 행사 계획, 생활기록부 점검 일정 · 준비물: 체험학습 결과 자료">${esc(m.agenda||"")}</textarea></label>
       <label class="f" style="grid-column:1/-1">회의록 · 결정 사항<textarea id="meNotes" rows="5" placeholder="회의에서 정한 것을 적어 두세요">${esc(m.notes||"")}</textarea></label>
       <label class="f" style="grid-column:1/-1">내가 할 일 <span class="small muted">한 줄에 하나 · 끝에 날짜를 쓰면 마감일이 돼요 (예: 행사 계획서 내기 11/20)</span><textarea id="meTodo" rows="3">${esc(m.todo||"")}</textarea></label>
@@ -4181,7 +4183,7 @@ function meetRow(m){
       <div class="row"><button class="btn sm ghost danger" data-act="meetDel" data-id="${m.id}">지우기</button><button class="btn sm" data-act="meetCancel">닫기</button><button class="btn sm pri" data-act="meetSave">저장</button></div></div></div>`;
   const past = m.date < today(), hasNote = !!(m.notes||"").trim();
   return `<div class="task-row ${past && !hasNote ? "" : ""}"><div class="meet-date num">${md(m.date)}${m.time?`<div class="small muted">${esc(m.time)}</div>`:""}</div>
-    <div class="task-main" data-act="meetOpen" data-id="${m.id}" title="눌러서 열기"><div class="task-title">${esc(m.title)}</div>
+    <div class="task-main" data-act="meetOpen" data-id="${m.id}" title="눌러서 열기"><div class="task-title">${esc(m.title)}</div>${(m.memo||"").trim() ? `<div class="meet-memo">📝 ${esc(m.memo.trim())}</div>` : ""}
       <div class="row small muted" style="gap:6px"><span class="pill ${meetPill(m.kind)}">${esc(m.kind)}</span>${m.place?`<span>${esc(m.place)}</span>`:""}${(m.agenda||"").trim()?`<span>· 안건 ${esc(m.agenda.split("\n")[0]).slice(0,40)}</span>`:""}
         ${hasNote?`<span class="pill ok">회의록</span>`:past?`<span class="pill">회의록 없음</span>`:""}${m.sent?`<span class="pill acc">업무 ${m.sent}개 보냄</span>`:""}</div></div>
     <button class="x" data-act="meetDel" data-id="${m.id}" aria-label="삭제">×</button></div>`;
@@ -4198,19 +4200,20 @@ function meetView(){
       <label class="f">종류${combo("mKind", meetKinds(), "학년협의회", {ph:"회의 종류", enter:"meetAdd"})}</label>
       <label class="f">회의 이름<input type="text" id="mTitle" placeholder="예: 11월 학년협의회" data-enter="meetAdd"></label>
       <label class="f">장소(선택)<input type="text" id="mPlace" placeholder="예: 연구실" data-enter="meetAdd"></label>
-      <button class="btn pri" data-act="meetAdd">회의 추가</button></div></div>
+      <button class="btn pri" data-act="meetAdd">회의 추가</button>
+      <label class="f" style="grid-column:1/-1">메모(선택) <span class="small muted">접어 둔 목록에도 그대로 보여요</span><input type="text" id="mMemo" placeholder="예: 노트북 챙기기, 학년 협의록 양식 출력" data-enter="meetAdd"></label></div></div>
   <div class="card">${groups.length ? groups.map(([g,l])=>`<div class="task-group"><div class="task-gh">${g} <span class="muted">${g==="지난 회의"?pastN:l.length}</span></div>${l.map(meetRow).join("")}
       ${g==="지난 회의" && pastN>10 ? `<button class="btn sm ghost" data-act="meetAll" style="margin-top:6px">${q?"최근 10개만 보기":`지난 회의 ${pastN}개 모두 보기`}</button>` : ""}</div>`).join("")
     : `<div class="empty">적어 둔 회의가 없어요. 회의 날짜와 이름을 넣어 두면 다이어리에 표시되고, 회의록과 할 일도 여기에 적을 수 있어요.</div>`}</div>`;
 }
 A.meetAdd = () => { const title = $("#mTitle").value.trim(), date = $("#mDate").value; if(!title || !date){ toast("날짜와 회의 이름을 적어 주세요"); $("#mTitle").focus(); return; }
-  (S.meetings ||= []).push({id:uid(), date, time:$("#mTime").value||"", kind:fieldVal("mKind") || "기타", title, place:$("#mPlace").value.trim(), agenda:"", notes:"", todo:"", sent:0}); commit(); toast("회의를 추가했어요"); };
+  (S.meetings ||= []).push({id:uid(), date, time:$("#mTime").value||"", kind:fieldVal("mKind") || "기타", title, place:$("#mPlace").value.trim(), memo:$("#mMemo").value.trim(), agenda:"", notes:"", todo:"", sent:0}); commit(); toast("회의를 추가했어요"); };
 EN.meetAdd = () => A.meetAdd();
 A.meetOpen = el => { ui.meetEdit = el.dataset.id; render(); $("#meNotes")?.focus(); };
 A.meetCancel = () => { ui.meetEdit = null; render(); };
 A.meetAll = () => { ui.meetAll = !ui.meetAll; render(); };
 function meetCollect(){ const m = S.meetings.find(x=>x.id===ui.meetEdit); if(!m) return null;
-  Object.assign(m, {date:$("#meDate").value || m.date, time:$("#meTime").value||"", kind:fieldVal("meKind") || "기타", title:$("#meTitle").value.trim() || m.title, place:$("#mePlace").value.trim(), agenda:$("#meAgenda").value, notes:$("#meNotes").value, todo:$("#meTodo").value}); return m; }
+  Object.assign(m, {date:$("#meDate").value || m.date, time:$("#meTime").value||"", kind:fieldVal("meKind") || "기타", title:$("#meTitle").value.trim() || m.title, place:$("#mePlace").value.trim(), memo:$("#meMemo").value.trim(), agenda:$("#meAgenda").value, notes:$("#meNotes").value, todo:$("#meTodo").value}); return m; }
 A.meetSave = () => { if(!meetCollect()) return; ui.meetEdit = null; commit(); toast("저장했어요"); };
 A.meetDel = async el => { if(await ask("이 회의를 지울까요? 회의록도 함께 지워져요.","지우기",true)){ S.meetings = S.meetings.filter(m=>m.id!==el.dataset.id); if(ui.meetEdit===el.dataset.id) ui.meetEdit = null; commit(); } };
 A.meetToTasks = () => { const m = meetCollect(); if(!m) return;
@@ -4222,7 +4225,7 @@ A.meetToTasks = () => { const m = meetCollect(); if(!m) return;
     (S.tasks ||= []).push({id:uid(), title, due, cat, note:`${md(m.date)} ${m.title}`, done:false, doneAt:"", created:today()}); });
   m.sent = (m.sent||0) + lines.length; m.todo = ""; commit(); toast(`업무에 ${lines.length}개를 넣었어요`); };
 A.meetCopy = async () => { const m = meetCollect(); if(!m) return;
-  const txt = `[${m.kind}] ${m.title}\n${md(m.date)}${m.time?" "+m.time:""}${m.place?" · "+m.place:""}\n` + ((m.agenda||"").trim()?`\n■ 안건\n${m.agenda.trim()}\n`:"") + ((m.notes||"").trim()?`\n■ 회의록\n${m.notes.trim()}\n`:"");
+  const txt = `[${m.kind}] ${m.title}\n${md(m.date)}${m.time?" "+m.time:""}${m.place?" · "+m.place:""}\n` + ((m.memo||"").trim()?`\n■ 메모\n${m.memo.trim()}\n`:"") + ((m.agenda||"").trim()?`\n■ 안건\n${m.agenda.trim()}\n`:"") + ((m.notes||"").trim()?`\n■ 회의록\n${m.notes.trim()}\n`:"");
   persist(); try{ await navigator.clipboard.writeText(txt); toast("회의록을 복사했어요. 메신저에 붙여 넣으면 돼요"); }catch(e){ toast("복사가 막혀 있어요"); } };
 
 function subGroup(x){ if(x.done) return "제출 완료"; const g = taskGroup(x); return g; }
