@@ -684,9 +684,10 @@ label.f .combo select{flex:1}
 .draw-item{display:flex;justify-content:space-between;padding:5px 8px;border-radius:6px;background:var(--bg);font-size:14px}
 .modal-bg{position:fixed;inset:0;background:rgba(10,16,24,.42);display:flex;align-items:center;justify-content:center;z-index:50;padding:16px}
 .modal{background:var(--surface);border-radius:14px;padding:22px;max-width:420px;width:100%;display:flex;flex-direction:column;gap:14px;border:1px solid var(--line)}
-.undo-fab{position:fixed;right:16px;bottom:16px;z-index:45;display:flex;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px;box-shadow:0 4px 16px rgba(0,0,0,.14)}
+.undo-fab{position:fixed;right:14px;top:10px;z-index:45;display:flex;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px;box-shadow:0 4px 16px rgba(0,0,0,.14)}
 .undo-fab[hidden]{display:none}.undo-fab button{border:0;background:transparent;color:var(--ink);font:inherit;font-size:13.5px;padding:7px 12px;border-radius:999px;cursor:pointer}
-.undo-fab button:hover:not(:disabled){background:var(--accent-soft)}.undo-fab button:disabled{opacity:.45;cursor:default}.undo-fab .num{color:var(--accent-ink);font-weight:700;margin-left:2px}.undo-fab .r-b[hidden]{display:none}
+.undo-fab button:hover:not(:disabled){background:var(--accent-soft)}.undo-fab button:disabled{opacity:.45;cursor:default}.undo-fab .num{color:var(--accent-ink);font-weight:700;margin-left:2px}.undo-fab .r-b{font-size:16px;padding:5px 11px}
+.wrap{padding-top:58px}
 @media print{.undo-fab{display:none}}
 .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--surface);padding:10px 16px;border-radius:10px;font-size:13.5px;z-index:60;max-width:90vw}
 .menu-btn{display:none}
@@ -835,7 +836,7 @@ A.calWReset = () => { LOOK.calw = 0; saveLook(); render(); };
 A.lookAccent = el => { LOOK.accent = el.dataset.v; saveLook(); render(); };
 A.lookTone = el => { LOOK.tone = el.dataset.v; saveLook(); render(); };
 A.lookMode = el => { LOOK.mode = el.dataset.v; saveLook(); render(); };
-const APP_VER = "2026.11.20-3";
+const APP_VER = "2026.11.20-4";
 const LOGO_SVG = `<svg class="brand-logo" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" style="fill:var(--brand,#1F6E8C)"/><g transform="translate(256 258) scale(1.13) translate(-256 -258)"><rect x="140" y="112" width="232" height="292" rx="30" fill="#FFFFFF"/><rect x="140" y="112" width="44" height="292" rx="22" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><rect x="162" y="112" width="22" height="292" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><path d="M318 112 H352 V214 L335 198 L318 214 Z" fill="#F2B84B"/><path d="M212 196 L236 220 L284 168" fill="none" style="stroke:var(--accent-ink,#1F6E8C)" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/><rect x="212" y="262" width="124" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="306" width="96" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="350" width="112" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 26%, #fff)"/></g></svg>`;
 let storageOK = true;
 /* 학급 여러 개: 학급마다 따로 저장한다. 처음 학급(c1)은 예전 저장 위치를 그대로 쓴다 */
@@ -848,7 +849,7 @@ function loadState(id){ try{ const r = localStorage.getItem(dataKey(id || REG.cu
 function regName(){ if(!S || !S.cls) return; const e = REG.list.find(c=>c.id===REG.cur), n = S.cls.name || "", y = S.cls.year || "";
   if(!e){ REG.list.push({id:REG.cur, name:n, year:y}); saveReg(); } else if(e.name!==n || e.year!==y){ e.name = n; e.year = y; saveReg(); } }
 /* 같은 기기의 다른 화면(평가·평어)이 기록을 바꾸면 다시 읽기 */
-window.addEventListener("storage", e => { try{ if(liveS || !e.newValue || e.key !== dataKey(REG.cur)) return; const n = JSON.parse(e.newValue); if(!n || !n.cls) return; S = n; undoReset(); markDirty(); render(); }catch(err){} });
+window.addEventListener("storage", e => { try{ if(liveS || !e.newValue || e.key !== dataKey(REG.cur)) return; const n = JSON.parse(e.newValue); if(!n || !n.cls) return; if(e.newValue === JSON.stringify(S)) return; S = n; uSnap = e.newValue; undoPaint(); render(); }catch(err){} });
 function persist(){ if(liveS) return; const j = JSON.stringify(S); try{ localStorage.setItem(dataKey(REG.cur), j); storageOK = true; }catch(e){ storageOK = false; } undoTrack(j); regName(); markDirty(); }
 /* ── 되돌리기: 저장될 때마다 바로 전 상태를 쌓아 둠 (최대 50번). 모든 메뉴에 적용. 글자를 치는 중엔 한 번으로 묶음 ── */
 let UNDO = [], REDO = [], uSnap = null, uLast = 0, uMute = false, uForce = false;   // uForce: 버튼·엔터로 저장(commit)한 건 항상 따로 한 번
@@ -865,7 +866,7 @@ function undoPaint(){ let el = document.getElementById("undoFab"); if(!el){ if(!
     el.innerHTML = '<button type="button" class="u-b" data-u="undo" title="되돌리기 (Ctrl+Z)">↶ 되돌리기 <span class="num"></span></button><button type="button" class="r-b" data-u="redo" title="다시 하기 (Ctrl+Y)" aria-label="다시 하기">↷</button>';
     el.addEventListener("click", e => { const b = e.target.closest("[data-u]"); if(!b) return; e.preventDefault(); b.dataset.u === "undo" ? undoGo() : redoGo(); });
     el.addEventListener("mousedown", e => e.preventDefault()); document.body.appendChild(el); }
-  el.hidden = !!liveS || (!UNDO.length && !REDO.length); el.querySelector(".u-b").disabled = !UNDO.length; el.querySelector(".u-b .num").textContent = UNDO.length || ""; el.querySelector(".r-b").hidden = !REDO.length; }
+  el.hidden = !!liveS; el.querySelector(".u-b").disabled = !UNDO.length; el.querySelector(".u-b .num").textContent = UNDO.length || ""; el.querySelector(".r-b").disabled = !REDO.length; }
 window.addEventListener("keydown", e => { if(!(e.ctrlKey || e.metaKey) || e.altKey) return; const k = e.key.toLowerCase(); if(k !== "z" && k !== "y") return;
   const a = document.activeElement; if(a && (a.tagName === "TEXTAREA" || a.tagName === "INPUT" || a.isContentEditable)) return;   // 글자 칸 안에서는 원래 글자 되돌리기
   e.preventDefault(); (k === "y" || e.shiftKey) ? redoGo() : undoGo(); });
@@ -5489,7 +5490,7 @@ async function readRemote(f){
   return j;
 }
 function applyRemote(j){
-  syncApplying = true; S = Object.assign(blank(), j.data); persist(); syncApplying = false; undoReset();
+  const before = JSON.stringify(S); syncApplying = true; S = Object.assign(blank(), j.data); uMute = true; persist(); uMute = false; syncApplying = false; if(JSON.stringify(S) !== before){ UNDO.push(before); if(UNDO.length > U_MAX) UNDO.shift(); REDO = []; undoPaint(); }
   Object.assign(SY, {rev:j.savedAt, dirty:false, lastOk:Date.now(), state:"ok", msg:""}); saveSY(); render();
 }
 async function uploadNow(){
