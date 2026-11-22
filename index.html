@@ -122,6 +122,10 @@ label.f,div.f{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:
 .g-names{margin-top:8px;display:flex;flex-direction:column;gap:5px;font-size:13px;background:var(--accent-soft);border-radius:10px;padding:8px 10px}
 .g-names>div{display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px}
 .g-nm{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:1px 9px;white-space:nowrap}
+.att-row{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}.att-box{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:8px 0;grid-column:1/-1}
+.att-chip{display:inline-flex;align-items:center;gap:3px;max-width:260px;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:3px 8px;font:inherit;font-size:12.5px;color:var(--ink);cursor:pointer}
+.att-chip:hover{border-color:var(--accent)}.att-chip.ed{padding:0;cursor:default}.att-chip .att-o{border:0;background:transparent;font:inherit;color:inherit;padding:4px 4px 4px 8px;cursor:pointer;display:inline-flex;gap:3px;align-items:center;min-width:0}
+.att-nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}.att-x{border:0;background:transparent;color:var(--muted);font-size:15px;padding:2px 8px;cursor:pointer}.att-x:hover{color:var(--ink)}
 .meet-memo{font-size:12.5px;color:var(--ink);background:var(--warn-soft,#fff6e0);border-radius:6px;padding:3px 8px;margin-top:4px;white-space:pre-wrap;word-break:break-word}
 div.f .stu-pick{color:var(--ink);font-size:14px;flex:none;min-width:0}
 .ev-d{color:var(--accent);margin-top:2px;white-space:nowrap}
@@ -223,6 +227,7 @@ table.t{width:100%;border-collapse:collapse;font-size:13.5px}
 .dash6{grid-template-columns:repeat(12,minmax(0,1fr))}.dw-fixed{margin-bottom:12px}.dw > .card{margin-bottom:0!important}
 .lay-bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:flex-end;margin:-6px 0 10px}.dash .tt-day textarea.tt-memo-in{min-height:30px}
 @media (max-width:1200px){.dash:not(.dash6){grid-template-columns:repeat(2,minmax(0,1fr))}.dw[style*="--dw:3"]{grid-column:span 2}}
+[data-grip]{touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 .m-only{display:none!important}.m-ghost{position:fixed;z-index:999;transform:translate(-50%,-130%);background:var(--accent);color:var(--on-accent);padding:6px 12px;border-radius:999px;font-size:13px;font-weight:600;pointer-events:none;box-shadow:var(--shadow);white-space:nowrap}
 @media (max-width:860px){.dash,.dash6{grid-template-columns:repeat(2,minmax(0,1fr));column-gap:10px}.dw{grid-column:span var(--mw,2)!important}.dw-bar{display:none}
   .d-only{display:none!important}.m-only{display:inline-flex!important}.m-lay{display:flex!important;gap:8px;align-items:center;margin:0 0 10px;flex-wrap:wrap}
@@ -836,7 +841,7 @@ A.calWReset = () => { LOOK.calw = 0; saveLook(); render(); };
 A.lookAccent = el => { LOOK.accent = el.dataset.v; saveLook(); render(); };
 A.lookTone = el => { LOOK.tone = el.dataset.v; saveLook(); render(); };
 A.lookMode = el => { LOOK.mode = el.dataset.v; saveLook(); render(); };
-const APP_VER = "2026.11.20-4";
+const APP_VER = "2026.11.23-1";
 const LOGO_SVG = `<svg class="brand-logo" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" style="fill:var(--brand,#1F6E8C)"/><g transform="translate(256 258) scale(1.13) translate(-256 -258)"><rect x="140" y="112" width="232" height="292" rx="30" fill="#FFFFFF"/><rect x="140" y="112" width="44" height="292" rx="22" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><rect x="162" y="112" width="22" height="292" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><path d="M318 112 H352 V214 L335 198 L318 214 Z" fill="#F2B84B"/><path d="M212 196 L236 220 L284 168" fill="none" style="stroke:var(--accent-ink,#1F6E8C)" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/><rect x="212" y="262" width="124" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="306" width="96" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="350" width="112" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 26%, #fff)"/></g></svg>`;
 let storageOK = true;
 /* 학급 여러 개: 학급마다 따로 저장한다. 처음 학급(c1)은 예전 저장 위치를 그대로 쓴다 */
@@ -1537,13 +1542,24 @@ A.dashReset = () => { delete LOOK.dash; try{ localStorage.setItem(LOOK_KEY, JSON
   document.addEventListener("dragstart", e => { const w = e.target.closest && e.target.closest(".dw"); if(!w || !w.draggable) return; dragK = w.dataset.k; w.classList.add("dragging"); try{ e.dataTransfer.setData("text/plain", dragK); e.dataTransfer.effectAllowed = "move"; }catch(_){} });
   const mark = (w, after) => { document.querySelectorAll(".dw.drop-b,.dw.drop-a").forEach(x => x.classList.remove("drop-b","drop-a")); if(w) w.classList.add(after ? "drop-a" : "drop-b"); };
   document.addEventListener("dragover", e => { if(!dragK) return; const m = document.querySelector("#main"); if(m){ if(e.clientY < 90) m.scrollBy(0, -18); else if(e.clientY > innerHeight - 90) m.scrollBy(0, 18); } e.preventDefault(); const w = e.target.closest && e.target.closest(".dw"); if(!w || w.dataset.k === dragK){ mark(null); return; } e.preventDefault(); const r = w.getBoundingClientRect(); mark(w, e.clientX > r.left + r.width/2); });
-  document.addEventListener("drop", e => { if(!dragK) return; const w = e.target.closest && e.target.closest(".dw"); e.preventDefault();
-    if(w && w.dataset.k !== dragK && !w.classList.contains("dw-fixed")){ const r = w.getBoundingClientRect(), after = e.clientX > r.left + r.width/2, view = w.parentElement.dataset.view;
+  const dropOn = (w, x) => {
+    if(w && w.dataset.k !== dragK && !w.classList.contains("dw-fixed")){ const r = w.getBoundingClientRect(), after = x > r.left + r.width/2, view = w.parentElement.dataset.view;
       const cur = view ? [...w.parentElement.querySelectorAll(":scope > .dw:not(.dw-fixed)")].map(x => x.dataset.k) : dashLayout().order;
       if(view){ const L = layGet(view); const hid = (L.hide||[]).filter(k => !cur.includes(k)); cur.push(...hid); }
       const o = cur.filter(k => k !== dragK); let i = o.indexOf(w.dataset.k); if(after) i++; o.splice(i, 0, dragK);
       if(view){ layGet(view).order = o; laySave(); } else saveDash(o); }
-    dragK = null; mark(null); render(); });
+    dragK = null; mark(null); render(); };
+  document.addEventListener("drop", e => { if(!dragK) return; e.preventDefault(); dropOn(e.target.closest && e.target.closest(".dw"), e.clientX); });
+  /* 아이패드·태블릿처럼 손가락(펜)으로 끌 때: 브라우저 끌기 대신 직접 따라가기 */
+  let tw = null, tid = null, tScroll = 0;
+  document.addEventListener("pointerdown", e => { if(e.pointerType === "mouse") return; const g = e.target.closest && e.target.closest("[data-grip]"); if(!g) return; const w = g.closest(".dw"); if(!w) return;
+    e.preventDefault(); tw = w; tid = e.pointerId; dragK = w.dataset.k; w.classList.add("dragging"); try{ g.setPointerCapture(e.pointerId); }catch(_){} }, {passive:false});
+  document.addEventListener("pointermove", e => { if(!tw || e.pointerId !== tid) return; e.preventDefault();
+    const m = document.querySelector("#main") || document.scrollingElement; tScroll = e.clientY < 90 ? -14 : e.clientY > innerHeight - 90 ? 14 : 0; if(tScroll){ m.scrollBy(0, tScroll); window.scrollBy(0, tScroll); }
+    const el = document.elementFromPoint(e.clientX, e.clientY), w = el && el.closest(".dw"); if(!w || w === tw || w.classList.contains("dw-fixed")){ mark(null); return; } const r = w.getBoundingClientRect(); mark(w, e.clientX > r.left + r.width/2); }, {passive:false});
+  const tEnd = (e, ok) => { if(!tw || e.pointerId !== tid) return; const el = ok ? document.elementFromPoint(e.clientX, e.clientY) : null, w = el && el.closest(".dw"); tw.classList.remove("dragging"); tw = null; tid = null;
+    if(w && ok) dropOn(w, e.clientX); else { dragK = null; mark(null); } };
+  document.addEventListener("pointerup", e => tEnd(e, true)); document.addEventListener("pointercancel", e => tEnd(e, false));
   document.addEventListener("dragend", () => { if(!dragK) return; dragK = null; mark(null); document.querySelectorAll(".dw").forEach(w => { w.classList.remove("dragging"); w.draggable = false; }); });
 })();
 /* 오늘 제출 현황에서 이름 누르면 제출 처리(마감 지났으면 '늦게 제출'), 되돌리기 가능 */
@@ -1719,7 +1735,7 @@ VIEWS.diary = () => {
         <input type="text" class="add" style="border:1px solid var(--line);border-radius:8px;margin-top:8px" placeholder="할 일 추가 후 Enter · 업무 관리에도 들어가요" data-enter="addTodo" data-date="${d}" id="add-${d}"></div>` : ""}</div>
       <div style="display:flex;flex-direction:column;gap:16px">
         <div class="card"><h2>일정 · 기록</h2><div class="tags" style="padding:0">${tg || `<div class="empty">이날 일정과 기록이 없어요</div>`}</div></div>
-        <div class="card"><div class="spread"><h2>이날 메모</h2><span class="small muted" id="dmSaved"></span></div><textarea rows="6" data-in="dayMemo" data-date="${d}" placeholder="수업 메모, 전달 사항 등">${esc((S.dayMemo||{})[d]||"")}</textarea></div>
+        <div class="card"><div class="spread"><h2>이날 메모</h2><span class="small muted" id="dmSaved"></span></div><textarea rows="6" data-in="dayMemo" data-date="${d}" placeholder="수업 메모, 전달 사항 등">${esc((S.dayMemo||{})[d]||"")}</textarea>${attHtml("day:"+d)}</div>
       </div></div>` + (d===t ? `${dOn("eval") ? evalTodayCard() : ""}<div class="grid2">${dOn("todo") ? tasksTodayCard() : ""}${dOn("counsel") ? counselTodayCard() : ""}</div><div class="grid2">${dOn("asg") ? todaySubmitCard() : ""}${todayJobsCard()}</div>` : "");
   } else if(mode === "week"){
     const mon = mondayOf(cur), wk = ymd(mon);
@@ -1731,7 +1747,7 @@ VIEWS.diary = () => {
     const half = (d, cls) => `<div class="half">${head(d,cls)}<div class="tags">${diaryTags(d)}</div><ul class="todos">${diaryTodos(d, d===t).map(x=>todoLi(d,x)).join("")}</ul><input type="text" class="add" placeholder="+ 할 일 추가" data-enter="addTodo" data-date="${d}" id="add-${d}"></div>`;
     body = (shown("diary","quick") ? todayQuickCard(days.concat([sat,sun]).includes(t) ? t : ui.diaryDate, "빠른 입력") : "") + `<div class="week">${days.map(dayCol).join("")}<section class="day wkend">${half(sat,"sat")}${half(sun,"sun")}</section></div>
     <div class="card"><div class="spread"><h2>이번 주 메모 · 목표</h2><span class="small muted" id="wmSaved"></span></div>
-      <textarea rows="4" data-in="weekMemo" data-week="${wk}" placeholder="이번 주에 기억할 내용이나 목표">${esc(S.weekMemo[wk]||"")}</textarea></div>`;
+      <textarea rows="4" data-in="weekMemo" data-week="${wk}" placeholder="이번 주에 기억할 내용이나 목표">${esc(S.weekMemo[wk]||"")}</textarea>${attHtml("week:"+wk)}</div>`;
   } else {
     const y = cur.getFullYear(), m = cur.getMonth(), first = new Date(y, m, 1), start = addDays(first, -first.getDay());
     const cells = []; for(let i=0;i<42;i++){ const d = addDays(start,i); if(i>=35 && d.getMonth()!==m) break; cells.push(d); }
@@ -1780,7 +1796,7 @@ VIEWS.memo = () => {
       <div class="row" style="margin-bottom:10px"><input type="text" value="${esc(m.title)}" data-in="memoTitle" id="memoTitle" placeholder="제목" style="flex:1;font-family:var(--font-display);font-size:17px;font-weight:600">
       <input type="date" value="${m.date||""}" data-ch="memoDate" title="날짜를 정하면 다이어리 그날에 보여요" aria-label="다이어리에 보일 날짜" style="width:140px">
       <button class="btn sm" data-act="pinMemo">${m.pinned?"고정 해제":"위에 고정"}</button><button class="btn sm danger" data-act="delMemo">삭제</button></div>
-      <textarea rows="18" data-in="memoBody" id="memoBody" placeholder="내용">${esc(m.body)}</textarea>
+      ${attHtml("memo:"+m.id)}<textarea rows="18" data-in="memoBody" id="memoBody" placeholder="내용">${esc(m.body)}</textarea>
       <div class="small muted" id="memoSaved" style="margin-top:6px">입력하면 바로 저장돼요</div>` : `<div class="empty">왼쪽에서 메모를 고르거나 새 메모를 만드세요</div>`}</div>
   </div>`;
 };
@@ -1814,7 +1830,7 @@ function evRow(e, isPast){
       ${e.note ? `<div class="small">${esc(e.note)}</div>` : ""}
       ${e.checklist.length ? `<div><div class="small muted" style="margin-bottom:2px">준비 ${done}/${e.checklist.length}</div>${e.checklist.map(c=>`<label class="check ${c.done?"done":""}"><input type="checkbox" ${c.done?"checked":""} data-ch="evCheck" data-e="${e.id}" data-c="${c.id}"><span>${esc(c.text)}</span></label>`).join("")}</div>` : ""}
     </div>
-    <div class="row"><button class="btn sm" data-act="editEvent" data-id="${e.id}">수정</button><button class="x" data-act="delEvent" data-id="${e.id}" aria-label="삭제">×</button></div></div>`;
+    ${attHtml("ev:"+e.id)}<div class="row"><button class="btn sm" data-act="editEvent" data-id="${e.id}">수정</button><button class="x" data-act="delEvent" data-id="${e.id}" aria-label="삭제">×</button></div></div>`;
 }
 function eventForm(e){
   return `<div class="card"><h2>${S.events.find(x=>x.id===e.id)?"행사 수정":"새 행사"}</h2>
@@ -2096,7 +2112,7 @@ function attEditor(){ const e = ui.attEdit, isNew = !e.days.length, r0 = isNew ?
       <label class="f qk-f">종류<select id="aeKind">${KINDS.map(k=>`<option ${r0&&r0.kind===k?"selected":""}>${k}</option>`).join("")}</select></label>
       <label class="f qk-f">교시<input type="text" id="aePer" value="${r0 && r0.periods ? r0.periods.join(",") : ""}" placeholder="예: 2, 3·4" inputmode="numeric" style="width:90px"></label>
       <input type="text" id="aeNote" value="${esc(r0?.note||"")}" placeholder="내용" style="flex:2;min-width:160px" data-enter="attEdSave">
-      <div class="row" style="gap:6px">${isNew ? "" : `<button class="btn sm danger" data-act="attEdDel">지우기</button>`}<button class="btn sm" data-act="attEdCancel">취소</button><button class="btn sm pri" data-act="attEdSave">${isNew?"넣기":"저장"}</button></div></div></div>`; }
+      ${isNew ? "" : attHtml("att:" + e.sid + ":" + e.days[0])}<div class="row" style="gap:6px">${isNew ? "" : `<button class="btn sm danger" data-act="attEdDel">지우기</button>`}<button class="btn sm" data-act="attEdCancel">취소</button><button class="btn sm pri" data-act="attEdSave">${isNew?"넣기":"저장"}</button></div></div></div>`; }
 A.attEdit = el => { const sid = el.dataset.s, days = el.dataset.days ? el.dataset.days.split(",") : [];
   if(ui.attEdit && ui.attEdit.sid === sid && ui.attEdit.days.join(",") === days.join(",") && ui.attEdit.view === ui.attView){ ui.attEdit = null; render(); return; }
   ui.attEdit = {sid, days, view: ui.attView}; render(); setTimeout(() => { const t = document.querySelector(".att-ed"); t?.scrollIntoView({block:"nearest", behavior:"smooth"}); (document.getElementById("aePickQ") || document.getElementById("aeNote"))?.focus(); }, 30); };
@@ -2297,7 +2313,7 @@ VIEWS.submit = () => {
       <div class="list">${list.map(x=>{ const n = asgDone(x), tot = asgTargets(x).length || 1; return `<div class="li ${x.id===ui.submitSel?"on":""}" data-act="selAsg" data-id="${x.id}" style="flex-direction:column;align-items:stretch;gap:5px"><div class="spread"><span class="t1">${esc(x.title)}</span><span class="small muted num">${n}/${asgTargets(x).length}</span></div><div class="bar ${n===asgTargets(x).length?"ok":""}"><i style="width:${n/tot*100}%"></i></div><span class="small muted">마감 ${md(x.due)}${Object.keys(x.exempt||{}).length?` · 제외 ${sorted().filter(s=>isEx(x,s.id)).length}명`:""}</span></div>`; }).join("") || `<div class="empty">과제를 추가해 보세요</div>`}</div>
     </div>
     <div class="card">${a ? `<div class="spread"><div>${ui.asgEdit===a.id ? `<div class="row asg-ed" style="gap:6px;margin-bottom:6px;flex-wrap:wrap"><input type="text" id="aeTitle" value="${esc(a.title)}" data-enter="asgEdSave" style="flex:1;min-width:200px;font-size:16px;font-weight:600" aria-label="과제 이름"><input type="date" id="aeDue" value="${a.due}" aria-label="마감일"><button class="btn sm pri" data-act="asgEdSave">저장</button><button class="btn sm ghost" data-act="asgEdCancel">취소</button></div>` : `<h2>${esc(a.title)} <button class="btn sm ghost asg-pen" data-act="asgEdit" title="과제 이름·마감일 고치기" aria-label="과제 이름 고치기">✎ 고치기</button></h2>`}<div class="small muted">마감 ${md(a.due)} · 대상 ${asgTargets(a).length}명 · 제출 ${asgDone(a)}명${asgLate(a).length?`(늦게 ${asgLate(a).length})`:""}${asgFix(a).length?` · 수정 중 ${asgFix(a).length}명`:""} · 미제출 ${miss.length}명${exN?` · 제외 ${exN}명`:""}</div></div>
-      <div class="row"><button class="btn sm ${exMode?"pri":""}" data-act="exMode">${exMode?"제외 고르기 끝":"제외할 학생 고르기"}</button>${exMode?"":`<button class="btn sm" data-act="asgAll" data-v="1">모두 제출</button><button class="btn sm" data-act="asgAll" data-v="0">모두 해제</button>`}<button class="btn sm danger" data-act="delAsg">과제 삭제</button></div></div>
+      ${attHtml("asg:"+a.id)}<div class="row"><button class="btn sm ${exMode?"pri":""}" data-act="exMode">${exMode?"제외 고르기 끝":"제외할 학생 고르기"}</button>${exMode?"":`<button class="btn sm" data-act="asgAll" data-v="1">모두 제출</button><button class="btn sm" data-act="asgAll" data-v="0">모두 해제</button>`}<button class="btn sm danger" data-act="delAsg">과제 삭제</button></div></div>
       ${exMode ? "" : `<div class="row sub-stamp" style="gap:8px;margin-bottom:10px"><span class="small muted">누르면 표시할 것</span><div class="seg">${Object.entries(SUB_ST).map(([k,l])=>`<button class="${(ui.subStamp||"ok")===k?"on":""} st-${k}" data-act="subStamp" data-v="${k}">${l}</button>`).join("")}</div><span class="small muted">같은 표시를 한 번 더 누르면 미제출로 돌아가요</span></div>`}
       <div class="tiles ${exMode?"ex-mode":""}" style="margin-bottom:14px">${sorted().map(s=>{ const ex = isEx(a,s.id), st = ex ? "" : subSt(a, s.id);
         return `<button class="tile ${st==="ok"?"on":""} ${st==="late"?"on sub-late":""} ${st==="fix"?"sub-fix":""} ${!st&&!ex?"sub-miss":""} ${ex?"ex":""}" data-act="${exMode?"asgEx":"asgToggle"}" data-s="${s.id}" ${!exMode&&ex?"disabled":""} aria-pressed="${exMode?ex:!!st}"><span class="no num">${s.no}번${ex?" · 제외":st&&st!=="ok"?` · ${SUB_ST[st]}`:""}</span><span>${esc(s.name)}</span></button>`; }).join("")}</div>
@@ -2399,7 +2415,7 @@ VIEWS.records = () => {
         </div><div class="row" style="justify-content:flex-end;margin-top:10px"><button class="btn pri" data-act="addRec">기록 저장</button></div></div>
       <div class="card"><div class="spread"><h2>${sid==="all"?"전체 기록":esc(sname(sid))+" 기록"} <span class="small muted">${list.length}</span></h2>
         <div class="chips">${["전체",...REC_CATS].map(c=>`<button class="chip k-plain ${ui.recCat===c?"on":""}" data-act="recCat" data-c="${c}">${c}</button>`).join("")}</div></div>
-        <div class="tl">${list.map(r=> ui.recEdit===r.id ? `<div class="it rec-ed"><div class="dt"><input type="date" id="reDate" value="${r.date}" title="기록(지도) 날짜"><div class="small muted" style="margin-top:4px">사건 날짜</div><input type="date" id="reEv" value="${r.ev||""}" title="사건 날짜(다를 때만)"><select id="reCat" style="margin-top:4px">${REC_CATS.map(c=>`<option ${c===r.cat?"selected":""}>${c}</option>`).join("")}</select></div><div>${sid==="all"?`<div style="font-weight:600;margin-bottom:2px">${esc(sname(r.sid))}</div>`:""}<textarea id="reText" rows="3" style="width:100%" data-enter="recEdSave">${esc(r.text)}</textarea><div class="row" style="gap:6px;margin-top:6px;justify-content:flex-end"><button class="btn sm ghost" data-act="edCancel" data-k="recEdit">취소</button><button class="btn sm pri" data-act="recEdSave">저장</button></div></div><span></span></div>` : `<div class="it"><div class="dt num">${r.date.replace(/-/g,". ")}${r.ev && r.ev!==r.date ? `<div class="small ev-d" title="실제로 일이 일어난 날">사건 ${md(r.ev)}</div>` : ""}<div style="margin-top:4px"><span class="pill ${recPill(r.cat)}">${r.cat}</span></div></div><div>${sid==="all"?`<div style="font-weight:600;margin-bottom:2px">${esc(sname(r.sid))}</div>`:""}<div class="tx">${r.when?`<span class="pill" style="margin-right:6px">${esc(whenLabel(r))}</span>`:""}${esc(r.text)}</div></div><div class="row" style="gap:2px;align-items:flex-start"><button class="x" data-act="recEdOpen" data-id="${r.id}" aria-label="고치기" title="고치기">✎</button><button class="x" data-act="delRec" data-id="${r.id}" aria-label="삭제">×</button></div></div>`).join("") || `<div class="empty">기록이 없어요</div>`}</div></div>
+        <div class="tl">${list.map(r=> ui.recEdit===r.id ? `<div class="it rec-ed"><div class="dt"><input type="date" id="reDate" value="${r.date}" title="기록(지도) 날짜"><div class="small muted" style="margin-top:4px">사건 날짜</div><input type="date" id="reEv" value="${r.ev||""}" title="사건 날짜(다를 때만)"><select id="reCat" style="margin-top:4px">${REC_CATS.map(c=>`<option ${c===r.cat?"selected":""}>${c}</option>`).join("")}</select></div><div>${sid==="all"?`<div style="font-weight:600;margin-bottom:2px">${esc(sname(r.sid))}</div>`:""}<textarea id="reText" rows="3" style="width:100%" data-enter="recEdSave">${esc(r.text)}</textarea>${attHtml("rec:"+r.id)}<div class="row" style="gap:6px;margin-top:6px;justify-content:flex-end"><button class="btn sm ghost" data-act="edCancel" data-k="recEdit">취소</button><button class="btn sm pri" data-act="recEdSave">저장</button></div></div><span></span></div>` : `<div class="it"><div class="dt num">${r.date.replace(/-/g,". ")}${r.ev && r.ev!==r.date ? `<div class="small ev-d" title="실제로 일이 일어난 날">사건 ${md(r.ev)}</div>` : ""}<div style="margin-top:4px"><span class="pill ${recPill(r.cat)}">${r.cat}</span></div></div><div>${sid==="all"?`<div style="font-weight:600;margin-bottom:2px">${esc(sname(r.sid))}</div>`:""}<div class="tx">${r.when?`<span class="pill" style="margin-right:6px">${esc(whenLabel(r))}</span>`:""}${esc(r.text)}</div>${attChips("rec:"+r.id)}</div><div class="row" style="gap:2px;align-items:flex-start"><button class="x" data-act="recEdOpen" data-id="${r.id}" aria-label="고치기" title="고치기">✎</button><button class="x" data-act="delRec" data-id="${r.id}" aria-label="삭제">×</button></div></div>`).join("") || `<div class="empty">기록이 없어요</div>`}</div></div>
     </div>
   </div>`;
 };
@@ -2479,7 +2495,7 @@ VIEWS.grades = () => {
       <button class="btn pri" data-act="addGrade">평가 추가</button>
       <div class="list" style="margin-top:4px">${groups.length ? groups.map(g=>`<div class="g-grp">${esc(g.label)} <span class="num">${g.items.length}</span></div>` + g.items.map(x=>`<div class="li ${x.id===ui.gradeSel?"on":""}" data-act="gradeSel" data-id="${x.id}"><div><div class="t1">${aKind(x)==="test"?`<span class="pill" style="font-size:11px;padding:0 6px">${esc(x.testType||"단원평가")}</span> `:""}${esc(x.title)}</div><div class="small muted">${ui.gGroup==="month"?esc(x.subject)+" · ":""}${x.date?md(x.date):""}${aKind(x)==="test"?` · ${x.max}점 만점`:""}</div></div><span class="small muted num">${S.students.filter(s=>x.scores[s.id]!==undefined&&x.scores[s.id]!=="").length}/${S.students.length}</span></div>`).join("")).join("") : `<div class="empty">${tab==="perf"?"수행평가":"단원·형성평가"}를 추가해 보세요</div>`}</div>
     </div>
-    <div class="card">${a ? `<div class="spread"><div>${ui.gEdit===a.id ? `<div class="row" style="gap:6px;flex-wrap:wrap"><input type="text" id="geSub" data-sug="subj" autocomplete="off" value="${esc(a.subject)}" style="width:110px" aria-label="과목"><input type="text" id="geTitle" value="${esc(a.title)}" data-enter="gEdSave" style="flex:1;min-width:200px;font-weight:600" aria-label="평가 이름"><button class="btn sm pri" data-act="gEdSave">저장</button><button class="btn sm ghost" data-act="edCancel" data-k="gEdit">취소</button></div>${subjDL}` : `<h2>${esc(a.subject)} · ${esc(a.title)} <button class="btn sm ghost asg-pen" data-act="gEdOpen" aria-label="평가 이름 고치기">✎ 고치기</button></h2>`}<div class="row" style="margin-top:6px">${summary}</div>${gGenderTable(a)}${gFinBar(a)}</div>
+    <div class="card">${a ? `<div class="spread"><div>${ui.gEdit===a.id ? `<div class="row" style="gap:6px;flex-wrap:wrap"><input type="text" id="geSub" data-sug="subj" autocomplete="off" value="${esc(a.subject)}" style="width:110px" aria-label="과목"><input type="text" id="geTitle" value="${esc(a.title)}" data-enter="gEdSave" style="flex:1;min-width:200px;font-weight:600" aria-label="평가 이름"><button class="btn sm pri" data-act="gEdSave">저장</button><button class="btn sm ghost" data-act="edCancel" data-k="gEdit">취소</button></div>${subjDL}` : `<h2>${esc(a.subject)} · ${esc(a.title)} <button class="btn sm ghost asg-pen" data-act="gEdOpen" aria-label="평가 이름 고치기">✎ 고치기</button></h2>`}<div class="row" style="margin-top:6px">${summary}</div>${gGenderTable(a)}${gFinBar(a)}${attHtml("grade:"+a.id)}</div>
       <div class="row">${aKind(a)==="test"?`<select data-ch="gType" aria-label="평가 종류">${TEST_TYPES.map(x=>`<option ${(a.testType||"단원평가")===x?"selected":""}>${x}</option>`).join("")}</select>`:""}${a.mode==="score"?`<label class="f" style="flex-direction:row;align-items:center;gap:6px">만점<input type="number" class="scoreIn" style="width:76px" value="${a.max}" data-ch="gMax" min="1"></label>`:""}<input type="date" value="${a.date}" data-ch="gDate"><label class="row small g-rt-tg" style="gap:5px"><input type="checkbox" ${a.retakeOn?"checked":""} data-ch="gRetakeOn">재시험 있음</label><button class="btn sm danger" data-act="delGrade">평가 삭제</button></div></div>
       ${a.retakeOn ? `<div class="banner g-rt-info" style="margin-top:10px"><div class="small">재시험 볼 학생은 <b>재시험</b> 칸의 '＋ 재시험'을 누르고, 결과를 넣으세요. 처음 결과와 재시험 중 <b>더 나은 쪽이 최종</b>이 돼요. 재시험 대상 <b class="num">${Object.keys(a.retake||{}).length}명</b> · 결과 입력 <b class="num">${Object.values(a.retake||{}).filter(hasV).length}명</b></div></div>` : ""}
       ${gBulkBar(a)}
@@ -2644,7 +2660,7 @@ VIEWS.budget = () => {
       <div class="small muted num">한도 합계 ${b.cats.reduce((s,c)=>s+Number(c.pct),0)}% ${b.cats.reduce((s,c)=>s+Number(c.pct),0)!==100?"· 100%가 아니에요":""}</div>
       <div class="row"><input type="text" id="catName" placeholder="새 항목" style="flex:1"><input type="number" id="catPct" placeholder="%" style="width:70px" min="0" max="100"><button class="btn sm" data-act="addCat">추가</button></div></div></div>
     <div class="card"><div class="spread">${ui.budEdit===b.id ? `<div class="row" style="gap:6px;flex-wrap:wrap;flex:1"><input type="text" id="beName" value="${esc(b.name)}" style="flex:1;min-width:150px;font-weight:600" aria-label="예산명" data-enter="budEdSave"><label class="row small" style="gap:4px">총 금액<input type="number" id="beTotal" value="${b.total}" min="0" style="width:130px" data-enter="budEdSave"></label><button class="btn sm pri" data-act="budEdSave">저장</button><button class="btn sm ghost" data-act="edCancel" data-k="budEdit">취소</button></div>` : `<h2>${esc(b.name)} 지출 내역 <button class="btn sm ghost asg-pen" data-act="budEdOpen" title="예산명·총 금액 고치기">✎ 고치기</button></h2><button class="btn sm" data-act="budExport">내보내기</button>`}</div>
-      <div class="form" style="grid-template-columns:130px 1fr 1.4fr 110px auto;margin-bottom:12px">
+      ${attHtml("bud:"+b.id)}<div class="form" style="grid-template-columns:130px 1fr 1.4fr 110px auto;margin-bottom:12px">
         <label class="f">날짜<input type="date" id="exDate" value="${today()}"></label>
         <label class="f">항목<select id="exCat">${b.cats.map(c=>`<option>${esc(c.name)}</option>`).join("")}<option>미분류</option></select></label>
         <label class="f">사용 목적<input type="text" id="exPurpose" placeholder="예: 모둠 활동 재료"></label>
@@ -3523,7 +3539,7 @@ function calRow(k, x, view){
     <input type="text" id="ceName" value="${esc(x.name)}" style="flex:1;min-width:120px" data-enter="calEditSave" aria-label="이름">
     ${k==="offs" ? `<select id="ceKind">${["재량휴업일","개교기념일","공휴일","기타 휴업"].map(o=>`<option ${x.kind===o?"selected":""}>${o}</option>`).join("")}</select>` : ""}
     ${k!=="breaks" ? `<select id="ceMove" aria-label="종류"><option value="">${k==="events"?"학교 행사":"수업 없는 날"}</option><option value="${k==="events"?"offs":"events"}">${k==="events"?"→ 수업 없는 날로":"→ 학교 행사로"}</option></select>` : ""}
-    <button class="btn sm" data-act="calEditCancel">취소</button><button class="btn sm pri" data-act="calEditSave" data-k="${k}">저장</button></div>`;
+    <button class="btn sm" data-act="calEditCancel">취소</button><button class="btn sm pri" data-act="calEditSave" data-k="${k}">저장</button></div>${attHtml("cal:"+x.id)}`;
 }
 A.calEditOpen = (el, ev) => { if(ev && ev.target.closest(".x")) return; ui.calEdit = el.dataset.id; render(); $("#ceName")?.focus(); };
 A.calEditCancel = () => { ui.calEdit = null; render(); };
@@ -3656,7 +3672,7 @@ VIEWS.evalplan = () => {
       <label class="f">방법${combo("epMethod", EVAL_METHODS, e?.method||"", {empty:"선택 안 함", ph:"평가 방법"})}</label>
       <label class="f">날짜(알면)<input type="date" id="epDate" value="${e?.date||""}"></label>
       <label class="f">또는 월<select id="epMonth"><option value="">-</option>${Array.from({length:12},(_,i)=>{ const mm = ((i+2)%12)+1, yy = mm>=3?c.year:c.year+1, v = `${yy}-${pad(mm)}`; return `<option value="${v}" ${e?.month===v?"selected":""}>${mm}월</option>`; }).join("")}</select></label>
-      <div class="row" style="align-self:end;justify-content:flex-end">${e?`<button class="btn" data-act="epCancel">취소</button>`:""}<button class="btn pri" data-act="epSave">${e && (S.evalPlans||[]).some(p=>p.id===e.id)?"저장":"추가"}</button></div>
+      ${e ? attHtml("ep:"+e.id) : ""}<div class="row" style="align-self:end;justify-content:flex-end">${e?`<button class="btn" data-act="epCancel">취소</button>`:""}<button class="btn pri" data-act="epSave">${e && (S.evalPlans||[]).some(p=>p.id===e.id)?"저장":"추가"}</button></div>
     </div></div>`;
   return header("평가 계획", `학년 평가 계획을 넣어 두면 제때 평가했는지, 성적을 다 입력했는지 확인할 수 있어요. 성적 입력에 같은 과목·평가 요소가 있으면 자동으로 연결돼요.`,
     `<div class="seg">${["1","2"].map(t=>`<button class="${term===t?"on":""}" data-act="epTerm" data-v="${t}">${termName(t)}</button>`).join("")}</div><button class="btn" data-act="epPasteOpen">파일·표 가져오기</button><button class="btn" data-act="epExport">내보내기</button>`) + `
@@ -4109,10 +4125,10 @@ function taskRow(t){
       <label class="f">마감일<input type="date" id="teDue" value="${t.due||""}"></label>
       <label class="f">분류${combo("teCat", taskCats(), t.cat, {ph:"분류 이름"})}</label>
       <label class="f" style="grid-column:1/-1">메모<input type="text" id="teNote" value="${esc(t.note||"")}" data-enter="taskSave"></label></div>
-    <div class="row"><button class="btn sm" data-act="taskCancel">취소</button><button class="btn sm pri" data-act="taskSave">저장</button></div></div>`;
+    ${attHtml("task:"+t.id)}<div class="row"><button class="btn sm" data-act="taskCancel">취소</button><button class="btn sm pri" data-act="taskSave">저장</button></div></div>`;
   const g = taskGroup(t);
   return `<div class="task-row ${t.done?"done":""} ${g==="기한 지남"?"late":""}"><input type="checkbox" ${t.done?"checked":""} data-ch="taskDone" data-id="${t.id}" aria-label="완료">
-    <div class="task-main" data-act="taskEditOpen" data-id="${t.id}" title="눌러서 고치기"><div class="task-title">${esc(t.title)}</div>
+    <div class="task-main" data-act="taskEditOpen" data-id="${t.id}" title="눌러서 고치기"><div class="task-title">${esc(t.title)}</div>${attChips("task:"+t.id)}
       <div class="row small muted" style="gap:6px"><span class="pill ${taskPill(t.cat)}">${esc(t.cat)}</span>${t.due?`<span class="${!t.done&&g==="기한 지남"?"":""}">마감 ${md(t.due)}</span>${t.done?"":`<span class="pill ${g==="기한 지남"?"bad":g==="오늘"?"warn":""}">${dday(t.due)}</span>`}`:""}${t.done&&t.doneAt?`<span>${md(t.doneAt)} 완료</span>`:""}${t.note?`<span>· ${esc(t.note)}</span>`:""}</div></div>
     <button class="x" data-act="taskDel" data-id="${t.id}" aria-label="삭제">×</button></div>`;
 }
@@ -4204,10 +4220,10 @@ function meetRow(m){
       <label class="f" style="grid-column:1/-1">내가 할 일 <span class="small muted">한 줄에 하나 · 끝에 날짜를 쓰면 마감일이 돼요 (예: 행사 계획서 내기 11/20)</span><textarea id="meTodo" rows="3">${esc(m.todo||"")}</textarea></label>
     </div>
     <div class="row" style="justify-content:space-between;width:100%"><div class="row"><button class="btn sm" data-act="meetToTasks">할 일을 업무로 보내기</button><button class="btn sm" data-act="meetCopy">회의록 복사</button></div>
-      <div class="row"><button class="btn sm ghost danger" data-act="meetDel" data-id="${m.id}">지우기</button><button class="btn sm" data-act="meetCancel">닫기</button><button class="btn sm pri" data-act="meetSave">저장</button></div></div></div>`;
+      ${attHtml("meet:"+m.id)}<div class="row"><button class="btn sm ghost danger" data-act="meetDel" data-id="${m.id}">지우기</button><button class="btn sm" data-act="meetCancel">닫기</button><button class="btn sm pri" data-act="meetSave">저장</button></div></div></div>`;
   const past = m.date < today(), hasNote = !!(m.notes||"").trim();
   return `<div class="task-row ${past && !hasNote ? "" : ""}"><div class="meet-date num">${md(m.date)}${m.time?`<div class="small muted">${esc(m.time)}</div>`:""}</div>
-    <div class="task-main" data-act="meetOpen" data-id="${m.id}" title="눌러서 열기"><div class="task-title">${esc(m.title)}</div>${(m.memo||"").trim() ? `<div class="meet-memo">📝 ${esc(m.memo.trim())}</div>` : ""}
+    <div class="task-main" data-act="meetOpen" data-id="${m.id}" title="눌러서 열기"><div class="task-title">${esc(m.title)}</div>${attChips("meet:"+m.id)}${(m.memo||"").trim() ? `<div class="meet-memo">📝 ${esc(m.memo.trim())}</div>` : ""}
       <div class="row small muted" style="gap:6px"><span class="pill ${meetPill(m.kind)}">${esc(m.kind)}</span>${m.place?`<span>${esc(m.place)}</span>`:""}${(m.agenda||"").trim()?`<span>· 안건 ${esc(m.agenda.split("\n")[0]).slice(0,40)}</span>`:""}
         ${hasNote?`<span class="pill ok">회의록</span>`:past?`<span class="pill">회의록 없음</span>`:""}${m.sent?`<span class="pill acc">업무 ${m.sent}개 보냄</span>`:""}</div></div>
     <button class="x" data-act="meetDel" data-id="${m.id}" aria-label="삭제">×</button></div>`;
@@ -4260,10 +4276,10 @@ function subRow(x){
       <label class="f">받는 곳<input type="text" id="seTo" value="${esc(x.to||"")}" placeholder="예: 교무부, 학년부장"></label>
       <label class="f">방법${combo("seHow", SUB_HOW.concat((S.submits||[]).map(x=>x.how)), x.how, {empty:"선택 안 함", ph:"제출 방법"})}</label>
       <label class="f" style="grid-column:1/-1">메모<input type="text" id="seNote" value="${esc(x.note||"")}" placeholder="예: 공문 번호, 양식 위치, 함께 낼 서류" data-enter="subSave"></label></div>
-    <div class="row"><button class="btn sm" data-act="subCancel">취소</button><button class="btn sm pri" data-act="subSave">저장</button></div></div>`;
+    ${attHtml("sub:"+x.id)}<div class="row"><button class="btn sm" data-act="subCancel">취소</button><button class="btn sm pri" data-act="subSave">저장</button></div></div>`;
   const g = subGroup(x);
   return `<div class="task-row ${x.done?"done":""} ${g==="기한 지남"?"late":""}"><input type="checkbox" ${x.done?"checked":""} data-ch="subDone" data-id="${x.id}" aria-label="제출함">
-    <div class="task-main" data-act="subOpen" data-id="${x.id}" title="눌러서 고치기"><div class="task-title">${esc(x.title)}</div>
+    <div class="task-main" data-act="subOpen" data-id="${x.id}" title="눌러서 고치기"><div class="task-title">${esc(x.title)}</div>${attChips("sub:"+x.id)}
       <div class="row small muted" style="gap:6px">${x.to?`<span>→ ${esc(x.to)}</span>`:""}${x.how?`<span class="pill">${esc(x.how)}</span>`:""}${x.due?`<span>마감 ${md(x.due)}</span>${x.done?"":`<span class="pill ${g==="기한 지남"?"bad":g==="오늘"?"warn":""}">${dday(x.due)}</span>`}`:""}${x.done&&x.doneAt?`<span>${md(x.doneAt)} 제출</span>`:""}${x.note?`<span>· ${esc(x.note)}</span>`:""}</div></div>
     <button class="x" data-act="subDel" data-id="${x.id}" aria-label="삭제">×</button></div>`;
 }
@@ -4356,7 +4372,7 @@ function csThreads(list, sel){
       ${multi ? `<div class="row cs-th-head" style="gap:6px">${sel==="all"?`<b>${esc(sname(first.sid))}</b>`:""}<span class="pill vio">${esc(first.topic)}</span><span class="small muted">${l.length}회 상담 · ${md(first.date)} ~ ${md(last.date)}</span></div>` : ""}
       ${l.map((c,n)=>`<div class="it"><div class="dt num">${multi?`<b class="cs-n">${n+1}차</b><br>`:""}${c.date.replace(/-/g,". ")}${c.time?`<br>${esc(c.time)}`:""}${c.ev && c.ev!==c.date ? `<div class="small ev-d" title="실제로 일이 일어난 날">사건 ${md(c.ev)}</div>` : ""}</div>
         <div style="display:flex;flex-direction:column;gap:4px;min-width:0">${multi ? `<div class="small muted">${esc(c.who)} · ${esc(c.how)}</div>` : `<div class="row" style="gap:6px">${sel==="all"?`<b>${esc(sname(c.sid))}</b>`:""}<span class="pill vio">${esc(c.topic)}</span><span class="small muted">${esc(c.who)} · ${esc(c.how)}</span></div>`}
-          ${c.ses ? (() => { const w = (S.counsels||[]).filter(x => x.ses === c.ses && x.sid !== c.sid).map(x=>sname(x.sid)); return w.length ? `<div class="small muted">함께 상담: ${esc([...new Set(w)].join(", "))}</div>` : ""; })() : ""}<div class="tx">${esc(c.content)||'<span class="muted">(내용 없음)</span>'}</div>
+          ${c.ses ? (() => { const w = (S.counsels||[]).filter(x => x.ses === c.ses && x.sid !== c.sid).map(x=>sname(x.sid)); return w.length ? `<div class="small muted">함께 상담: ${esc([...new Set(w)].join(", "))}</div>` : ""; })() : ""}<div class="tx">${esc(c.content)||'<span class="muted">(내용 없음)</span>'}</div>${attChips("cs:"+c.id)}
           ${c.followup?`<div class="small"><b>후속 조치</b> ${esc(c.followup)}</div>`:""}
           ${c.next?`<div class="small muted">다음 상담 ${md(c.next)}</div>`:""}</div>
         <div class="row" style="align-items:flex-start"><button class="btn sm ghost" data-act="csEditOpen" data-id="${c.id}">고치기</button><button class="x" data-act="csDel" data-id="${c.id}" aria-label="삭제">×</button></div></div>`).join("")}
@@ -4420,7 +4436,7 @@ VIEWS.counsel = () => {
       <label class="f" style="grid-column:1/-1">후속 조치(선택)<textarea id="csFollow" rows="2" placeholder="예: 2주 뒤 교우관계 다시 확인, 담임·상담교사 공유">${esc(e.followup)}</textarea></label>
       <label class="f">다음 상담일(선택)<input type="date" id="csNext" value="${e.next||""}"></label>
     </div>
-    <div class="row" style="justify-content:flex-end;margin-top:12px"><button class="btn" data-act="csCancel">취소</button><button class="btn pri" data-act="csSave">저장</button></div></div>` : "";
+    ${attHtml("cs:"+e.id)}<div class="row" style="justify-content:flex-end;margin-top:12px"><button class="btn" data-act="csCancel">취소</button><button class="btn pri" data-act="csSave">저장</button></div></div>` : "";
   return header("상담 기록", "학생·보호자 상담을 날짜별로 남겨요. 다음 상담일을 적으면 '오늘' 화면과 다이어리에 함께 보여요.",
     `<button class="btn" data-act="csExport">내보내기</button><button class="btn pri" data-act="csNew">상담 기록 추가</button>`) + form + `
   ${upcoming.length ? `<div class="card"><h2>다가오는 상담 <span class="small muted">누르면 이어서 기록할 수 있어요</span></h2><div class="row" style="gap:8px">${upcoming.slice(0,8).map(c=>`<button class="pill acc pill-btn" data-act="csFollowOpen" data-th="${c.thread||c.id}" data-d="${c.next}">${md(c.next)} · ${esc(sname(c.sid))} · ${esc(c.topic)}</button>`).join("")}</div></div>` : ""}
@@ -5401,6 +5417,52 @@ const drv = GMODE ? {
   async trash(id){ await gd("trash_file", {fileId:id}); },
   limit: 950000
 };
+
+/* ───────── 첨부파일: 구글 드라이브 '학급일지 첨부파일' 폴더에 올리고, 기록에는 파일 정보만 남긴다 ─────────
+   S.att = { "종류:아이디": [{fid, name, size, mime, at}] } · 빼기(×)는 연결만 지우고 드라이브 원본은 남겨 둔다(되돌리기 대비) */
+const ATT_FOLDER = GMODE ? "학급일지 첨부파일 (웹앱)" : "학급일지 첨부파일", ATT_MAX = GMODE ? 30*1024*1024 : 6*1024*1024;
+const attList = k => ((S.att||{})[k] || []);
+const fmtSize = n => n >= 1048576 ? (n/1048576).toFixed(1) + "MB" : Math.max(1, Math.round(n/1024)) + "KB";
+const attIcon = (m, n) => /image/.test(m) ? "🖼️" : /pdf/.test(m) || /\.pdf$/i.test(n) ? "📕" : /sheet|excel|\.xlsx?$/i.test(m + n) ? "📗" : /hwp|word|document|\.(hwpx?|docx?)$/i.test(m + n) ? "📘" : /presentation|\.pptx?$/i.test(m + n) ? "📙" : "📄";
+function attChips(k){ const L = attList(k); return L.length ? `<div class="att-row">${L.map((f, i) => `<button type="button" class="att-chip" data-act="attOpen" data-k="${esc(k)}" data-i="${i}" title="눌러서 받기 · ${esc(f.name)}">${attIcon(f.mime, f.name)} <span class="att-nm">${esc(f.name)}</span></button>`).join("")}</div>` : ""; }
+function attHtml(k){ const L = attList(k);
+  return `<div class="att-box">${L.map((f, i) => `<span class="att-chip ed"><button type="button" class="att-o" data-act="attOpen" data-k="${esc(k)}" data-i="${i}" title="눌러서 받기">${attIcon(f.mime, f.name)} <span class="att-nm">${esc(f.name)}</span> <span class="muted small">${fmtSize(f.size||0)}</span></button><button type="button" class="att-x" data-act="attDel" data-k="${esc(k)}" data-i="${i}" aria-label="${esc(f.name)} 빼기">×</button></span>`).join("")}<button type="button" class="btn sm ghost att-add" data-act="attAdd" data-k="${esc(k)}">📎 파일 붙이기</button></div>`; }
+async function attFolder(){ if(SY.attFid) return SY.attFid; let id = await drv.findFolder(ATT_FOLDER); if(!id) id = await drv.createFolder(ATT_FOLDER); SY.attFid = id; saveSY(); return id; }
+const blobB64 = b => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(",")[1] || ""); r.onerror = rej; r.readAsDataURL(b); });
+const b64Blob = (b64, type) => { const bin = atob(String(b64).replace(/-/g,"+").replace(/_/g,"/")), u = new Uint8Array(bin.length); for(let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return new Blob([u], {type: type || "application/octet-stream"}); };
+async function attUpload(fid, f){ const mime = f.type || "application/octet-stream";
+  if(GMODE){ if(f.size <= 5*1024*1024){ const b = "cba" + Date.now(), meta = JSON.stringify({name:f.name, parents:[fid]});
+      const body = new Blob([`--${b}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${meta}\r\n--${b}\r\nContent-Type: ${mime}\r\n\r\n`, f, `\r\n--${b}--`]);
+      return (await (await gfetch("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id", {method:"POST", headers:{"Content-Type":`multipart/related; boundary=${b}`}, body})).json()).id; }
+    const r = await gfetch("https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&fields=id", {method:"POST", headers:{"Content-Type":"application/json; charset=UTF-8", "X-Upload-Content-Type":mime}, body:JSON.stringify({name:f.name, parents:[fid]})});
+    const loc = r.headers.get("Location"); if(!loc) throw {code:"http_upload", message:"큰 파일 올리기를 시작하지 못했어요"};
+    return (await (await gfetch(loc, {method:"PUT", headers:{"Content-Type":mime}, body:f})).json()).id; }
+  const r = await gd("create_file", {title:f.name, parentId:fid, base64Content: await blobB64(f), contentMimeType:mime, disableConversionToGoogleType:true}); return r && (r.id || (r.file && r.file.id)); }
+async function attDownload(f){ if(GMODE) return await (await gfetch(`${GAPI}/${f.fid}?alt=media`)).blob(); const r = await gd("download_file_content", {fileId:f.fid}); return b64Blob(r.content || r.data || "", f.mime); }
+let attBusy = false;
+A.attAdd = el => { const k = el.dataset.k; if(liveS){ toast("지난 학년도 기록에는 붙일 수 없어요"); return; }
+  if(GMODE && !gTokenOk()){ toast("구글 로그인 뒤 '📎 파일 붙이기'를 한 번 더 눌러 주세요"); setTimeout(() => gLogin("attReady"), 600); return; }
+  const inp = document.createElement("input"); inp.type = "file"; inp.multiple = true; inp.style.cssText = "position:fixed;left:-9999px;top:0;opacity:0"; document.body.appendChild(inp);
+  inp.onchange = async () => { const files = [...inp.files]; inp.remove(); if(!files.length || attBusy) return;
+    const big = files.filter(f => f.size > ATT_MAX); if(big.length){ toast(`${big[0].name}: ${fmtSize(ATT_MAX)}보다 큰 파일은 못 올려요`); }
+    const ok = files.filter(f => f.size <= ATT_MAX); if(!ok.length) return;
+    if(!GMODE && !hasClaude() && !(await waitClaude(6000))){ toast("드라이브에 연결할 수 없어요. 설정에서 드라이브 연결을 확인해 주세요"); return; }
+    attBusy = true; let n = 0;
+    try{ const fid = await attFolder();
+      for(const f of ok){ toast(`올리는 중… ${f.name}`); let id; try{ id = await attUpload(fid, f); }catch(e){ if(e && /not.?found|404/i.test(String(e.code||e.message||""))){ SY.attFid = ""; id = await attUpload(await attFolder(), f); } else throw e; }
+        if(!id) throw {message:"파일 번호를 받지 못했어요"}; S.att ||= {}; (S.att[k] ||= []).push({fid:id, name:f.name, size:f.size, mime:f.type||"", at:Date.now()}); n++; commit(); }
+      toast(n > 1 ? `파일 ${n}개를 붙였어요` : "파일을 붙였어요"); }
+    catch(e){ const c = e && e.code; toast(c === "needs_login" ? "구글 로그인이 필요해요. 다시 눌러 주세요" : c === "not_granted" || c === "server_not_connected" ? "드라이브 연결을 허락해 주세요" : "올리지 못했어요: " + String((e && (e.message || e.code)) || e).slice(0, 80)); if(c === "needs_login") setTimeout(() => gLogin("attReady"), 800); }
+    finally{ attBusy = false; } };
+  inp.click(); };
+A.attReady = () => toast("로그인됐어요. '📎 파일 붙이기'를 다시 눌러 주세요");
+A.attOpen = async el => { const f = attList(el.dataset.k)[Number(el.dataset.i)]; if(!f) return;
+  if(GMODE && !gTokenOk()){ toast("구글 로그인 뒤 파일을 다시 눌러 주세요"); setTimeout(() => gLogin("attReady"), 600); return; }
+  toast("파일을 받는 중…"); try{ const b = await attDownload(f); await saveFile(f.name, b); }
+  catch(e){ toast(e && e.code === "needs_login" ? "구글 로그인이 필요해요" : "받지 못했어요. 드라이브 '" + ATT_FOLDER + "' 폴더에서 직접 열어 보세요"); } };
+A.attDel = async el => { const k = el.dataset.k, L = attList(k), f = L[Number(el.dataset.i)]; if(!f) return;
+  if(!(await ask(`'${f.name}' 첨부를 뺄까요? (드라이브 '${ATT_FOLDER}' 폴더의 원본은 남아 있어요)`, "빼기", true))) return;
+  L.splice(Number(el.dataset.i), 1); if(!L.length) delete S.att[k]; commit(); toast("첨부를 뺐어요"); };
 /* 동기화를 사용자가 누른 버튼에서 시작할 때: 구글 모드면 먼저 로그인 */
 /* 동기화를 사용자가 누른 버튼에서 시작할 때: 구글 모드에서 연결이 없으면 구글 로그인 페이지로 다녀온 뒤 이어서 실행 */
 /* claude.ai 아티팩트 화면인지(웹앱 배포본과 구분) */
