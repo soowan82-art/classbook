@@ -680,9 +680,9 @@ label.f .combo select{flex:1}
 .fx-hit{animation:fxHit .6s cubic-bezier(.2,1.6,.4,1)}@keyframes fxHit{0%{transform:scale(.6);opacity:.3}60%{transform:scale(1.22);text-shadow:0 0 22px var(--accent)}100%{transform:scale(1)}}
 .fx-in{animation:fxIn .35s cubic-bezier(.2,1.5,.4,1)}@keyframes fxIn{0%{transform:translateY(10px) scale(.85);opacity:0}100%{transform:none;opacity:1}}
 .fx-confetti{position:fixed;inset:0;pointer-events:none;z-index:2000}
-.fx-big{position:fixed;inset:0;z-index:1500;background:rgba(15,22,30,.92);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;cursor:pointer}
+.fx-big{position:fixed;inset:0;z-index:1500;background:#0f161e;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;cursor:pointer}
 .fx-big-t{font-size:clamp(20px,3vw,34px);opacity:.75}.fx-big-n{font-size:clamp(60px,14vw,200px);font-weight:800;letter-spacing:-2px;line-height:1.1;text-align:center}.fx-big-n.fx-rolling{color:#9fb3c8!important}.fx-big-h{font-size:14px;opacity:.5}
-.fx-big-list{background:rgba(15,22,30,.98);justify-content:flex-start;padding:4vh 3vw;overflow:auto}.fxb-grid{display:grid;gap:14px;width:100%;max-width:1600px}
+.fx-big-list{background:#0f161e;justify-content:flex-start;padding:4vh 3vw;overflow:auto}.fxb-grid{display:grid;gap:14px;width:100%;max-width:1600px}
 .fxb-order{grid-template-columns:repeat(auto-fill,minmax(210px,1fr))}.fxb-o{display:flex;align-items:center;gap:14px;background:rgba(255,255,255,.08);border-radius:16px;padding:14px 18px;font-size:clamp(22px,2.6vw,40px);font-weight:700}.fxb-o b{min-width:1.6em;color:#F6C445}
 .fxb-groups{grid-template-columns:repeat(auto-fill,minmax(280px,1fr))}.fxb-g{background:rgba(255,255,255,.08);border-radius:18px;padding:16px 20px}.fxb-g>b{display:block;font-size:clamp(22px,2.4vw,34px);color:#F6C445;margin-bottom:8px}.fxb-g>div{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:clamp(20px,2.2vw,34px);font-weight:700}
 .draw-list{max-height:240px;overflow:auto;display:flex;flex-direction:column;gap:2px}
@@ -841,7 +841,7 @@ A.calWReset = () => { LOOK.calw = 0; saveLook(); render(); };
 A.lookAccent = el => { LOOK.accent = el.dataset.v; saveLook(); render(); };
 A.lookTone = el => { LOOK.tone = el.dataset.v; saveLook(); render(); };
 A.lookMode = el => { LOOK.mode = el.dataset.v; saveLook(); render(); };
-const APP_VER = "2026.11.23-1";
+const APP_VER = "2026.11.23-2";
 const LOGO_SVG = `<svg class="brand-logo" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" style="fill:var(--brand,#1F6E8C)"/><g transform="translate(256 258) scale(1.13) translate(-256 -258)"><rect x="140" y="112" width="232" height="292" rx="30" fill="#FFFFFF"/><rect x="140" y="112" width="44" height="292" rx="22" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><rect x="162" y="112" width="22" height="292" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><path d="M318 112 H352 V214 L335 198 L318 214 Z" fill="#F2B84B"/><path d="M212 196 L236 220 L284 168" fill="none" style="stroke:var(--accent-ink,#1F6E8C)" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/><rect x="212" y="262" width="124" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="306" width="96" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="350" width="112" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 26%, #fff)"/></g></svg>`;
 let storageOK = true;
 /* 학급 여러 개: 학급마다 따로 저장한다. 처음 학급(c1)은 예전 저장 위치를 그대로 쓴다 */
@@ -4698,10 +4698,10 @@ function fxRoll(el, pool, final, done){ const f = FX();
   tick(); return () => { clearTimeout(tm); el.classList.remove("fx-rolling"); el.textContent = final; }; }
 function fxHit(el, big){ const f = FX(); if(!f.on) return; if(f.pop && el){ el.classList.remove("fx-hit"); void el.offsetWidth; el.classList.add("fx-hit"); } fxSound("win"); if(big !== false) fxConfetti(); }
 /* 크게 보기: 화면 가득 이름을 띄워 돌리기 */
-function fxBig(title, pool, final, onClose){ const bg = document.createElement("div"); bg.className = "fx-big";
+function fxBig(title, pool, final, onClose, onDone){ const bg = document.createElement("div"); bg.className = "fx-big";
   bg.innerHTML = `<div class="fx-big-t">${esc(title)}</div><div class="fx-big-n" id="fxBigN">…</div><div class="fx-big-h">아무 곳이나 누르면 닫혀요</div>`; document.body.appendChild(bg);
-  const n = bg.querySelector("#fxBigN"); let fin = false; const stop = fxRoll(n, pool, final, () => { fin = true; fxHit(n); });
-  bg.addEventListener("click", () => { if(!fin){ stop(); fin = true; fxHit(n); return; } bg.remove(); onClose && onClose(); }); }
+  const n = bg.querySelector("#fxBigN"); let fin = false; const stop = fxRoll(n, pool, final, () => { fin = true; fxHit(n); onDone && onDone(); });
+  bg.addEventListener("click", () => { if(!fin){ stop(); fin = true; fxHit(n); onDone && onDone(); return; } bg.remove(); onClose && onClose(); }); }
 function fxBar(){ const f = FX(), ck = (k, l) => `<label class="chip fx-ck ${f.on && f[k]?"on":""}" ${!f.on?'style="opacity:.5"':""}><input type="checkbox" ${f[k]?"checked":""} ${!f.on?"disabled":""} data-ch="fxSet" data-k="${k}">${l}</label>`;
   return `<div class="fx-bar"><label class="chip fx-ck ${f.on?"on":""}"><input type="checkbox" ${f.on?"checked":""} data-ch="fxSet" data-k="on"><b>✨ 효과</b></label>${ck("sound","🔊 소리")}${ck("confetti","🎉 꽃가루")}${ck("pop","💥 튀어나오기")}${ck("big","🖥 크게 보기")}
     <span class="seg sm-seg" ${!f.on?'style="opacity:.5;pointer-events:none"':""}>${[["short","빠르게"],["normal","보통"],["long","두근두근"]].map(([k,l])=>`<button class="${f.speed===k?"on":""}" data-act="fxSpeed" data-v="${k}">${l}</button>`).join("")}</span></div>`; }
@@ -4762,7 +4762,7 @@ A.rndDraw = () => {
   if(R.busy) return; R.busy = true;
   const final = pool[Math.floor(Math.random()*pool.length)].key, names = pool.map(p=>p.name), fn = rndName(final);
   const commitRes = () => { R.busy = false; R.result = final; if(!R.drawn.includes(final)) R.drawn.push(final); render(); };
-  if(FX().on && FX().big){ fxBig("뽑힌 사람은…", names, fn, null); commitRes(); return; }
+  if(FX().on && FX().big){ fxBig("뽑힌 사람은…", names, fn, null, commitRes); return; }   // 다 돌고 나서 결과 저장 → 뒤 화면에 미리 안 보임
   const el = $("#pickName"); fxRoll(el, names, fn, () => { commitRes(); fxHit($("#pickName")); });
 };
 A.rndOrder = () => { ui.rnd.order = shuffle(rndPool().map(p=>p.key)); render();
