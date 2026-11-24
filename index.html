@@ -214,7 +214,8 @@ table.t{width:100%;border-collapse:collapse;font-size:13.5px}
 .tile.sub-late{background:var(--warn-soft,#FFF4E0)!important;border-color:var(--warn)!important;color:var(--ink)!important}.tile.sub-late .no{color:var(--warn)!important}
 .tile.sub-fix{background:var(--fix-soft)!important;border-color:var(--fix)!important;border-style:dashed!important;color:var(--fix)!important}.tile.sub-fix .no{color:var(--fix)!important}
 .tile.sub-miss{background:var(--miss-soft);border-color:var(--miss-line);color:var(--miss)}.tile.sub-miss .no{color:var(--miss);opacity:.8}
-.sub-stamp .seg button.on.st-late{background:var(--warn);color:#fff;border-color:var(--warn)}.sub-stamp .seg button.on.st-fix{background:var(--fix);color:#fff;border-color:var(--fix)}.sub-stamp .seg button.on.st-ex{background:var(--muted);color:#fff;border-color:var(--muted)}
+.sub-stamp .seg button.on.st-late{background:var(--warn);color:#fff;border-color:var(--warn)}.sub-stamp .seg button.on.st-fix{background:var(--fix);color:#fff;border-color:var(--fix)}.ex-why .chip{font-size:12.5px;padding:4px 10px;cursor:pointer}.ex-why .exw-b,.ex-why .exw-x{border:0;background:transparent;font:inherit;color:inherit;padding:4px 4px 4px 10px;cursor:pointer}.ex-why .exw-x{padding:4px 8px 4px 2px;opacity:.6}
+.sub-stamp .seg button.on.st-ex{background:var(--muted);color:#fff;border-color:var(--muted)}
 .mchip.fix{border-color:var(--fix);border-style:dashed;color:var(--fix);background:var(--fix-soft)}.sub-sel{width:auto;padding:4px 6px;font-size:12.5px}
 .lv-rt button{font-size:12px;padding:4px 7px}.g-rt-c{white-space:nowrap}.g-rt-info{background:var(--accent-soft);border-color:var(--accent)}
 .up-card{margin-top:16px}.up-g{padding:6px 0;border-top:1px solid var(--line)}.up-g:first-of-type{border-top:0}.up-h{font-size:13px;margin:2px 0 4px;color:var(--muted)}.up-h b{color:var(--ink)}
@@ -845,7 +846,7 @@ A.calWReset = () => { LOOK.calw = 0; saveLook(); render(); };
 A.lookAccent = el => { LOOK.accent = el.dataset.v; saveLook(); render(); };
 A.lookTone = el => { LOOK.tone = el.dataset.v; saveLook(); render(); };
 A.lookMode = el => { LOOK.mode = el.dataset.v; saveLook(); render(); };
-const APP_VER = "2026.11.24-2";
+const APP_VER = "2026.11.24-3";
 const LOGO_SVG = `<svg class="brand-logo" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" style="fill:var(--brand,#1F6E8C)"/><g transform="translate(256 258) scale(1.13) translate(-256 -258)"><rect x="140" y="112" width="232" height="292" rx="30" fill="#FFFFFF"/><rect x="140" y="112" width="44" height="292" rx="22" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><rect x="162" y="112" width="22" height="292" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><path d="M318 112 H352 V214 L335 198 L318 214 Z" fill="#F2B84B"/><path d="M212 196 L236 220 L284 168" fill="none" style="stroke:var(--accent-ink,#1F6E8C)" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/><rect x="212" y="262" width="124" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="306" width="96" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="350" width="112" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 26%, #fff)"/></g></svg>`;
 let storageOK = true;
 /* 학급 여러 개: 학급마다 따로 저장한다. 처음 학급(c1)은 예전 저장 위치를 그대로 쓴다 */
@@ -2319,11 +2320,15 @@ VIEWS.submit = () => {
     <div class="card">${a ? `<div class="spread"><div>${ui.asgEdit===a.id ? `<div class="row asg-ed" style="gap:6px;margin-bottom:6px;flex-wrap:wrap"><input type="text" id="aeTitle" value="${esc(a.title)}" data-enter="asgEdSave" style="flex:1;min-width:200px;font-size:16px;font-weight:600" aria-label="과제 이름"><input type="date" id="aeDue" value="${a.due}" aria-label="마감일"><button class="btn sm pri" data-act="asgEdSave">저장</button><button class="btn sm ghost" data-act="asgEdCancel">취소</button></div>` : `<h2>${esc(a.title)} <button class="btn sm ghost asg-pen" data-act="asgEdit" title="과제 이름·마감일 고치기" aria-label="과제 이름 고치기">✎ 고치기</button></h2>`}<div class="small muted">마감 ${md(a.due)} · 대상 ${asgTargets(a).length}명 · 제출 ${asgDone(a)}명${asgLate(a).length?`(늦게 ${asgLate(a).length})`:""}${asgFix(a).length?` · 수정 중 ${asgFix(a).length}명`:""} · 미제출 ${miss.length}명${exN?` · 제외 ${exN}명`:""}</div></div>
       ${attHtml("asg:"+a.id)}<div class="row"><button class="btn sm" data-act="asgAll" data-v="1">모두 제출</button><button class="btn sm" data-act="asgAll" data-v="0">모두 해제</button><button class="btn sm danger" data-act="delAsg">과제 삭제</button></div></div>
       <div class="row sub-stamp" style="gap:8px;margin-bottom:10px;flex-wrap:wrap"><span class="small muted">누르면 표시할 것</span><div class="seg">${Object.entries(SUB_ST).map(([k,l])=>`<button class="${(ui.subStamp||"ok")===k?"on":""} st-${k}" data-act="subStamp" data-v="${k}">${l}</button>`).join("")}<button class="${ui.subStamp==="ex"?"on":""} st-ex" data-act="subStamp" data-v="ex">제외</button></div><span class="small muted">${ui.subStamp==="ex" ? "이름을 누르면 제외 · 한 번 더 누르면 제외 풀기" : "같은 표시를 한 번 더 누르면 미제출로 · 제외된 학생을 누르면 제외가 풀려요"}</span></div>
+      ${ui.subStamp==="ex" ? `<div class="row ex-why" style="gap:6px;margin:-4px 0 10px;flex-wrap:wrap;align-items:center"><span class="small muted">사유 (선택)</span>
+        <button class="chip ${!ui.exWhy?"on":""}" data-act="exWhy" data-v="">없음</button>${exWhys().map(w=>`<span class="chip ${ui.exWhy===w?"on":""}" style="padding:0;display:inline-flex"><button class="exw-b" data-act="exWhy" data-v="${esc(w)}">${esc(w)}</button>${EX_WHY0.includes(w)?"":`<button class="exw-x" data-act="exWhyDel" data-v="${esc(w)}" aria-label="${esc(w)} 사유 지우기">×</button>`}</span>`).join("")}<button class="chip" data-act="exWhyAdd">＋ 직접</button></div>` : ""}
       <div class="tiles ${ui.subStamp==="ex"?"ex-mode":""}" style="margin-bottom:14px">${sorted().map(s=>{ const ex = isEx(a,s.id), st = ex ? "" : subSt(a, s.id);
-        return `<button class="tile ${st==="ok"?"on":""} ${st==="late"?"on sub-late":""} ${st==="fix"?"sub-fix":""} ${!st&&!ex?"sub-miss":""} ${ex?"ex":""}" data-act="asgToggle" data-s="${s.id}" aria-pressed="${ex || !!st}"><span class="no num">${s.no}번${ex?" · 제외":st&&st!=="ok"?` · ${SUB_ST[st]}`:""}</span><span>${esc(s.name)}</span></button>`; }).join("")}</div>
+        return `<button class="tile ${st==="ok"?"on":""} ${st==="late"?"on sub-late":""} ${st==="fix"?"sub-fix":""} ${!st&&!ex?"sub-miss":""} ${ex?"ex":""}" data-act="asgToggle" data-s="${s.id}" aria-pressed="${ex || !!st}"><span class="no num">${s.no}번${ex?` · ${exWhy(a,s.id)?esc(exWhy(a,s.id)):"제외"}`:st&&st!=="ok"?` · ${SUB_ST[st]}`:""}</span><span>${esc(s.name)}</span></button>`; }).join("")}</div>
       <div class="banner" style="background:var(--bg);border-color:var(--line);flex-direction:column;align-items:stretch;gap:6px"><div class="spread"><div><b style="color:var(--miss)">미제출</b> <span id="missTxt" style="color:var(--miss)">${miss.length ? miss.map(s=>`${s.no} ${esc(s.name)}`).join(", ") : "없어요"}</span></div>${miss.length||asgFix(a).length?`<button class="btn sm" data-act="copyMiss">명단 복사</button>`:""}</div>
         ${asgFix(a).length ? `<div><b style="color:var(--fix)">수정 중</b> ${asgFix(a).map(s=>`${s.no} ${esc(s.name)}`).join(", ")}</div>` : ""}
-        ${asgLate(a).length ? `<div><b style="color:var(--warn)">늦게 제출</b> ${asgLate(a).map(s=>`${s.no} ${esc(s.name)}`).join(", ")}</div>` : ""}</div>` : `<div class="empty">왼쪽에서 과제를 추가하거나 골라 주세요</div>`}</div>
+        ${asgLate(a).length ? `<div><b style="color:var(--warn)">늦게 제출</b> ${asgLate(a).map(s=>`${s.no} ${esc(s.name)}`).join(", ")}</div>` : ""}
+        ${(() => { const E = sorted().filter(s=>isEx(a,s.id)); if(!E.length) return ""; const g = {}; E.forEach(s => (g[exWhy(a,s.id) || "사유 없음"] ||= []).push(s));
+          return `<div><b class="muted">제외 ${E.length}명</b> ${Object.entries(g).map(([w, L]) => `<span class="small">${esc(w)}: ${L.map(s=>`${s.no} ${esc(s.name)}`).join(", ")}</span>`).join(" · ")}</div>`; })()}</div>` : `<div class="empty">왼쪽에서 과제를 추가하거나 골라 주세요</div>`}</div>
   </div>`;
 };
 function isEx(a, id){ return !!(a.exempt && a.exempt[id]); }
@@ -2346,10 +2351,17 @@ A.addAsg = () => { const t = $("#asgTitle").value.trim(); if(!t){ $("#asgTitle")
 EN.addAsg = () => A.addAsg();
 A.selAsg = el => { ui.submitSel = el.dataset.id; ui.exMode = false; render(); };
 A.exMode = () => { ui.exMode = !ui.exMode; render(); };
-function setEx(a, sid, on){ a.exempt ||= {}; if(on){ a.exempt[sid] = true; delete a.submitted[sid]; } else delete a.exempt[sid]; }
+function setEx(a, sid, on, why){ a.exempt ||= {}; if(on){ a.exempt[sid] = why || true; delete a.submitted[sid]; } else delete a.exempt[sid]; }
+const exWhy = (a, sid) => { const v = a.exempt && a.exempt[sid]; return typeof v === "string" ? v : ""; };
+const EX_WHY0 = ["100점", "결석", "사랑반"], exWhys = () => [...new Set(EX_WHY0.concat(S.exWhys || []))];
+A.exWhy = el => { ui.exWhy = el.dataset.v; render(); };
+A.exWhyAdd = () => { const v = (prompt("제외 사유를 적어 주세요 (예: 전학, 병원)") || "").trim().slice(0, 12); if(!v) return; S.exWhys ||= []; if(!exWhys().includes(v)) S.exWhys.push(v); ui.exWhy = v; commit(); };
+A.exWhyDel = el => { S.exWhys = (S.exWhys||[]).filter(x => x !== el.dataset.v); if(ui.exWhy === el.dataset.v) ui.exWhy = ""; commit(); };
 A.asgEx = el => { const a = S.assignments.find(x=>x.id===ui.submitSel); setEx(a, el.dataset.s, !isEx(a, el.dataset.s)); commit(); };
 A.asgToggle = el => { const a = S.assignments.find(x=>x.id===ui.submitSel), sid = el.dataset.s, k = ui.subStamp || "ok";
-  if(k === "ex"){ setEx(a, sid, !isEx(a, sid)); commit(); return; }
+  if(k === "ex"){ const w = ui.exWhy || "";
+    if(isEx(a, sid) && exWhy(a, sid) !== w && w){ setEx(a, sid, true, w); commit(); toast(`${sname(sid)} 제외 사유: ${w}`); return; }   // 사유만 바꾸기
+    setEx(a, sid, !isEx(a, sid), w); commit(); return; }
   if(isEx(a, sid)){ setEx(a, sid, false); commit(); toast(`${sname(sid)} 제외를 풀었어요`); return; }
   setSub(a, sid, subSt(a, sid) === k ? "" : k); commit(); };
 A.subStamp = el => { ui.subStamp = el.dataset.v; render(); };
