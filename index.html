@@ -846,7 +846,7 @@ A.calWReset = () => { LOOK.calw = 0; saveLook(); render(); };
 A.lookAccent = el => { LOOK.accent = el.dataset.v; saveLook(); render(); };
 A.lookTone = el => { LOOK.tone = el.dataset.v; saveLook(); render(); };
 A.lookMode = el => { LOOK.mode = el.dataset.v; saveLook(); render(); };
-const APP_VER = "2026.11.24-3";
+const APP_VER = "2026.11.24-4";
 const LOGO_SVG = `<svg class="brand-logo" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" style="fill:var(--brand,#1F6E8C)"/><g transform="translate(256 258) scale(1.13) translate(-256 -258)"><rect x="140" y="112" width="232" height="292" rx="30" fill="#FFFFFF"/><rect x="140" y="112" width="44" height="292" rx="22" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><rect x="162" y="112" width="22" height="292" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><path d="M318 112 H352 V214 L335 198 L318 214 Z" fill="#F2B84B"/><path d="M212 196 L236 220 L284 168" fill="none" style="stroke:var(--accent-ink,#1F6E8C)" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/><rect x="212" y="262" width="124" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="306" width="96" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="350" width="112" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 26%, #fff)"/></g></svg>`;
 let storageOK = true;
 /* 학급 여러 개: 학급마다 따로 저장한다. 처음 학급(c1)은 예전 저장 위치를 그대로 쓴다 */
@@ -2319,9 +2319,7 @@ VIEWS.submit = () => {
     </div>
     <div class="card">${a ? `<div class="spread"><div>${ui.asgEdit===a.id ? `<div class="row asg-ed" style="gap:6px;margin-bottom:6px;flex-wrap:wrap"><input type="text" id="aeTitle" value="${esc(a.title)}" data-enter="asgEdSave" style="flex:1;min-width:200px;font-size:16px;font-weight:600" aria-label="과제 이름"><input type="date" id="aeDue" value="${a.due}" aria-label="마감일"><button class="btn sm pri" data-act="asgEdSave">저장</button><button class="btn sm ghost" data-act="asgEdCancel">취소</button></div>` : `<h2>${esc(a.title)} <button class="btn sm ghost asg-pen" data-act="asgEdit" title="과제 이름·마감일 고치기" aria-label="과제 이름 고치기">✎ 고치기</button></h2>`}<div class="small muted">마감 ${md(a.due)} · 대상 ${asgTargets(a).length}명 · 제출 ${asgDone(a)}명${asgLate(a).length?`(늦게 ${asgLate(a).length})`:""}${asgFix(a).length?` · 수정 중 ${asgFix(a).length}명`:""} · 미제출 ${miss.length}명${exN?` · 제외 ${exN}명`:""}</div></div>
       ${attHtml("asg:"+a.id)}<div class="row"><button class="btn sm" data-act="asgAll" data-v="1">모두 제출</button><button class="btn sm" data-act="asgAll" data-v="0">모두 해제</button><button class="btn sm danger" data-act="delAsg">과제 삭제</button></div></div>
-      <div class="row sub-stamp" style="gap:8px;margin-bottom:10px;flex-wrap:wrap"><span class="small muted">누르면 표시할 것</span><div class="seg">${Object.entries(SUB_ST).map(([k,l])=>`<button class="${(ui.subStamp||"ok")===k?"on":""} st-${k}" data-act="subStamp" data-v="${k}">${l}</button>`).join("")}<button class="${ui.subStamp==="ex"?"on":""} st-ex" data-act="subStamp" data-v="ex">제외</button></div><span class="small muted">${ui.subStamp==="ex" ? "이름을 누르면 제외 · 한 번 더 누르면 제외 풀기" : "같은 표시를 한 번 더 누르면 미제출로 · 제외된 학생을 누르면 제외가 풀려요"}</span></div>
-      ${ui.subStamp==="ex" ? `<div class="row ex-why" style="gap:6px;margin:-4px 0 10px;flex-wrap:wrap;align-items:center"><span class="small muted">사유 (선택)</span>
-        <button class="chip ${!ui.exWhy?"on":""}" data-act="exWhy" data-v="">없음</button>${exWhys().map(w=>`<span class="chip ${ui.exWhy===w?"on":""}" style="padding:0;display:inline-flex"><button class="exw-b" data-act="exWhy" data-v="${esc(w)}">${esc(w)}</button>${EX_WHY0.includes(w)?"":`<button class="exw-x" data-act="exWhyDel" data-v="${esc(w)}" aria-label="${esc(w)} 사유 지우기">×</button>`}</span>`).join("")}<button class="chip" data-act="exWhyAdd">＋ 직접</button></div>` : ""}
+      ${subStampBar()}
       <div class="tiles ${ui.subStamp==="ex"?"ex-mode":""}" style="margin-bottom:14px">${sorted().map(s=>{ const ex = isEx(a,s.id), st = ex ? "" : subSt(a, s.id);
         return `<button class="tile ${st==="ok"?"on":""} ${st==="late"?"on sub-late":""} ${st==="fix"?"sub-fix":""} ${!st&&!ex?"sub-miss":""} ${ex?"ex":""}" data-act="asgToggle" data-s="${s.id}" aria-pressed="${ex || !!st}"><span class="no num">${s.no}번${ex?` · ${exWhy(a,s.id)?esc(exWhy(a,s.id)):"제외"}`:st&&st!=="ok"?` · ${SUB_ST[st]}`:""}</span><span>${esc(s.name)}</span></button>`; }).join("")}</div>
       <div class="banner" style="background:var(--bg);border-color:var(--line);flex-direction:column;align-items:stretch;gap:6px"><div class="spread"><div><b style="color:var(--miss)">미제출</b> <span id="missTxt" style="color:var(--miss)">${miss.length ? miss.map(s=>`${s.no} ${esc(s.name)}`).join(", ") : "없어요"}</span></div>${miss.length||asgFix(a).length?`<button class="btn sm" data-act="copyMiss">명단 복사</button>`:""}</div>
@@ -2331,6 +2329,9 @@ VIEWS.submit = () => {
           return `<div><b class="muted">제외 ${E.length}명</b> ${Object.entries(g).map(([w, L]) => `<span class="small">${esc(w)}: ${L.map(s=>`${s.no} ${esc(s.name)}`).join(", ")}</span>`).join(" · ")}</div>`; })()}</div>` : `<div class="empty">왼쪽에서 과제를 추가하거나 골라 주세요</div>`}</div>
   </div>`;
 };
+function subStampBar(){ return `<div class="row sub-stamp" style="gap:8px;margin-bottom:10px;flex-wrap:wrap"><span class="small muted">누르면 표시할 것</span><div class="seg">${Object.entries(SUB_ST).map(([k,l])=>`<button class="${(ui.subStamp||"ok")===k?"on":""} st-${k}" data-act="subStamp" data-v="${k}">${l}</button>`).join("")}<button class="${ui.subStamp==="ex"?"on":""} st-ex" data-act="subStamp" data-v="ex">제외</button></div><span class="small muted">${ui.subStamp==="ex" ? "이름을 누르면 제외 · 한 번 더 누르면 제외 풀기" : "같은 표시를 한 번 더 누르면 미제출로 · 제외된 학생을 누르면 제외가 풀려요"}</span></div>
+      ${ui.subStamp==="ex" ? `<div class="row ex-why" style="gap:6px;margin:-4px 0 10px;flex-wrap:wrap;align-items:center"><span class="small muted">사유 (선택)</span>
+        <button class="chip ${!ui.exWhy?"on":""}" data-act="exWhy" data-v="">없음</button>${exWhys().map(w=>`<span class="chip ${ui.exWhy===w?"on":""}" style="padding:0;display:inline-flex"><button class="exw-b" data-act="exWhy" data-v="${esc(w)}">${esc(w)}</button>${EX_WHY0.includes(w)?"":`<button class="exw-x" data-act="exWhyDel" data-v="${esc(w)}" aria-label="${esc(w)} 사유 지우기">×</button>`}</span>`).join("")}<button class="chip" data-act="exWhyAdd">＋ 직접</button></div>` : ""}`; }
 function isEx(a, id){ return !!(a.exempt && a.exempt[id]); }
 function asgTargets(a){ return sorted().filter(s=>!isEx(a,s.id)); }
 /* 제출 상태: "" 미제출 · ok 제출 · late 늦게 제출 · fix 제출했지만 수정 중(통과 못함) */
@@ -2358,12 +2359,13 @@ A.exWhy = el => { ui.exWhy = el.dataset.v; render(); };
 A.exWhyAdd = () => { const v = (prompt("제외 사유를 적어 주세요 (예: 전학, 병원)") || "").trim().slice(0, 12); if(!v) return; S.exWhys ||= []; if(!exWhys().includes(v)) S.exWhys.push(v); ui.exWhy = v; commit(); };
 A.exWhyDel = el => { S.exWhys = (S.exWhys||[]).filter(x => x !== el.dataset.v); if(ui.exWhy === el.dataset.v) ui.exWhy = ""; commit(); };
 A.asgEx = el => { const a = S.assignments.find(x=>x.id===ui.submitSel); setEx(a, el.dataset.s, !isEx(a, el.dataset.s)); commit(); };
-A.asgToggle = el => { const a = S.assignments.find(x=>x.id===ui.submitSel), sid = el.dataset.s, k = ui.subStamp || "ok";
+A.asgToggle = el => subTap(S.assignments.find(x=>x.id===ui.submitSel), el.dataset.s);
+function subTap(a, sid){ const k = ui.subStamp || "ok";
   if(k === "ex"){ const w = ui.exWhy || "";
     if(isEx(a, sid) && exWhy(a, sid) !== w && w){ setEx(a, sid, true, w); commit(); toast(`${sname(sid)} 제외 사유: ${w}`); return; }   // 사유만 바꾸기
     setEx(a, sid, !isEx(a, sid), w); commit(); return; }
   if(isEx(a, sid)){ setEx(a, sid, false); commit(); toast(`${sname(sid)} 제외를 풀었어요`); return; }
-  setSub(a, sid, subSt(a, sid) === k ? "" : k); commit(); };
+  setSub(a, sid, subSt(a, sid) === k ? "" : k); commit(); }
 A.subStamp = el => { ui.subStamp = el.dataset.v; render(); };
 A.asgAll = el => { const a = S.assignments.find(x=>x.id===ui.submitSel); if(el.dataset.v!=="1"){ a.submitted = {}; commit(); return; } asgTargets(a).forEach(s => { if(!subDone(a, s.id)) setSub(a, s.id, "ok"); }); commit(); };
 A.delAsg = async () => { if(await ask("이 과제와 제출 기록을 삭제할까요?","삭제",true)){ S.assignments = S.assignments.filter(x=>x.id!==ui.submitSel); ui.submitSel=null; commit(); } };
@@ -2386,8 +2388,9 @@ function submitByStudent(list, modeSeg){
     <div class="card">${list.length ? `<div class="spread"><div><h2><span class="muted num" style="font-size:14px">${s.no}번</span> ${esc(s.name)}</h2><div class="small muted">해당 과제 ${mineList.length}개 중 제출 ${done} · 미완료 ${mine.length}${exList.length?` · 제외 ${exList.length}`:""}</div></div>
       <div class="row"><button class="btn sm" data-act="stuAll" data-v="1">모두 제출</button><button class="btn sm" data-act="stuAll" data-v="0">모두 해제</button><button class="btn sm" data-act="stuNext">다음 학생 →</button></div></div>
       <div class="bar ${mine.length?"":"ok"}" style="margin-bottom:14px"><i style="width:${mineList.length?done/mineList.length*100:100}%"></i></div>
+      ${subStampBar()}
       <div class="list">${list.map(a=>{ const ex = isEx(a,s.id), st = ex ? "" : subSt(a, s.id), on = st==="ok"||st==="late", over = !ex && !st && a.due < t;
-        return `<div class="sub-line ${ex?"sub-ex":""}"><button class="li sub-row ${on?"sub-on":""}" data-act="stuToggle" data-a="${a.id}" aria-pressed="${on}" ${ex?"disabled":""}><span style="text-align:left"><span class="t1">${esc(a.title)}</span><br><span class="small muted">마감 ${md(a.due)}</span></span><span class="pill ${ex?"":st==="ok"?"ok":st==="late"?"warn":st==="fix"?"bad":over?"bad":""}">${ex?"제외":st?SUB_ST[st]:over?"마감 지남":"미제출"}</span></button>
+        return `<div class="sub-line ${ex?"sub-ex":""}"><button class="li sub-row ${on?"sub-on":""}" data-act="stuToggle" data-a="${a.id}" aria-pressed="${on||ex}"><span style="text-align:left"><span class="t1">${esc(a.title)}</span><br><span class="small muted">마감 ${md(a.due)}</span></span><span class="pill ${ex?"":st==="ok"?"ok":st==="late"?"warn":st==="fix"?"bad":over?"bad":""}">${ex?(exWhy(a,s.id)?`제외 · ${esc(exWhy(a,s.id))}`:"제외"):st?SUB_ST[st]:over?"마감 지남":"미제출"}</span></button>
           ${ex ? "" : `<select class="sub-sel" data-ch="stuSt" data-a="${a.id}" aria-label="${esc(a.title)} 제출 상태"><option value="" ${!st?"selected":""}>미제출</option>${Object.entries(SUB_ST).map(([k,l])=>`<option value="${k}" ${st===k?"selected":""}>${l}</option>`).join("")}</select>`}<button class="btn sm ${ex?"":"ghost"}" data-act="stuEx" data-a="${a.id}">${ex?"제외 취소":"제외"}</button></div>`; }).join("")}</div>`
       : `<div class="empty">아직 과제가 없어요. '과제별'에서 과제를 추가해 주세요.</div>`}</div>
   </div>`;
@@ -2398,7 +2401,7 @@ A.copyMissAll = async () => { const list = S.assignments.slice().sort((a,b)=>b.d
   const txt = sorted().map(x=>{ const m = list.filter(a=>!isEx(a,x.id) && !subDone(a, x.id)); return m.length ? `${x.no} ${x.name}: ${m.map(a=>a.title + (subSt(a,x.id)==="fix" ? "(수정 중)" : "")).join(", ")}` : ""; }).filter(Boolean).join("\n");
   try{ await navigator.clipboard.writeText(txt); toast("미제출 명단을 복사했어요"); }catch(e){ toast("복사가 막혀 있어요"); } };
 A.submitStu = el => { ui.submitStu = el.dataset.id; render(); };
-A.stuToggle = el => { const a = S.assignments.find(x=>x.id===el.dataset.a), sid = ui.submitStu; if(isEx(a, sid)) return; setSub(a, sid, subDone(a, sid) ? "" : (a.due < today() ? "late" : "ok")); commit(); };
+A.stuToggle = el => subTap(S.assignments.find(x=>x.id===el.dataset.a), ui.submitStu);
 CH.stuSt = el => { const a = S.assignments.find(x=>x.id===el.dataset.a); if(isEx(a, ui.submitStu)) return; setSub(a, ui.submitStu, el.value); commit(); };
 A.stuEx = el => { const a = S.assignments.find(x=>x.id===el.dataset.a); setEx(a, ui.submitStu, !isEx(a, ui.submitStu)); commit(); };
 A.stuAll = el => { S.assignments.forEach(a=>{ if(isEx(a, ui.submitStu)) return; if(el.dataset.v==="1"){ if(!subDone(a, ui.submitStu)) setSub(a, ui.submitStu, "ok"); } else delete a.submitted[ui.submitStu]; }); commit(); };
