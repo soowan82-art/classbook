@@ -127,6 +127,8 @@ label.f,div.f{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:
 .att-chip{display:inline-flex;align-items:center;gap:3px;max-width:260px;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:3px 8px;font:inherit;font-size:12.5px;color:var(--ink);cursor:pointer}
 .att-chip:hover{border-color:var(--accent)}.att-chip.ed{padding:0;cursor:default}.att-chip .att-o{border:0;background:transparent;font:inherit;color:inherit;padding:4px 4px 4px 8px;cursor:pointer;display:inline-flex;gap:3px;align-items:center;min-width:0}
 .att-nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}.att-x{border:0;background:transparent;color:var(--muted);font-size:15px;padding:2px 8px;cursor:pointer}.att-x:hover{color:var(--ink)}
+.qk-line{background:var(--accent-soft);border-radius:12px;padding:10px;margin-bottom:8px}.qk-line input{font-size:15px}.qk-line-pv{margin-top:6px;line-height:1.6;word-break:keep-all}.sm-need{color:var(--warn);font-weight:600;margin-left:4px}
+.qk-more summary{cursor:pointer;font-size:13px;color:var(--muted);padding:4px 0}.qk-more summary:hover{color:var(--ink)}
 .meet-memo{font-size:12.5px;color:var(--ink);background:var(--warn-soft,#fff6e0);border-radius:6px;padding:3px 8px;margin-top:4px;white-space:pre-wrap;word-break:break-word}
 div.f .stu-pick{color:var(--ink);font-size:14px;flex:none;min-width:0}
 .ev-d{color:var(--accent);margin-top:2px;white-space:nowrap}
@@ -846,7 +848,7 @@ A.calWReset = () => { LOOK.calw = 0; saveLook(); render(); };
 A.lookAccent = el => { LOOK.accent = el.dataset.v; saveLook(); render(); };
 A.lookTone = el => { LOOK.tone = el.dataset.v; saveLook(); render(); };
 A.lookMode = el => { LOOK.mode = el.dataset.v; saveLook(); render(); };
-const APP_VER = "2026.11.24-4";
+const APP_VER = "2026.11.24-6";
 const LOGO_SVG = `<svg class="brand-logo" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" style="fill:var(--brand,#1F6E8C)"/><g transform="translate(256 258) scale(1.13) translate(-256 -258)"><rect x="140" y="112" width="232" height="292" rx="30" fill="#FFFFFF"/><rect x="140" y="112" width="44" height="292" rx="22" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><rect x="162" y="112" width="22" height="292" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><path d="M318 112 H352 V214 L335 198 L318 214 Z" fill="#F2B84B"/><path d="M212 196 L236 220 L284 168" fill="none" style="stroke:var(--accent-ink,#1F6E8C)" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/><rect x="212" y="262" width="124" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="306" width="96" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="350" width="112" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 26%, #fff)"/></g></svg>`;
 let storageOK = true;
 /* 학급 여러 개: 학급마다 따로 저장한다. 처음 학급(c1)은 예전 저장 위치를 그대로 쓴다 */
@@ -1303,9 +1305,12 @@ function todayQuickCard(defDate, title){
       <textarea id="qkBody" rows="2" placeholder="메모 내용" style="flex-basis:100%"></textarea>`
   }[k];
   return `<div class="card qk-card"><div class="spread" style="margin-bottom:10px"><h2>${title || "빠른 입력"}</h2><div class="seg">${QK.map(([v,l])=>`<button class="${k===v?"on":""}" data-act="qkKind" data-v="${v}">${l}</button>`).join("")}</div></div>
-    <div class="row qk-row">${f}<button class="btn pri" data-act="qkSave">넣기</button></div></div>`;
+    <div class="qk-line"><div class="row" style="gap:6px;flex-wrap:nowrap"><input type="text" id="qkLine" placeholder="✨ 한 줄로 쓰면 알아서 넣어요 (예: 홍길동 11/25 질병조퇴 3교시 후)" data-in="qkLine" data-enter="qkLineSave" autocomplete="off" style="flex:1;min-width:0"><button class="btn pri" data-act="qkLineSave">넣기</button></div>
+      <div class="small qk-line-pv" id="qkLinePv"><span class="muted">예: 홍길동 11/25 질병조퇴 3교시 후 · 제출 교육과정 성찰결과 11/27 교무부 · 회의 학년협의회 내일 3시 연구실</span></div></div>
+    <details class="qk-more" ${ui.qkMore?"open":""}><summary data-act="qkMoreTg">칸마다 나눠서 넣기 (${SM_LABEL[k]})</summary><div class="row qk-row" style="margin-top:8px">${f}<button class="btn pri" data-act="qkSave">넣기</button></div></details></div>`;
 }
-A.qkKind = el => { ui.qk = el.dataset.v; render(); ($("#qkTitle") || $("#qaPickQ") || $("#qrPickQ") || $("#qkBody"))?.focus(); };
+A.qkMoreTg = () => { ui.qkMore = !ui.qkMore; render(); };
+A.qkKind = el => { ui.qk = el.dataset.v; ui.qkMore = true; render(); ($("#qkTitle") || $("#qaPickQ") || $("#qrPickQ") || $("#qkBody"))?.focus(); };
 A.qkSave = () => {
   const k = ui.qk || "task", v = fieldVal, title = v("qkTitle"), date = v("qkDate") || today();
   let msg = "", go = "";
@@ -1327,6 +1332,79 @@ A.qkSave = () => {
   setTimeout(() => ($("#qkTitle") || $("#qkBody"))?.focus(), 0);
 };
 EN.qkSave = () => A.qkSave();
+/* ───────── 한 줄 입력: "홍길동 11/25 질병조퇴 3교시 후", "제출 교육과정 성찰결과 11/27 교무부"처럼 쓰면 알아서 나눠 넣기 ───────── */
+const SM_KEYS = [["task",/^(할\s*일|할일|업무|todo)(?=\s|$)\s*/i],["meet",/^회의\s*/],["sub",/^제출\s*/],["event",/^행사\s*/],["counsel",/^상담\s*/],["att",/^출결\s*/],["rec",/^(학생\s*기록|기록|관찰)\s*/],["memo",/^메모\s*/]];
+const SM_LABEL = Object.fromEntries(QK);
+const SM_DATE = "(?:오늘|내일|모레|어제|그제|그저께|\\d{4}\\s*[-./년]\\s*\\d{1,2}\\s*[-./월]\\s*\\d{1,2}\\s*일?|\\d{1,2}\\s*[/.]\\s*\\d{1,2}(?![\\d.])|\\d{1,2}\\s*월\\s*\\d{1,2}\\s*일?)(?:\\s*\\([월화수목금토일]\\))?";
+const SM_DATE_RE = new RegExp(`(${SM_DATE})(?:\\s*(?:~|〜|부터|-)\\s*(${SM_DATE}|\\d{1,2}\\s*일(?!\\s*(?:간|동안))|\\d+\\s*일\\s*(?:간|동안)))?(?:\\s*까지)?`);
+function smartParse(raw){
+  let t = String(raw||"").replace(/\s+/g, " ").trim(); if(!t) return null;
+  let kind = null; for(const [k, re] of SM_KEYS){ if(re.test(t)){ kind = k; t = t.replace(re, "").trim(); break; } }
+  const out = {kind, date:"", date2:"", time:"", sids:[], reason:"", akind:"", periods:[], to:"", place:"", rest:""};
+  // 날짜 (기간)
+  const dm = t.match(SM_DATE_RE); if(dm){ const rg = looseRange(dm[0].replace(/\([월화수목금토일]\)/g,"").replace(/\s*까지$/,"")); if(rg){ out.date = rg[0]; out.date2 = rg[1] !== rg[0] ? rg[1] : ""; t = (t.slice(0, dm.index) + " " + t.slice(dm.index + dm[0].length)).trim(); } }
+  // 요일: '금요일', '다음주 화요일'
+  if(!out.date){ const wm = t.match(/(이번\s*주|다음\s*주|담주)?\s*([월화수목금토일])요일/); if(wm){ const td = parse(today()), want = "일월화수목금토".indexOf(wm[2]), cur = td.getDay();
+      let diff = (want - cur + 7) % 7; if(wm[1] && /다음|담/.test(wm[1])){ diff = (want === 0 ? 7 : want) - (cur === 0 ? 7 : cur) + 7; } else if(wm[1] && /이번/.test(wm[1])){ diff = (want === 0 ? 7 : want) - (cur === 0 ? 7 : cur); }
+      out.date = ymd(addDays(td, diff)); t = t.replace(wm[0], " ").trim(); } }
+  // 시각 (교시는 빼고)
+  const tm = t.match(/(오전|오후)?\s*(\d{1,2})\s*(?::\s*(\d{2})|(?<!교)시\s*(?:(\d{1,2})\s*분|반)?)/);
+  if(tm && (tm[3] || /시/.test(tm[0]))){ let h = +tm[2], mi = tm[3] ? +tm[3] : tm[4] ? +tm[4] : /반/.test(tm[0]) ? 30 : 0;
+    if(tm[1] === "오후" && h < 12) h += 12; else if(!tm[1] && h >= 1 && h <= 6) h += 12;
+    if(h < 24 && mi < 60){ out.time = String(h).padStart(2,"0") + ":" + String(mi).padStart(2,"0"); t = t.replace(tm[0], " ").trim(); } }
+  // 학생 이름 (전체 이름, 이름+조사, '5번', 성 뺀 이름이 하나뿐일 때)
+  const st = sorted(), PART = /(은|는|이|가|을|를|와|과|랑|이랑|도|의|에게|한테)$/;
+  t = t.split(" ").filter(w => { const c = w.replace(/[,·]$/,""); let s = st.find(x => x.name === c) || st.find(x => x.name === c.replace(PART, ""));
+      if(!s && /^\d{1,2}번$/.test(c)) s = st.find(x => String(x.no) === c.replace("번",""));
+      if(!s && c.length >= 2){ const g = st.filter(x => x.name.length >= 3 && (x.name.slice(1) === c || x.name.slice(1) === c.replace(PART, ""))); if(g.length === 1) s = g[0]; }
+      if(s){ if(!out.sids.includes(s.id)) out.sids.push(s.id); return false; } return true; }).join(" ").trim();
+  // 출결 사유·종류·교시: '출결'이라고 썼거나, 종류를 안 쓰고 학생 이름이 있을 때만 (제출 '성찰결과'의 '결과' 같은 걸 건드리지 않게)
+  const attLike = kind === "att" || (!kind && out.sids.length && /결석|지각|조퇴|결과|체험/.test(t)) || (!kind && out.sids.length && ui.qk === "att");
+  if(attLike){
+  const rs = [["체험학습",/(교외\s*)?체험\s*학습|체험/],["미인정",/미인정|무단/],["인정",/(출석)?인정|경조사?/],["질병",/질병|아파서?|병원|병결|병/],["기타",/기타/]];
+  for(const [r, re] of rs){ const m = t.match(re); if(m){ out.reason = r; t = t.replace(m[0], " ").trim(); break; } }
+  const km = t.match(/결석|지각|조퇴|결과/); if(km){ out.akind = km[0]; t = t.replace(km[0], " ").trim(); }
+  if(out.reason === "체험학습" && !out.akind) out.akind = "결석";
+  const pm = t.match(/(\d+(?:\s*[,·~\-]\s*\d+)*)\s*교시/); if(pm){ const ns = pm[1].match(/\d+/g).map(Number); out.periods = /[~\-]/.test(pm[1]) && ns.length === 2 ? Array.from({length: Math.max(0, ns[1]-ns[0]+1)}, (_, i) => ns[0]+i) : ns; out.periods = out.periods.filter(n => n >= 1 && n <= 8); }
+  }
+  // 종류 정하기: 쓴 말 > 출결 낱말+이름 > 지금 고른 칸
+  if(!kind){ if(attLike) kind = "att"; else if(!out.sids.length && /(?:^|\s)[가-힣]{1,8}(?:부|행정실|교무실|청|센터)(?:에|로)?$/.test(t) && (!ui.qk || ui.qk === "task")) kind = "sub"; else kind = ui.qk || "task";
+    if(kind === "task" && out.sids.length) kind = "rec"; }
+  out.kind = kind;
+  if(kind === "att" && !out.akind && out.reason) out.akind = "결석";
+  if(kind === "att" && !out.reason && out.akind) out.reason = "질병";
+  // 받는 곳·장소
+  if(kind === "sub"){ const m = t.match(/(?:^|\s)([가-힣A-Za-z]{1,10}(?:부|실|청|과|팀|센터)(?:에|로)?)$/) || t.match(/(?:^|\s)([가-힣]{1,10}(?:부|실|청|과|팀|센터))(?:에|로)?\s/); if(m){ out.to = m[1].replace(/(에|로)$/,""); t = t.replace(m[1], " ").trim(); } }
+  if(kind === "meet" || kind === "event"){ const m = t.match(/(?:^|\s)([가-힣0-9A-Za-z]{1,12}(?:실|관|강당|교실|운동장|도서관|체육관|회의실))(?:에서)?(?=\s|$)/); if(m){ out.place = m[1]; t = t.replace(m[0], " ").trim(); } }
+  out.rest = t.replace(/\s+/g, " ").replace(/^[,·\-–]\s*|\s*[,·\-–]$/g, "").trim();
+  return out; }
+function smartDesc(o){ if(!o) return ""; const bits = [`<b>${SM_LABEL[o.kind]}</b>`];
+  if(o.sids.length) bits.push(o.sids.map(id => esc(sname(id))).join(", "));
+  if(o.date) bits.push(o.date2 ? `${md(o.date)} ~ ${md(o.date2)}` : md(o.date)); else bits.push(`<span class="muted">날짜 없음 → ${o.kind==="att"||o.kind==="rec"||o.kind==="counsel"||o.kind==="memo"?"오늘":"오늘"}</span>`);
+  if(o.time) bits.push(o.time);
+  if(o.kind === "att") bits.push(`${o.reason==="체험학습"?"교외체험학습":o.reason}${o.akind}${o.periods.length?` · ${o.periods.join("·")}교시`:""}`);
+  if(o.to) bits.push(`받는 곳 ${esc(o.to)}`); if(o.place) bits.push(`장소 ${esc(o.place)}`);
+  if(o.rest) bits.push(`${o.kind==="att"?"내용":o.kind==="rec"||o.kind==="counsel"||o.kind==="memo"?"내용":"이름"}: ${esc(o.rest)}`);
+  const need = smartNeed(o); return bits.join(" · ") + (need ? ` <span class="sm-need">${need}</span>` : ""); }
+function smartNeed(o){ if(["att","rec","counsel"].includes(o.kind) && !o.sids.length) return "학생 이름을 넣어 주세요";
+  if(["task","meet","sub","event"].includes(o.kind) && !o.rest) return "이름(내용)을 넣어 주세요";
+  if(["rec","counsel","memo"].includes(o.kind) && !o.rest) return "내용을 넣어 주세요"; return ""; }
+IN.qkLine = el => { const pv = $("#qkLinePv"); if(!pv) return; const o = smartParse(el.value); pv.innerHTML = o ? "→ " + smartDesc(o) : '<span class="muted">예: 홍길동 11/25 질병조퇴 3교시 후 · 제출 교육과정 성찰결과 11/27 교무부 · 회의 학년협의회 내일 3시 연구실</span>'; };
+A.qkLineSave = () => { const el = $("#qkLine"), o = smartParse(el && el.value); if(!o) return el && el.focus(); const need = smartNeed(o); if(need){ toast(need); el.focus(); return; }
+  const d = o.date || today(), title = o.rest; let msg = "";
+  if(o.kind === "task"){ (S.tasks ||= []).push({id:uid(), title, due:d, cat:"기타", note:"", done:false, doneAt:"", created:today()}); msg = `할 일 '${title}' (${md(d)})`; }
+  else if(o.kind === "meet"){ const mk = meetKinds().find(k => title.includes(k)) || "기타"; (S.meetings ||= []).push({id:uid(), date:d, time:o.time, kind:mk, title, place:o.place, memo:"", agenda:"", notes:"", todo:"", sent:0}); msg = `회의 '${title}' (${md(d)}${o.time?" "+o.time:""})`; }
+  else if(o.kind === "sub"){ (S.submits ||= []).push({id:uid(), title, due:d, to:o.to, how:"", note:"", done:false, doneAt:""}); msg = `제출 '${title}' (마감 ${md(d)}${o.to?" · "+o.to:""})`; }
+  else if(o.kind === "event"){ const type = EV_TYPES.find(x => title.includes(x.replace(/ /g,""))) || "학급 행사"; S.events.push({id:uid(), date:d, time:o.time, title, type, host:"", place:o.place || "우리 교실", note:"", checklist:defaultChecklist(type)}); msg = `행사 '${title}' (${md(d)})`; }
+  else if(o.kind === "counsel"){ const ses = o.sids.length > 1 ? uid() : undefined; o.sids.forEach(id => (S.counsels ||= []).push({...csBlank(id), date:d, content:nameFill(o.rest, id), grp:ses, ses})); msg = `${o.sids.map(sname).join(", ")} 상담`; }
+  else if(o.kind === "rec"){ o.sids.forEach(sid => S.records.push({id:uid(), sid, date:d, cat:REC_CATS[0], text:nameFill(o.rest, sid), when:"", subj:""})); msg = `${o.sids.map(sname).join(", ")} 학생 기록`; }
+  else if(o.kind === "memo"){ S.memos.push({id:uid(), title:o.rest.slice(0,30), body:o.rest, date:d, pinned:false, updated:Date.now()}); msg = "메모"; }
+  else if(o.kind === "att"){ const to = o.date2 || d, days = []; for(let x = parse(d); ymd(x) <= to; x = addDays(x,1)){ const k = ymd(x); if(isSchoolDay(k)) days.push(k); } if(!days.length) days.push(d);
+    days.forEach(k => { const day = S.attendance[k] ||= {}; o.sids.forEach(sid => { day[sid] = {kind:o.akind, reason:o.reason, note:o.rest, periods: o.akind === "결석" ? [] : o.periods.slice()}; }); });
+    msg = `${o.sids.map(sname).join(", ")} ${o.reason==="체험학습"?"체험학습":o.reason}${o.akind} ${days.length > 1 ? days.length+"일" : md(days[0])}`; }
+  commit(); toast(`넣었어요: ${msg}`); setTimeout(() => { const e = $("#qkLine"); if(e){ e.value = ""; e.focus(); IN.qkLine(e); } }, 0); };
+EN.qkLineSave = () => A.qkLineSave();
+
 /* 오늘: 카드 판(대시보드). 카드는 끌어서 옮기고, 넓이(1~3칸)를 바꿀 수 있어요. 배치는 이 기기에 저장 */
 const DASH_DEF = [["tt",1],["quick",2],["sched",1],["todo",1],["memo",1],["submit",1],["tasks",1],["eval",2],["event",1],["counsel",1],["jobs",1],["roll",1],["attn",1],["budget",1]];
 function dashLayout(){ const L = LOOK.dash || {}, keys = DASH_DEF.map(x=>x[0]);
@@ -2378,8 +2456,9 @@ function submitByStudent(list, modeSeg){
   const mineList = list.filter(a=>!isEx(a,s.id)), exList = list.filter(a=>isEx(a,s.id));
   const done = mineList.length - mine.length;
   const missRows = st.map(x=>({x, m:missOf(x.id)})).filter(r=>r.m.length);
-  const overview = `<div class="card"><div class="spread"><h2>미제출·수정 중 한눈에 보기 <span class="small muted">${missRows.length}명</span></h2><div class="row"><span class="small muted">과제 이름을 누르면 바로 제출로 바뀌어요</span>${missRows.length?`<button class="btn sm" data-act="copyMissAll">전체 명단 복사</button>`:""}</div></div>
-    ${list.length ? (missRows.length ? `<div class="miss-all">${missRows.map(({x,m})=>`<div class="miss-row ${x.id===s.id?"on":""}"><button class="miss-nm" data-act="submitStu" data-id="${x.id}"><span class="muted small num">${x.no}</span> ${esc(x.name)} <span class="pill ${m.length>=3?"bad":"warn"} num">${m.length}</span></button><div class="miss-chips">${m.map(a=>{ const fx = subSt(a, x.id)==="fix"; return `<button class="mchip ${a.due<t?"late":""} ${fx?"fix":""}" data-act="quickSubmit" data-a="${a.id}" data-s="${x.id}" title="눌러서 제출로 바꾸기">${esc(a.title)}${fx?" · 수정 중":a.due<t?" · 마감 지남":""}</button>`; }).join("")}</div></div>`).join("")}</div>` : `<div class="empty">모든 학생이 해당 과제를 다 냈어요</div>`) : `<div class="empty">아직 과제가 없어요</div>`}</div>`;
+  const overview = `<div class="card"><div class="spread"><h2>미제출·수정 중 한눈에 보기 <span class="small muted">${missRows.length}명</span></h2><div class="row"><span class="small muted">과제를 누르면 아래에서 고른 표시로 바뀌어요</span>${missRows.length?`<button class="btn sm" data-act="copyMissAll">전체 명단 복사</button>`:""}</div></div>
+    ${list.length && missRows.length ? `<div style="margin-top:8px">${subStampBar()}</div>` : ""}
+    ${list.length ? (missRows.length ? `<div class="miss-all">${missRows.map(({x,m})=>`<div class="miss-row ${x.id===s.id?"on":""}"><button class="miss-nm" data-act="submitStu" data-id="${x.id}"><span class="muted small num">${x.no}</span> ${esc(x.name)} <span class="pill ${m.length>=3?"bad":"warn"} num">${m.length}</span></button><div class="miss-chips">${m.map(a=>{ const fx = subSt(a, x.id)==="fix"; return `<button class="mchip ${a.due<t?"late":""} ${fx?"fix":""}" data-act="quickSubmit" data-a="${a.id}" data-s="${x.id}" title="눌러서 고른 표시로 바꾸기">${esc(a.title)}${fx?" · 수정 중":a.due<t?" · 마감 지남":""}</button>`; }).join("")}</div></div>`).join("")}</div>` : `<div class="empty">모든 학생이 해당 과제를 다 냈어요</div>`) : `<div class="empty">아직 과제가 없어요</div>`}</div>`;
   return header("제출 체크", "위에서 학생별 미제출 과제를 한눈에 보고, 아래에서 한 학생씩 자세히 체크해요. 해당 없는 과제는 '제외'를 누르세요.", modeSeg) + overview + `
   <div class="split">
     <div class="card" style="padding:12px"><div class="list">
@@ -2396,7 +2475,8 @@ function submitByStudent(list, modeSeg){
   </div>`;
 }
 A.submitMode = el => { ui.submitMode = el.dataset.v; ui.exMode = false; render(); };
-A.quickSubmit = el => { const a = S.assignments.find(x=>x.id===el.dataset.a); if(!a || isEx(a, el.dataset.s)) return; const st = "ok"; setSub(a, el.dataset.s, st); commit(); toast(`${sname(el.dataset.s)} · ${a.title} ${SUB_ST[st]}`); };
+A.quickSubmit = el => { const a = S.assignments.find(x=>x.id===el.dataset.a), sid = el.dataset.s; if(!a) return; const k = ui.subStamp || "ok";
+  subTap(a, sid); toast(`${sname(sid)} · ${a.title} → ${isEx(a, sid) ? "제외" + (exWhy(a, sid) ? `(${exWhy(a, sid)})` : "") : subSt(a, sid) ? SUB_ST[subSt(a, sid)] : "미제출"}`); };
 A.copyMissAll = async () => { const list = S.assignments.slice().sort((a,b)=>b.due.localeCompare(a.due));
   const txt = sorted().map(x=>{ const m = list.filter(a=>!isEx(a,x.id) && !subDone(a, x.id)); return m.length ? `${x.no} ${x.name}: ${m.map(a=>a.title + (subSt(a,x.id)==="fix" ? "(수정 중)" : "")).join(", ")}` : ""; }).filter(Boolean).join("\n");
   try{ await navigator.clipboard.writeText(txt); toast("미제출 명단을 복사했어요"); }catch(e){ toast("복사가 막혀 있어요"); } };
