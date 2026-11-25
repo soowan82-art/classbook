@@ -848,7 +848,7 @@ A.calWReset = () => { LOOK.calw = 0; saveLook(); render(); };
 A.lookAccent = el => { LOOK.accent = el.dataset.v; saveLook(); render(); };
 A.lookTone = el => { LOOK.tone = el.dataset.v; saveLook(); render(); };
 A.lookMode = el => { LOOK.mode = el.dataset.v; saveLook(); render(); };
-const APP_VER = "2026.11.24-6";
+const APP_VER = "2026.11.25-1";
 const LOGO_SVG = `<svg class="brand-logo" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" style="fill:var(--brand,#1F6E8C)"/><g transform="translate(256 258) scale(1.13) translate(-256 -258)"><rect x="140" y="112" width="232" height="292" rx="30" fill="#FFFFFF"/><rect x="140" y="112" width="44" height="292" rx="22" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><rect x="162" y="112" width="22" height="292" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><path d="M318 112 H352 V214 L335 198 L318 214 Z" fill="#F2B84B"/><path d="M212 196 L236 220 L284 168" fill="none" style="stroke:var(--accent-ink,#1F6E8C)" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/><rect x="212" y="262" width="124" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="306" width="96" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="350" width="112" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 26%, #fff)"/></g></svg>`;
 let storageOK = true;
 /* 학급 여러 개: 학급마다 따로 저장한다. 처음 학급(c1)은 예전 저장 위치를 그대로 쓴다 */
@@ -2577,7 +2577,7 @@ VIEWS.grades = () => {
   const subjDL = `<datalist id="gSubList">${[...new Set(TT().subjects.map(x=>x.name).concat(["국어","수학","사회","과학","영어","도덕","음악","미술","체육","실과"]))].map(x=>`<option value="${esc(x)}">`).join("")}</datalist>`;
   const form = tab === "perf" ? `<div class="form" style="grid-template-columns:1fr 1fr">
         <label class="f">과목<input type="text" id="gSub" data-sug="subj" placeholder="수학 (ㅅㅎ도 돼요)" autocomplete="off"></label>
-        <label class="f">날짜<input type="date" id="gDate" value="${today()}"></label>
+        ${dateTextHtml("g", today(), true)}
         <label class="f" style="grid-column:1/-1">평가 내용<input type="text" id="gTitle" placeholder="꺾은선 그래프 그리기" data-enter="addGrade" data-sug="gtitle" autocomplete="off"></label>
       </div><div class="small muted">등급: ${LEVELS.join(" · ")}</div>`
     : `<div class="form" style="grid-template-columns:1fr 1fr">
@@ -2585,7 +2585,7 @@ VIEWS.grades = () => {
         <label class="f">종류<select id="gType">${TEST_TYPES.map(x=>`<option>${x}</option>`).join("")}</select></label>
         <label class="f" style="grid-column:1/-1">평가 내용<input type="text" id="gTitle" placeholder="3단원 곱셈" data-enter="addGrade" data-sug="gtitle" autocomplete="off"></label>
         <label class="f">만점<input type="number" id="gMaxNew" min="1" value="100" data-enter="addGrade"></label>
-        <label class="f">날짜<input type="date" id="gDate" value="${today()}"></label>
+        ${dateTextHtml("g", today(), true)}
       </div>`;
   return header("성적 입력", "수행평가는 등급으로, 단원평가·형성평가는 점수로 입력해요.", `<button class="btn" data-act="gradeExport">전체 성적 내보내기</button>`) + `
   <div class="row" style="gap:10px;margin-bottom:14px;flex-wrap:wrap"><div class="seg big-seg"><button class="${tab==="perf"?"on":""}" data-act="gTab" data-v="perf">수행평가 <span class="num muted">${nP}</span></button><button class="${tab==="test"?"on":""}" data-act="gTab" data-v="test">단원·형성평가 <span class="num muted">${nT}</span></button></div>
@@ -2598,7 +2598,7 @@ VIEWS.grades = () => {
       <div class="list" style="margin-top:4px">${groups.length ? groups.map(g=>`<div class="g-grp">${esc(g.label)} <span class="num">${g.items.length}</span></div>` + g.items.map(x=>`<div class="li ${x.id===ui.gradeSel?"on":""}" data-act="gradeSel" data-id="${x.id}"><div><div class="t1">${aKind(x)==="test"?`<span class="pill" style="font-size:11px;padding:0 6px">${esc(x.testType||"단원평가")}</span> `:""}${esc(x.title)}</div><div class="small muted">${ui.gGroup==="month"?esc(x.subject)+" · ":""}${x.date?md(x.date):""}${aKind(x)==="test"?` · ${x.max}점 만점`:""}</div></div><span class="small muted num">${S.students.filter(s=>x.scores[s.id]!==undefined&&x.scores[s.id]!=="").length}/${S.students.length}</span></div>`).join("")).join("") : `<div class="empty">${tab==="perf"?"수행평가":"단원·형성평가"}를 추가해 보세요</div>`}</div>
     </div>
     <div class="card">${a ? `<div class="spread"><div>${ui.gEdit===a.id ? `<div class="row" style="gap:6px;flex-wrap:wrap"><input type="text" id="geSub" data-sug="subj" autocomplete="off" value="${esc(a.subject)}" style="width:110px" aria-label="과목"><input type="text" id="geTitle" value="${esc(a.title)}" data-enter="gEdSave" style="flex:1;min-width:200px;font-weight:600" aria-label="평가 이름"><button class="btn sm pri" data-act="gEdSave">저장</button><button class="btn sm ghost" data-act="edCancel" data-k="gEdit">취소</button></div>${subjDL}` : `<h2>${esc(a.subject)} · ${esc(a.title)} <button class="btn sm ghost asg-pen" data-act="gEdOpen" aria-label="평가 이름 고치기">✎ 고치기</button></h2>`}<div class="row" style="margin-top:6px">${summary}</div>${gGenderTable(a)}${gFinBar(a)}${attHtml("grade:"+a.id)}</div>
-      <div class="row">${aKind(a)==="test"?`<select data-ch="gType" aria-label="평가 종류">${TEST_TYPES.map(x=>`<option ${(a.testType||"단원평가")===x?"selected":""}>${x}</option>`).join("")}</select>`:""}${a.mode==="score"?`<label class="f" style="flex-direction:row;align-items:center;gap:6px">만점<input type="number" class="scoreIn" style="width:76px" value="${a.max}" data-ch="gMax" min="1"></label>`:""}<input type="date" value="${a.date}" data-ch="gDate"><label class="row small g-rt-tg" style="gap:5px"><input type="checkbox" ${a.retakeOn?"checked":""} data-ch="gRetakeOn">재시험 있음</label><button class="btn sm danger" data-act="delGrade">평가 삭제</button></div></div>
+      <div class="row">${aKind(a)==="test"?`<select data-ch="gType" aria-label="평가 종류">${TEST_TYPES.map(x=>`<option ${(a.testType||"단원평가")===x?"selected":""}>${x}</option>`).join("")}</select>`:""}${a.mode==="score"?`<label class="f" style="flex-direction:row;align-items:center;gap:6px">만점<input type="number" class="scoreIn" style="width:76px" value="${a.max}" data-ch="gMax" min="1"></label>`:""}<span class="date-tx"><input type="text" value="${mdShort(a.date)}" data-ch="gDate" data-enter="gDateEn" aria-label="평가 날짜" placeholder="예: 11/25" style="width:84px" autocomplete="off" title="${md(a.date)}"><input type="date" class="date-pop" tabindex="-1" aria-label="달력에서 고르기" value="${a.date}" data-ch="gDatePop"></span><label class="row small g-rt-tg" style="gap:5px"><input type="checkbox" ${a.retakeOn?"checked":""} data-ch="gRetakeOn">재시험 있음</label><button class="btn sm danger" data-act="delGrade">평가 삭제</button></div></div>
       ${a.retakeOn ? `<div class="banner g-rt-info" style="margin-top:10px"><div class="small">재시험 볼 학생은 <b>재시험</b> 칸의 '＋ 재시험'을 누르고, 결과를 넣으세요. 처음 결과와 재시험 중 <b>더 나은 쪽이 최종</b>이 돼요. 재시험 대상 <b class="num">${Object.keys(a.retake||{}).length}명</b> · 결과 입력 <b class="num">${Object.values(a.retake||{}).filter(hasV).length}명</b></div></div>` : ""}
       ${gBulkBar(a)}
       <div class="scroll"><table class="t ${ui.gBulk?"g-picking":""} ${a.fin?"g-locked":""}"><thead><tr>${ui.gBulk?`<th style="width:34px"></th>`:""}<th>번호</th><th>이름</th><th>${a.mode==="level"?"등급":"점수"}</th>${a.retakeOn && !ui.gBulk ? `<th>재시험</th><th>최종</th>` : ""}</tr></thead><tbody>
@@ -2609,7 +2609,7 @@ VIEWS.grades = () => {
   </div>`;
 };
 A.addGrade = () => { const t = $("#gTitle").value.trim(); if(!t){ $("#gTitle").focus(); return; } const tab = ui.gTab || "perf";
-  const a = {id:uid(), subject:$("#gSub").value.trim()||"기타", title:t, date:$("#gDate")?.value || today(), kind:tab, mode: tab==="test" ? "score" : "level", levels:LEVELS.slice(), max:100, scores:{}};
+  const a = {id:uid(), subject:$("#gSub").value.trim()||"기타", title:t, date:(looseRange($("#gDate")?.value)||[today()])[0], kind:tab, mode: tab==="test" ? "score" : "level", levels:LEVELS.slice(), max:100, scores:{}};
   if(tab === "test"){ const mx = Number($("#gMaxNew").value); if(!(mx > 0)){ toast("몇 점 만점인지 적어 주세요"); $("#gMaxNew").focus(); return; } a.max = mx; a.testType = $("#gType").value; }
   S.assessments.push(a); ui.gradeSel = a.id; commit(); };
 A.gTab = el => { ui.gTab = el.dataset.v; if(ui.gGroup === "stu") ui.gGroup = "subj"; ui.gBulk = null; ui.gradeSel = null; render(); };
@@ -2746,7 +2746,9 @@ A.gEdSave = () => { const a = S.assessments.find(x=>x.id===ui.gEdit); if(!a) ret
 EN.gEdSave = () => A.gEdSave();
 A.edCancel = el => { ui[el.dataset.k] = null; render(); };
 CH.gMax = el => { const a = S.assessments.find(x=>x.id===ui.gradeSel); a.max = Math.max(1, Number(el.value)||100); commit(); };
-CH.gDate = el => { const a = S.assessments.find(x=>x.id===ui.gradeSel); a.date = el.value||a.date; commit(); };
+CH.gDate = el => { const a = S.assessments.find(x=>x.id===ui.gradeSel), r = looseRange(el.value); if(!r){ toast("날짜를 못 알아봤어요 (예: 11/25, 어제)"); el.value = mdShort(a.date); return; } if(r[0] === a.date) return; a.date = r[0]; commit(); toast(`평가 날짜를 ${md(a.date)}로 바꿨어요`); };
+EN.gDateEn = el => el.blur();
+CH.gDatePop = el => { if(!el.value) return; const a = S.assessments.find(x=>x.id===ui.gradeSel); a.date = el.value; commit(); toast(`평가 날짜를 ${md(a.date)}로 바꿨어요`); };
 A.delGrade = async () => { if(await ask("이 평가와 입력한 성적을 삭제할까요?","삭제",true)){ S.assessments = S.assessments.filter(x=>x.id!==ui.gradeSel); ui.gradeSel=null; commit(); } };
 A.gradeExport = () => {
   const sheet = (kind) => { const as = S.assessments.filter(a=>aKind(a)===kind).sort((a,b)=>gSubjOrder(a.subject)-gSubjOrder(b.subject)||a.subject.localeCompare(b.subject)||(a.date||"").localeCompare(b.date||""));
