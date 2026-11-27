@@ -848,7 +848,7 @@ A.calWReset = () => { LOOK.calw = 0; saveLook(); render(); };
 A.lookAccent = el => { LOOK.accent = el.dataset.v; saveLook(); render(); };
 A.lookTone = el => { LOOK.tone = el.dataset.v; saveLook(); render(); };
 A.lookMode = el => { LOOK.mode = el.dataset.v; saveLook(); render(); };
-const APP_VER = "2026.11.25-1";
+const APP_VER = "2026.11.27-1";
 const LOGO_SVG = `<svg class="brand-logo" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" style="fill:var(--brand,#1F6E8C)"/><g transform="translate(256 258) scale(1.13) translate(-256 -258)"><rect x="140" y="112" width="232" height="292" rx="30" fill="#FFFFFF"/><rect x="140" y="112" width="44" height="292" rx="22" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><rect x="162" y="112" width="22" height="292" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 18%, #fff)"/><path d="M318 112 H352 V214 L335 198 L318 214 Z" fill="#F2B84B"/><path d="M212 196 L236 220 L284 168" fill="none" style="stroke:var(--accent-ink,#1F6E8C)" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/><rect x="212" y="262" width="124" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="306" width="96" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 45%, #fff)"/><rect x="212" y="350" width="112" height="16" rx="8" style="fill:color-mix(in srgb, var(--brand,#1F6E8C) 26%, #fff)"/></g></svg>`;
 let storageOK = true;
 /* 학급 여러 개: 학급마다 따로 저장한다. 처음 학급(c1)은 예전 저장 위치를 그대로 쓴다 */
@@ -1337,9 +1337,11 @@ const SM_KEYS = [["task",/^(할\s*일|할일|업무|todo)(?=\s|$)\s*/i],["meet",
 const SM_LABEL = Object.fromEntries(QK);
 const SM_DATE = "(?:오늘|내일|모레|어제|그제|그저께|\\d{4}\\s*[-./년]\\s*\\d{1,2}\\s*[-./월]\\s*\\d{1,2}\\s*일?|\\d{1,2}\\s*[/.]\\s*\\d{1,2}(?![\\d.])|\\d{1,2}\\s*월\\s*\\d{1,2}\\s*일?)(?:\\s*\\([월화수목금토일]\\))?";
 const SM_DATE_RE = new RegExp(`(${SM_DATE})(?:\\s*(?:~|〜|부터|-)\\s*(${SM_DATE}|\\d{1,2}\\s*일(?!\\s*(?:간|동안))|\\d+\\s*일\\s*(?:간|동안)))?(?:\\s*까지)?`);
-function smartParse(raw){
+let smDef = null;   // 한 줄 입력이 종류를 못 정할 때 쓸 기본값 (업무 관리 탭에서 지정)
+function smartParse(raw, defKind){ if(defKind) smDef = defKind; else smDef = null;
   let t = String(raw||"").replace(/\s+/g, " ").trim(); if(!t) return null;
-  let kind = null; for(const [k, re] of SM_KEYS){ if(re.test(t)){ kind = k; t = t.replace(re, "").trim(); break; } }
+  let kind = null; for(const [k, re] of SM_KEYS){ if(smDef && !["task","meet","sub","event","memo"].includes(k)) continue;   // 업무 관리에선 '출결 통계'처럼 쓴 말을 출결로 보지 않음
+    if(re.test(t)){ kind = k; t = t.replace(re, "").trim(); break; } }
   const out = {kind, date:"", date2:"", time:"", sids:[], reason:"", akind:"", periods:[], to:"", place:"", rest:""};
   // 날짜 (기간)
   const dm = t.match(SM_DATE_RE); if(dm){ const rg = looseRange(dm[0].replace(/\([월화수목금토일]\)/g,"").replace(/\s*까지$/,"")); if(rg){ out.date = rg[0]; out.date2 = rg[1] !== rg[0] ? rg[1] : ""; t = (t.slice(0, dm.index) + " " + t.slice(dm.index + dm[0].length)).trim(); } }
@@ -1368,7 +1370,7 @@ function smartParse(raw){
   const pm = t.match(/(\d+(?:\s*[,·~\-]\s*\d+)*)\s*교시/); if(pm){ const ns = pm[1].match(/\d+/g).map(Number); out.periods = /[~\-]/.test(pm[1]) && ns.length === 2 ? Array.from({length: Math.max(0, ns[1]-ns[0]+1)}, (_, i) => ns[0]+i) : ns; out.periods = out.periods.filter(n => n >= 1 && n <= 8); }
   }
   // 종류 정하기: 쓴 말 > 출결 낱말+이름 > 지금 고른 칸
-  if(!kind){ if(attLike) kind = "att"; else if(!out.sids.length && /(?:^|\s)[가-힣]{1,8}(?:부|행정실|교무실|청|센터)(?:에|로)?$/.test(t) && (!ui.qk || ui.qk === "task")) kind = "sub"; else kind = ui.qk || "task";
+  if(!kind){ if(attLike) kind = "att"; else if(!out.sids.length && /(?:^|\s)[가-힣]{1,8}(?:부|행정실|교무실|청|센터)(?:에|로)?$/.test(t) && (smDef ? smDef === "task" || smDef === "all" : (!ui.qk || ui.qk === "task"))) kind = "sub"; else kind = (smDef && smDef !== "all" ? smDef : null) || ui.qk || "task";
     if(kind === "task" && out.sids.length) kind = "rec"; }
   out.kind = kind;
   if(kind === "att" && !out.akind && out.reason) out.akind = "결석";
@@ -1389,8 +1391,13 @@ function smartDesc(o){ if(!o) return ""; const bits = [`<b>${SM_LABEL[o.kind]}</
 function smartNeed(o){ if(["att","rec","counsel"].includes(o.kind) && !o.sids.length) return "학생 이름을 넣어 주세요";
   if(["task","meet","sub","event"].includes(o.kind) && !o.rest) return "이름(내용)을 넣어 주세요";
   if(["rec","counsel","memo"].includes(o.kind) && !o.rest) return "내용을 넣어 주세요"; return ""; }
-IN.qkLine = el => { const pv = $("#qkLinePv"); if(!pv) return; const o = smartParse(el.value); pv.innerHTML = o ? "→ " + smartDesc(o) : '<span class="muted">예: 홍길동 11/25 질병조퇴 3교시 후 · 제출 교육과정 성찰결과 11/27 교무부 · 회의 학년협의회 내일 3시 연구실</span>'; };
-A.qkLineSave = () => { const el = $("#qkLine"), o = smartParse(el && el.value); if(!o) return el && el.focus(); const need = smartNeed(o); if(need){ toast(need); el.focus(); return; }
+const smWorkDef = () => ({task:"task", meet:"meet", sub:"sub"})[ui.taskTab] || "all";
+function smartWorkLine(){ const d = smWorkDef(), nm = {all:"업무", task:"업무", meet:"회의", sub:"제출"}[d];
+  const ex = {all:"학부모 안내장 금요일 · 회의 학년협의회 내일 3시 연구실 · 교육과정 성찰결과 11/27 교무부", task:"학부모 안내장 만들기 금요일 · 생활기록부 점검 다음주 화요일", meet:"학년협의회 내일 3시 연구실 · 12/2 15:30 전체 교직원 회의 강당", sub:"교육과정 성찰결과 11/27 교무부 · 출결 통계 금요일 행정실"}[d];
+  return `<div class="card qk-line" style="margin-bottom:12px"><div class="row" style="gap:6px;flex-wrap:nowrap"><input type="text" id="qkLine" data-def="${d}" placeholder="✨ 한 줄로 쓰면 알아서 넣어요 (기본: ${nm}${d==="all"?" · 맨 앞에 '회의', '제출'을 쓰면 그쪽으로":""})" data-in="qkLine" data-enter="qkLineSave" autocomplete="off" style="flex:1;min-width:0"><button class="btn pri" data-act="qkLineSave">넣기</button></div>
+    <div class="small qk-line-pv" id="qkLinePv" data-ex="${esc(ex)}"><span class="muted">예: ${esc(ex)}</span></div></div>`; }
+IN.qkLine = el => { const pv = $("#qkLinePv"); if(!pv) return; const o = smartParse(el.value, el.dataset.def); pv.innerHTML = o ? "→ " + smartDesc(o) : `<span class="muted">예: ${esc(pv.dataset.ex || "홍길동 11/25 질병조퇴 3교시 후 · 제출 교육과정 성찰결과 11/27 교무부 · 회의 학년협의회 내일 3시 연구실")}</span>`; };
+A.qkLineSave = () => { const el = $("#qkLine"), o = smartParse(el && el.value, el && el.dataset.def); if(!o) return el && el.focus(); const need = smartNeed(o); if(need){ toast(need); el.focus(); return; }
   const d = o.date || today(), title = o.rest; let msg = "";
   if(o.kind === "task"){ (S.tasks ||= []).push({id:uid(), title, due:d, cat:"기타", note:"", done:false, doneAt:"", created:today()}); msg = `할 일 '${title}' (${md(d)})`; }
   else if(o.kind === "meet"){ const mk = meetKinds().find(k => title.includes(k)) || "기타"; (S.meetings ||= []).push({id:uid(), date:d, time:o.time, kind:mk, title, place:o.place, memo:"", agenda:"", notes:"", todo:"", sent:0}); msg = `회의 '${title}' (${md(d)}${o.time?" "+o.time:""})`; }
@@ -4255,10 +4262,10 @@ VIEWS.tasks = () => {
   const tab = ui.taskTab, mt = (S.meetings||[]), up = mt.filter(m=>m.date>=today()).length, sb = (S.submits||[]).filter(x=>!x.done), sbLate = sb.filter(x=>taskGroup(x)==="기한 지남").length;
   const tabs = `<div class="seg big-seg"><button class="${tab==="all"?"on":""}" data-act="taskTab" data-v="all">전체 <span class="seg-n ${late+sbLate?"bad":""}">${open.length+up+sb.length}</span></button><button class="${tab==="task"?"on":""}" data-act="taskTab" data-v="task">업무 <span class="seg-n">${open.length}</span></button><button class="${tab==="meet"?"on":""}" data-act="taskTab" data-v="meet">회의 <span class="seg-n">${up}</span></button><button class="${tab==="sub"?"on":""}" data-act="taskTab" data-v="sub">제출 <span class="seg-n ${sbLate?"bad":""}">${sb.length}</span></button></div>`;
   const sub = `할 일 ${open.length}개${late?` · <span style="color:var(--bad)">기한 지남 ${late}개</span>`:""} · 다가오는 회의 ${up}개 · 낼 것 ${sb.length}개${sbLate?` · <span style="color:var(--bad)">제출 기한 지남 ${sbLate}개</span>`:""}`;
-  if(tab==="all") return header("업무 관리", sub, tabs) + allWorkView();
-  if(tab==="meet") return header("업무 관리", sub, tabs) + meetView();
-  if(tab==="sub") return header("업무 관리", sub, tabs) + subView();
-  return header("업무 관리", sub, tabs) + `
+  if(tab==="all") return header("업무 관리", sub, tabs) + smartWorkLine() + allWorkView();
+  if(tab==="meet") return header("업무 관리", sub, tabs) + smartWorkLine() + meetView();
+  if(tab==="sub") return header("업무 관리", sub, tabs) + smartWorkLine() + subView();
+  return header("업무 관리", sub, tabs) + smartWorkLine() + `
   <div class="card"><div class="form" style="grid-template-columns:2fr 150px 130px auto">
     <label class="f">업무<input type="text" id="tTitle" placeholder="예: 학교폭력 예방교육 결과 보고" data-enter="taskAdd"></label>
     <label class="f">마감일(선택)<input type="date" id="tDue"></label>
